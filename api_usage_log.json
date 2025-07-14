@@ -1,0 +1,2183 @@
+[
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-21T22:13:47.640332",
+    "details": {
+      "paintings": [
+        {
+          "title": "Test Painting 1",
+          "artist": "Test Artist 1",
+          "year": "2023",
+          "url": "http://example.com/1.jpg"
+        },
+        {
+          "title": "Test Painting 2",
+          "artist": "Test Artist 2",
+          "year": "2023",
+          "url": "http://example.com/3.jpg"
+        },
+        {
+          "title": "Test Painting 3",
+          "artist": "Test Artist 3",
+          "year": "2023",
+          "url": "http://example.com/3.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "timestamp": "2025-06-21T22:13:47.640319"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-21T22:16:38.692094",
+    "details": {
+      "paintings": [
+        {
+          "title": "Test Painting 1",
+          "artist": "Test Artist 1",
+          "year": "2023",
+          "url": "http://example.com/1.jpg"
+        },
+        {
+          "title": "Test Painting 2",
+          "artist": "Test Artist 2",
+          "year": "2023",
+          "url": "http://example.com/2.jpg"
+        },
+        {
+          "title": "Test Painting 3",
+          "artist": "Test Artist 3",
+          "year": "2023",
+          "url": "http://example.com/3.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "timestamp": "2025-06-21T22:16:38.692084"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-21T22:30:14.014592",
+    "details": {
+      "paintings": [
+        {
+          "title": "Test Painting 1",
+          "artist": "Test Artist 1",
+          "year": "2000",
+          "url": "http://example.com/1.jpg"
+        },
+        {
+          "title": "Test Painting 2",
+          "artist": "Test Artist 2",
+          "year": "2001",
+          "url": "http://example.com/2.jpg"
+        },
+        {
+          "title": "Test Painting 3",
+          "artist": "Test Artist 3",
+          "year": "2002",
+          "url": "http://example.com/3.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "timestamp": "2025-06-21T22:30:14.014580"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-21T22:33:28.691655",
+    "details": {
+      "paintings": [
+        {
+          "title": "Naufragio Della Flotta Di Enea",
+          "artist": "Agostino Tassi",
+          "year": "1627",
+          "url": "http://example.com/1.jpg"
+        },
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent Van Gogh",
+          "year": "1889",
+          "url": "http://example.com/2.jpg"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "http://example.com/3.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "timestamp": "2025-06-21T22:33:28.691648"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-21T22:40:40.130080",
+    "details": {
+      "paintings": [
+        {
+          "title": "Test Painting 1",
+          "artist": "Test Artist 1",
+          "year": "2000",
+          "url": "http://example.com/1.jpg"
+        },
+        {
+          "title": "Test Painting 2",
+          "artist": "Test Artist 2",
+          "year": "2001",
+          "url": "http://example.com/2.jpg"
+        },
+        {
+          "title": "Test Painting 3",
+          "artist": "Test Artist 3",
+          "year": "2002",
+          "url": "http://example.com/3.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "timestamp": "2025-06-21T22:40:40.130072"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-21T22:43:29.509082",
+    "details": {
+      "paintings": [
+        {
+          "title": "Naufragio Della Flotta Di Enea",
+          "artist": "Agostino Tassi",
+          "year": "1627",
+          "url": "https://uploads0.wikiart.org/images/agostino-tassi/naufragio-della-flotta-di-enea-1627.jpg"
+        },
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent Van Gogh",
+          "year": "1889",
+          "url": "https://uploads0.wikiart.org/images/vincent-van-gogh/the-starry-night-1889.jpg"
+        },
+        {
+          "title": "Girl With A Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "https://uploads0.wikiart.org/images/johannes-vermeer/girl-with-a-pearl-earring-1665.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "timestamp": "2025-06-21T22:43:29.509075"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-21T22:47:27.006078",
+    "details": {
+      "paintings": [
+        {
+          "title": "Naufragio Della Flotta Di Enea",
+          "artist": "Agostino Tassi",
+          "year": "1627",
+          "url": "https://uploads0.wikiart.org/images/agostino-tassi/naufragio-della-flotta-di-enea-1627.jpg"
+        },
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent Van Gogh",
+          "year": "1889",
+          "url": "https://uploads0.wikiart.org/images/vincent-van-gogh/the-starry-night-1889.jpg"
+        },
+        {
+          "title": "Girl With A Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "https://uploads0.wikiart.org/images/johannes-vermeer/girl-with-a-pearl-earring-1665.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "timestamp": "2025-06-21T22:47:27.006071"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-21T22:49:04.585322",
+    "details": {
+      "paintings": [
+        {
+          "title": "Naufragio Della Flotta Di Enea",
+          "artist": "Agostino Tassi",
+          "year": "1627",
+          "url": "https://uploads0.wikiart.org/images/agostino-tassi/naufragio-della-flotta-di-enea-1627.jpg"
+        },
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent Van Gogh",
+          "year": "1889",
+          "url": "https://uploads0.wikiart.org/images/vincent-van-gogh/the-starry-night-1889.jpg"
+        },
+        {
+          "title": "Girl With A Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "https://uploads0.wikiart.org/images/johannes-vermeer/girl-with-a-pearl-earring-1665.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "timestamp": "2025-06-21T22:49:04.585315"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-21T22:49:30.646660",
+    "details": {
+      "paintings": [
+        {
+          "title": "Test 1",
+          "artist": "Artist 1",
+          "year": "2000",
+          "url": "http://example.com/1.jpg"
+        },
+        {
+          "title": "Test 2",
+          "artist": "Artist 2",
+          "year": "2001",
+          "url": "http://example.com/2.jpg"
+        },
+        {
+          "title": "Test 3",
+          "artist": "Artist 3",
+          "year": "2002",
+          "url": "http://example.com/3.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "timestamp": "2025-06-21T22:49:30.646652"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-21T22:50:12.195446",
+    "details": {
+      "paintings": [
+        {
+          "title": "Test 1",
+          "artist": "Artist 1",
+          "year": "2000",
+          "url": "http://example.com/1.jpg"
+        },
+        {
+          "title": "Test 2",
+          "artist": "Artist 2",
+          "year": "2001",
+          "url": "http://example.com/2.jpg"
+        },
+        {
+          "title": "Test 3",
+          "artist": "Artist 3",
+          "year": "2002",
+          "url": "http://example.com/3.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "timestamp": "2025-06-21T22:50:12.195439"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-21T22:50:37.418566",
+    "details": {
+      "paintings": [
+        {
+          "title": "Naufragio Della Flotta Di Enea",
+          "artist": "Agostino Tassi",
+          "year": "1627",
+          "url": "https://uploads0.wikiart.org/images/agostino-tassi/naufragio-della-flotta-di-enea-1627.jpg"
+        },
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent Van Gogh",
+          "year": "1889",
+          "url": "https://uploads0.wikiart.org/images/vincent-van-gogh/the-starry-night-1889.jpg"
+        },
+        {
+          "title": "Girl With A Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "https://uploads0.wikiart.org/images/johannes-vermeer/girl-with-a-pearl-earring-1665.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "timestamp": "2025-06-21T22:50:37.418554"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-21T22:55:36.050565",
+    "details": {
+      "paintings": [
+        {
+          "title": "Tiger And Lillies",
+          "artist": "Vajda Lajos",
+          "year": "1933",
+          "url": "https://uploads4.wikiart.org/images/vajda-lajos/tiger-and-lillies-1933.jpg"
+        },
+        {
+          "title": "Green Tea",
+          "artist": "Leonora Carrington",
+          "year": "1942",
+          "url": "https://uploads3.wikiart.org/images/leonora-carrington/green-tea-1942.jpg"
+        },
+        {
+          "title": "Seal",
+          "artist": "Morris Louis",
+          "year": "1959",
+          "url": "https://uploads1.wikiart.org/images/morris-louis/seal-1959.jpg"
+        }
+      ],
+      "narrative_style": "poet",
+      "timestamp": "2025-06-21T22:55:36.050554"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-21T23:01:24.827714",
+    "details": {
+      "paintings": [
+        {
+          "title": "Head",
+          "artist": "Jean Michel Basquiat",
+          "year": "Unknown Year",
+          "url": "https://uploads4.wikiart.org/images/jean-michel-basquiat/head.jpg"
+        },
+        {
+          "title": "Deeds Of Christian Charity",
+          "artist": "Pieter Aertsen",
+          "year": "1575",
+          "url": "https://uploads7.wikiart.org/images/pieter-aertsen/deeds-of-christian-charity-1575.jpg"
+        },
+        {
+          "title": "Feast In The Garden",
+          "artist": "Corneille",
+          "year": "1971",
+          "url": "https://uploads4.wikiart.org/images/corneille/feast-in-the-garden-1971.jpg"
+        }
+      ],
+      "narrative_style": "detective",
+      "timestamp": "2025-06-21T23:01:24.827705"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T11:29:58.975297",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665"
+        },
+        {
+          "title": "The Great Wave off Kanagawa",
+          "artist": "Hokusai",
+          "year": "1831"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "Marci Ma",
+      "timestamp": "2025-06-22T11:29:58.975287"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T11:40:37.856283",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Egg",
+          "artist": "Tarsila Do Amaral",
+          "year": "1928",
+          "url": "https://uploads0.wikiart.org/images/tarsila-do-amaral/the-egg-1928.jpg"
+        },
+        {
+          "title": "La Perquisition De St Sebastian",
+          "artist": "Eduardo Arroyo",
+          "year": "1969",
+          "url": "https://uploads3.wikiart.org/images/eduardo-arroyo/la-perquisition-de-st-sebastian-1969.jpg"
+        },
+        {
+          "title": "Number 9 In Praise Of Gertrude Stein",
+          "artist": "Bradley Walker Tomlin",
+          "year": "1950",
+          "url": "https://uploads6.wikiart.org/images/bradley-walker-tomlin/number-9-in-praise-of-gertrude-stein-1950.jpg"
+        }
+      ],
+      "narrative_style": "time_traveller",
+      "user_name": "",
+      "timestamp": "2025-06-22T11:40:37.856272"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T11:56:26.780380",
+    "details": {
+      "paintings": [
+        {
+          "title": "Bad Taste",
+          "artist": "Martial Raysse",
+          "year": "1965",
+          "url": "https://uploads8.wikiart.org/images/martial-raysse/bad-taste-1965.jpg"
+        },
+        {
+          "title": "The City",
+          "artist": "Fernand Leger",
+          "year": "1919",
+          "url": "https://uploads6.wikiart.org/images/fernand-leger/the-city-1919.jpg"
+        },
+        {
+          "title": "Portrait Of Louis Du Vergier",
+          "artist": "Pierre Narcisse Guerin",
+          "year": "1819",
+          "url": "https://uploads8.wikiart.org/images/pierre-narcisse-guerin/portrait-of-louis-du-vergier-1819.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "Marci",
+      "timestamp": "2025-06-22T11:56:26.780360"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T12:22:52.550011",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889",
+          "url": "https://example.com/starry-night.jpg"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "https://example.com/pearl-earring.jpg"
+        },
+        {
+          "title": "The Great Wave",
+          "artist": "Hokusai",
+          "year": "1831",
+          "url": "https://example.com/great-wave.jpg"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "Marci Ma",
+      "timestamp": "2025-06-22T12:22:52.549998"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T12:25:05.926016",
+    "details": {
+      "paintings": [
+        {
+          "title": "Silent Meadow",
+          "artist": "Eyvind Earle",
+          "year": "1990",
+          "url": "https://uploads1.wikiart.org/images/eyvind-earle/silent-meadow-1990.jpg"
+        },
+        {
+          "title": "The Nap",
+          "artist": "Gustave Caillebotte",
+          "year": "Unknown Year",
+          "url": "https://uploads6.wikiart.org/images/gustave-caillebotte/the-nap.jpg"
+        },
+        {
+          "title": "Green Fields",
+          "artist": "Eyvind Earle",
+          "year": "1994",
+          "url": "https://uploads0.wikiart.org/images/eyvind-earle/green-fields-1994.jpg"
+        }
+      ],
+      "narrative_style": "critic",
+      "user_name": "Kevin",
+      "timestamp": "2025-06-22T12:25:05.926006"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T12:44:23.731806",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889",
+          "url": "https://example.com/starry-night.jpg"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "https://example.com/pearl-earring.jpg"
+        },
+        {
+          "title": "The Great Wave",
+          "artist": "Hokusai",
+          "year": "1831",
+          "url": "https://example.com/great-wave.jpg"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T12:44:23.731794"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T12:58:25.705216",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889",
+          "url": "https://example.com/starry-night.jpg"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "https://example.com/pearl-earring.jpg"
+        },
+        {
+          "title": "The Great Wave",
+          "artist": "Hokusai",
+          "year": "1831",
+          "url": "https://example.com/great-wave.jpg"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "Loading Test User",
+      "timestamp": "2025-06-22T12:58:25.705208"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T13:13:05.870744",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889",
+          "url": "https://example.com/starry-night.jpg"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "https://example.com/pearl-earring.jpg"
+        },
+        {
+          "title": "The Great Wave",
+          "artist": "Hokusai",
+          "year": "1831",
+          "url": "https://example.com/great-wave.jpg"
+        }
+      ],
+      "narrative_style": "detective",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T13:13:05.870736"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T13:17:04.415866",
+    "details": {
+      "paintings": [
+        {
+          "title": "Donna Allo Specchio",
+          "artist": "Cagnaccio Di San Pietro",
+          "year": "1927",
+          "url": "https://uploads0.wikiart.org/images/cagnaccio-di-san-pietro/donna-allo-specchio-1927.jpg"
+        },
+        {
+          "title": "Desertique",
+          "artist": "Bram Van Velde",
+          "year": "1981",
+          "url": "https://uploads0.wikiart.org/images/bram-van-velde/desertique-1981.jpg"
+        },
+        {
+          "title": "Fair Critics",
+          "artist": "Charles Courtney Curran",
+          "year": "1887",
+          "url": "https://uploads0.wikiart.org/00123/images/charles-courtney-curran/fair-critics-1887.jpg"
+        }
+      ],
+      "narrative_style": "critic",
+      "user_name": "GG Bang",
+      "timestamp": "2025-06-22T13:17:04.415853"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T13:50:41.988278",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889",
+          "url": "https://example.com/starry-night.jpg"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "https://example.com/pearl-earring.jpg"
+        },
+        {
+          "title": "The Great Wave",
+          "artist": "Hokusai",
+          "year": "1831",
+          "url": "https://example.com/great-wave.jpg"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T13:50:41.988268"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T14:01:36.132661",
+    "details": {
+      "paintings": [
+        {
+          "title": "Test 1",
+          "artist": "Test Artist",
+          "year": "2000",
+          "url": "test1.jpg"
+        },
+        {
+          "title": "Test 2",
+          "artist": "Test Artist 2",
+          "year": "2001",
+          "url": "test2.jpg"
+        },
+        {
+          "title": "Test 3",
+          "artist": "Test Artist 3",
+          "year": "2002",
+          "url": "test3.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T14:01:36.132651"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T14:04:09.811853",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889",
+          "url": "https://example.com/starry-night.jpg"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "https://example.com/girl-pearl-earring.jpg"
+        },
+        {
+          "title": "The Great Wave off Kanagawa",
+          "artist": "Katsushika Hokusai",
+          "year": "1831",
+          "url": "https://example.com/great-wave.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T14:04:09.811843"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T14:45:25.088200",
+    "details": {
+      "paintings": [
+        {
+          "title": "Test 1",
+          "artist": "Test Artist",
+          "year": "2000"
+        },
+        {
+          "title": "Test 2",
+          "artist": "Test Artist 2",
+          "year": "2001"
+        },
+        {
+          "title": "Test 3",
+          "artist": "Test Artist 3",
+          "year": "2002"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T14:45:25.088191"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T14:45:56.810458",
+    "details": {
+      "paintings": [
+        {
+          "title": "Test 1",
+          "artist": "Test Artist",
+          "year": "2000"
+        },
+        {
+          "title": "Test 2",
+          "artist": "Test Artist 2",
+          "year": "2001"
+        },
+        {
+          "title": "Test 3",
+          "artist": "Test Artist 3",
+          "year": "2002"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T14:45:56.810451"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T14:47:27.568319",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665"
+        },
+        {
+          "title": "The Great Wave off Kanagawa",
+          "artist": "Katsushika Hokusai",
+          "year": "1831"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T14:47:27.568306"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T14:52:14.886938",
+    "details": {
+      "paintings": [
+        {
+          "title": "Test 1",
+          "artist": "Test Artist",
+          "year": "2000"
+        },
+        {
+          "title": "Test 2",
+          "artist": "Test Artist 2",
+          "year": "2001"
+        },
+        {
+          "title": "Test 3",
+          "artist": "Test Artist 3",
+          "year": "2002"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T14:52:14.886930"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T14:53:18.977149",
+    "details": {
+      "paintings": [
+        {
+          "title": "Test 1",
+          "artist": "Test Artist",
+          "year": "2000"
+        },
+        {
+          "title": "Test 2",
+          "artist": "Test Artist 2",
+          "year": "2001"
+        },
+        {
+          "title": "Test 3",
+          "artist": "Test Artist 3",
+          "year": "2002"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T14:53:18.977137"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T14:55:07.868257",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665"
+        },
+        {
+          "title": "The Great Wave off Kanagawa",
+          "artist": "Katsushika Hokusai",
+          "year": "1831"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "Art Lover",
+      "timestamp": "2025-06-22T14:55:07.868247"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T14:55:59.920617",
+    "details": {
+      "paintings": [
+        {
+          "title": "Test 1",
+          "artist": "Test Artist",
+          "year": "2000"
+        },
+        {
+          "title": "Test 2",
+          "artist": "Test Artist 2",
+          "year": "2001"
+        },
+        {
+          "title": "Test 3",
+          "artist": "Test Artist 3",
+          "year": "2002"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T14:55:59.920610"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T14:56:13.795163",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665"
+        },
+        {
+          "title": "The Great Wave off Kanagawa",
+          "artist": "Katsushika Hokusai",
+          "year": "1831"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "Art Enthusiast",
+      "timestamp": "2025-06-22T14:56:13.795156"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T14:56:30.254342",
+    "details": {
+      "paintings": [
+        {
+          "title": "Mona Lisa",
+          "artist": "Leonardo da Vinci",
+          "year": "1503"
+        },
+        {
+          "title": "The Scream",
+          "artist": "Edvard Munch",
+          "year": "1893"
+        },
+        {
+          "title": "Guernica",
+          "artist": "Pablo Picasso",
+          "year": "1937"
+        }
+      ],
+      "narrative_style": "detective",
+      "user_name": "Mystery Solver",
+      "timestamp": "2025-06-22T14:56:30.254335"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T15:08:29.040386",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889",
+          "url": "https://example.com/starry-night.jpg"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "https://example.com/girl-pearl-earring.jpg"
+        },
+        {
+          "title": "The Great Wave",
+          "artist": "Katsushika Hokusai",
+          "year": "1831",
+          "url": "https://example.com/great-wave.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T15:08:29.040377"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T15:19:48.109012",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889",
+          "url": "https://example.com/starry-night.jpg"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "https://example.com/girl-pearl-earring.jpg"
+        },
+        {
+          "title": "The Great Wave",
+          "artist": "Katsushika Hokusai",
+          "year": "1831",
+          "url": "https://example.com/great-wave.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T15:19:48.109004"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T15:21:36.429813",
+    "details": {
+      "paintings": [
+        {
+          "title": "Mona Lisa",
+          "artist": "Leonardo da Vinci",
+          "year": "1503",
+          "url": "https://example.com/mona-lisa.jpg"
+        },
+        {
+          "title": "The Scream",
+          "artist": "Edvard Munch",
+          "year": "1893",
+          "url": "https://example.com/scream.jpg"
+        },
+        {
+          "title": "Guernica",
+          "artist": "Pablo Picasso",
+          "year": "1937",
+          "url": "https://example.com/guernica.jpg"
+        }
+      ],
+      "narrative_style": "detective",
+      "user_name": "Art Detective",
+      "timestamp": "2025-06-22T15:21:36.429801"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T15:22:34.281231",
+    "details": {
+      "paintings": [
+        {
+          "title": "Water Lilies",
+          "artist": "Claude Monet",
+          "year": "1919",
+          "url": "https://example.com/water-lilies.jpg"
+        },
+        {
+          "title": "The Kiss",
+          "artist": "Gustav Klimt",
+          "year": "1908",
+          "url": "https://example.com/kiss.jpg"
+        },
+        {
+          "title": "Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889",
+          "url": "https://example.com/starry-night.jpg"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "Poetry Lover",
+      "timestamp": "2025-06-22T15:22:34.281219"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T15:59:02.735541",
+    "details": {
+      "paintings": [
+        {
+          "title": "Peg Top",
+          "artist": "Hans Bellmer",
+          "year": "1937",
+          "url": "https://uploads4.wikiart.org/images/hans-bellmer/peg-top-1937.jpg"
+        },
+        {
+          "title": "Rolla",
+          "artist": "Henri Gervex",
+          "year": "1878",
+          "url": "https://uploads8.wikiart.org/00114/images/henri-gervex/rolla-1878.jpg"
+        },
+        {
+          "title": "On Me Fait Signe",
+          "artist": "Natalia Dumitresco",
+          "year": "1964",
+          "url": "https://uploads1.wikiart.org/images/natalia-dumitresco/on-me-fait-signe-1964.jpg"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "GG Bang",
+      "timestamp": "2025-06-22T15:59:02.735530"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T16:24:35.263366",
+    "details": {
+      "paintings": [
+        {
+          "title": "Oberland Bernois",
+          "artist": "Samuel Buri",
+          "year": "1967",
+          "url": "https://uploads3.wikiart.org/images/samuel-buri/oberland-bernois-1967.jpg"
+        },
+        {
+          "title": "Jesuiten Iii Jesuits Iii",
+          "artist": "Lyonel Feininger",
+          "year": "1915",
+          "url": "https://uploads7.wikiart.org/images/lyonel-feininger/jesuiten-iii-jesuits-iii-1915.jpg"
+        },
+        {
+          "title": "The Arch Of Constantine",
+          "artist": "Bernardo Bellotto",
+          "year": "1742",
+          "url": "https://uploads7.wikiart.org/images/bernardo-bellotto/the-arch-of-constantine-1742.jpg"
+        }
+      ],
+      "narrative_style": "critic",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-22T16:24:35.263357"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T16:30:53.793883",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889",
+          "url": "https://example.com/starry-night.jpg"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "https://example.com/girl-pearl-earring.jpg"
+        },
+        {
+          "title": "The Great Wave",
+          "artist": "Katsushika Hokusai",
+          "year": "1831",
+          "url": "https://example.com/great-wave.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T16:30:53.793871"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T16:36:09.484797",
+    "details": {
+      "paintings": [
+        {
+          "title": "Nudes",
+          "artist": "Lajos Tihanyi",
+          "year": "1907",
+          "url": "https://uploads3.wikiart.org/images/lajos-tihanyi/nudes-1907.jpg"
+        },
+        {
+          "title": "La Perquisition De St Sebastian",
+          "artist": "Eduardo Arroyo",
+          "year": "1969",
+          "url": "https://uploads3.wikiart.org/images/eduardo-arroyo/la-perquisition-de-st-sebastian-1969.jpg"
+        },
+        {
+          "title": "Untitled Red Blue",
+          "artist": "Edward Avedisian",
+          "year": "1979",
+          "url": "https://uploads0.wikiart.org/images/edward-avedisian/untitled-red-blue-1979.jpg"
+        }
+      ],
+      "narrative_style": "critic",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-22T16:36:09.484786"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T16:42:11.938932",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Starry Night",
+          "artist": "Vincent van Gogh",
+          "year": "1889",
+          "url": "https://example.com/starry-night.jpg"
+        },
+        {
+          "title": "Girl with a Pearl Earring",
+          "artist": "Johannes Vermeer",
+          "year": "1665",
+          "url": "https://example.com/girl-pearl-earring.jpg"
+        },
+        {
+          "title": "The Great Wave",
+          "artist": "Katsushika Hokusai",
+          "year": "1831",
+          "url": "https://example.com/great-wave.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "Test User",
+      "timestamp": "2025-06-22T16:42:11.938925"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T16:48:47.654374",
+    "details": {
+      "paintings": [
+        {
+          "title": "Unknown Title",
+          "artist": "Unknown Artist",
+          "year": "Unknown Year",
+          "url": "https://uploads0.wikiart.org/images/antonio-areal/a-hist-ria-dram-tica-de-um-ovo-objecto-1967.jpg"
+        },
+        {
+          "title": "Unknown Title",
+          "artist": "Unknown Artist",
+          "year": "Unknown Year",
+          "url": "https://uploads3.wikiart.org/images/eduardo-arroyo/la-perquisition-de-st-sebastian-1969.jpg"
+        },
+        {
+          "title": "Unknown Title",
+          "artist": "Unknown Artist",
+          "year": "Unknown Year",
+          "url": "https://uploads7.wikiart.org/images/andre-masson/goethe-or-the-metamorphosis-of-plants-1940.jpg"
+        }
+      ],
+      "narrative_style": "time_traveller",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-22T16:48:47.654364"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-22T16:51:44.342655",
+    "details": {
+      "paintings": [
+        {
+          "title": "Paradise Paradise",
+          "artist": "Corneille",
+          "year": "1999",
+          "url": "https://uploads2.wikiart.org/images/corneille/paradise-paradise-1999.jpg"
+        },
+        {
+          "title": "The American Dream I",
+          "artist": "Robert Indiana",
+          "year": "1961",
+          "url": "https://uploads1.wikiart.org/images/robert-indiana/the-american-dream-i-1961.jpg"
+        },
+        {
+          "title": "Untitled 1986(1)",
+          "artist": "Rene Duvillier",
+          "year": "Unknown Year",
+          "url": "https://uploads1.wikiart.org/images/rene-duvillier/untitled-1986(1).jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-22T16:51:44.342640"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-23T09:33:16.888264",
+    "details": {
+      "paintings": [
+        {
+          "title": "Study For A Painting 1938 1",
+          "artist": "Ad Reinhardt",
+          "year": "Unknown Year",
+          "url": "https://uploads1.wikiart.org/images/ad-reinhardt/study-for-a-painting-1938-1.jpg"
+        },
+        {
+          "title": "Oberland Bernois",
+          "artist": "Samuel Buri",
+          "year": "1967",
+          "url": "https://uploads3.wikiart.org/images/samuel-buri/oberland-bernois-1967.jpg"
+        },
+        {
+          "title": "Jesuiten Iii Jesuits Iii",
+          "artist": "Lyonel Feininger",
+          "year": "1915",
+          "url": "https://uploads7.wikiart.org/images/lyonel-feininger/jesuiten-iii-jesuits-iii-1915.jpg"
+        }
+      ],
+      "narrative_style": "time_traveller",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-23T09:33:16.888249"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-23T09:56:18.588297",
+    "details": {
+      "paintings": [
+        {
+          "title": "Monica Vitti With Heart",
+          "artist": "Pauline Boty",
+          "year": "1963",
+          "url": "https://uploads2.wikiart.org/images/pauline-boty/monica-vitti-with-heart-1963.jpg"
+        },
+        {
+          "title": "Chalice",
+          "artist": "Morris Graves",
+          "year": "1941",
+          "url": "https://uploads5.wikiart.org/images/morris-graves/chalice-1941.jpg"
+        },
+        {
+          "title": "Striped Trousers",
+          "artist": "Domenico Gnoli",
+          "year": "Unknown Year",
+          "url": "https://uploads1.wikiart.org/images/domenico-gnoli/striped-trousers.jpg"
+        }
+      ],
+      "narrative_style": "detective",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-23T09:56:18.588286"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-23T10:09:46.366768",
+    "details": {
+      "paintings": [
+        {
+          "title": "Hornet",
+          "artist": "Dan Christensen",
+          "year": "1970",
+          "url": "https://uploads6.wikiart.org/images/dan-christensen/hornet-1970.jpg"
+        },
+        {
+          "title": "Paradise Paradise",
+          "artist": "Corneille",
+          "year": "1999",
+          "url": "https://uploads2.wikiart.org/images/corneille/paradise-paradise-1999.jpg"
+        },
+        {
+          "title": "At The Well",
+          "artist": "Martiros Saryan",
+          "year": "1908",
+          "url": "https://uploads2.wikiart.org/images/martiros-saryan/at-the-well-1908.jpg"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-23T10:09:46.366753"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-23T10:18:31.483752",
+    "details": {
+      "paintings": [
+        {
+          "title": "Perseus Rescuing Andromeda",
+          "artist": "Joachim Wtewael",
+          "year": "1611",
+          "url": "https://uploads8.wikiart.org/images/joachim-wtewael/perseus-rescuing-andromeda-1611.jpg"
+        },
+        {
+          "title": "Mystic Marriage Of St Catherine",
+          "artist": "Hans Memling",
+          "year": "1480",
+          "url": "https://uploads1.wikiart.org/images/hans-memling/mystic-marriage-of-st-catherine-1480.jpg"
+        },
+        {
+          "title": "P Trification",
+          "artist": "Serge Brignoni",
+          "year": "1940",
+          "url": "https://uploads3.wikiart.org/images/serge-brignoni/p-trification-1940.jpg"
+        }
+      ],
+      "narrative_style": "critic",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-23T10:18:31.483740"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-23T10:26:07.969346",
+    "details": {
+      "paintings": [
+        {
+          "title": "Femme Sur Divan",
+          "artist": "Oscar Dominguez",
+          "year": "1942",
+          "url": "https://uploads6.wikiart.org/images/oscar-dominguez/femme-sur-divan-1942.jpg"
+        },
+        {
+          "title": "La Perquisition De St Sebastian",
+          "artist": "Eduardo Arroyo",
+          "year": "1969",
+          "url": "https://uploads3.wikiart.org/images/eduardo-arroyo/la-perquisition-de-st-sebastian-1969.jpg"
+        },
+        {
+          "title": "Goethe Or The Metamorphosis Of Plants",
+          "artist": "Andre Masson",
+          "year": "1940",
+          "url": "https://uploads7.wikiart.org/images/andre-masson/goethe-or-the-metamorphosis-of-plants-1940.jpg"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-23T10:26:07.969335"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-23T10:27:05.457509",
+    "details": {
+      "paintings": [
+        {
+          "title": "N Mero 363",
+          "artist": "Luis Feito",
+          "year": "1962",
+          "url": "https://uploads5.wikiart.org/images/luis-feito/n-mero-363-1962.jpg"
+        },
+        {
+          "title": "A Hist Ria Dram Tica De Um Ovo Objecto",
+          "artist": "Antonio Areal",
+          "year": "1967",
+          "url": "https://uploads0.wikiart.org/images/antonio-areal/a-hist-ria-dram-tica-de-um-ovo-objecto-1967.jpg"
+        },
+        {
+          "title": "Der Wolfsjunge",
+          "artist": "Rainer Fetting",
+          "year": "1983",
+          "url": "https://uploads4.wikiart.org/images/rainer-fetting/der-wolfsjunge-1983.jpg"
+        }
+      ],
+      "narrative_style": "detective",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-23T10:27:05.457500"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-23T11:06:14.685645",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Nap",
+          "artist": "Gustave Caillebotte",
+          "year": "Unknown Year",
+          "url": "https://uploads6.wikiart.org/images/gustave-caillebotte/the-nap.jpg"
+        },
+        {
+          "title": "The Steer The Bull",
+          "artist": "Franz Marc",
+          "year": "1911",
+          "url": "https://uploads4.wikiart.org/images/franz-marc/the-steer-the-bull-1911.jpg"
+        },
+        {
+          "title": "Sleeping Herd Boy",
+          "artist": "Alexey Venetsianov",
+          "year": "Unknown Year",
+          "url": "https://uploads6.wikiart.org/images/alexey-venetsianov/sleeping-herd-boy.jpg"
+        }
+      ],
+      "narrative_style": "detective",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-23T11:06:14.685631"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-23T11:07:05.021718",
+    "details": {
+      "paintings": [
+        {
+          "title": "Made In Japan",
+          "artist": "Martial Raysse",
+          "year": "1964",
+          "url": "https://uploads3.wikiart.org/images/martial-raysse/made-in-japan-1964.jpg"
+        },
+        {
+          "title": "Zulma",
+          "artist": "Roger Raveel",
+          "year": "1948",
+          "url": "https://uploads2.wikiart.org/images/roger-raveel/zulma-1948.jpg"
+        },
+        {
+          "title": "Untitled 1988 1",
+          "artist": "Sam Francis",
+          "year": "Unknown Year",
+          "url": "https://uploads6.wikiart.org/images/sam-francis/untitled-1988-1.jpg"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-23T11:07:05.021707"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-23T11:13:17.164121",
+    "details": {
+      "paintings": [
+        {
+          "title": "Staccato",
+          "artist": "Cesar Paternosto",
+          "year": "1965",
+          "url": "https://uploads0.wikiart.org/images/cesar-paternosto/staccato-1965.jpg"
+        },
+        {
+          "title": "Kleiner Garten",
+          "artist": "Fritz Winter",
+          "year": "1961",
+          "url": "https://uploads2.wikiart.org/images/fritz-winter/kleiner-garten-1961.jpg"
+        },
+        {
+          "title": "Taucherin Auf Steinen",
+          "artist": "Dieter Asmus",
+          "year": "1972",
+          "url": "https://uploads0.wikiart.org/images/dieter-asmus/taucherin-auf-steinen-1972.jpg"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-23T11:13:17.164108"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-23T11:38:35.784086",
+    "details": {
+      "paintings": [
+        {
+          "title": "Passage Rosion Vermillion",
+          "artist": "Fernand Leduc",
+          "year": "1967",
+          "url": "https://uploads5.wikiart.org/images/fernand-leduc/passage-rosion-vermillion-1967.jpg"
+        },
+        {
+          "title": "Blue Balls Viii",
+          "artist": "Sam Francis",
+          "year": "1962",
+          "url": "https://uploads2.wikiart.org/images/sam-francis/blue-balls-viii-1962.jpg"
+        },
+        {
+          "title": "Kleiner Garten",
+          "artist": "Fritz Winter",
+          "year": "1961",
+          "url": "https://uploads2.wikiart.org/images/fritz-winter/kleiner-garten-1961.jpg"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-23T11:38:35.784076"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-23T11:47:44.233610",
+    "details": {
+      "paintings": [
+        {
+          "title": "Unknown Title",
+          "artist": "Unknown Artist",
+          "year": "Unknown Year",
+          "url": "https://uploads6.wikiart.org/images/remedios-varo/eyes-on-the-table-1938.jpg"
+        },
+        {
+          "title": "Unknown Title",
+          "artist": "Unknown Artist",
+          "year": "Unknown Year",
+          "url": "https://uploads8.wikiart.org/images/pierre-daura/f1-1930.jpg"
+        },
+        {
+          "title": "Unknown Title",
+          "artist": "Unknown Artist",
+          "year": "Unknown Year",
+          "url": "https://uploads7.wikiart.org/00148/images/il-sodoma/piet-1533.jpg"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-23T11:47:44.233601"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-23T11:53:51.826186",
+    "details": {
+      "paintings": [
+        {
+          "title": "Unknown Title",
+          "artist": "Unknown Artist",
+          "year": "Unknown Year",
+          "url": "https://uploads7.wikiart.org/images/joseph-wright/vesuvius-from-posillipo.jpg"
+        },
+        {
+          "title": "Unknown Title",
+          "artist": "Unknown Artist",
+          "year": "Unknown Year",
+          "url": "https://uploads7.wikiart.org/images/lyonel-feininger/jesuiten-iii-jesuits-iii-1915.jpg"
+        },
+        {
+          "title": "Unknown Title",
+          "artist": "Unknown Artist",
+          "year": "Unknown Year",
+          "url": "https://uploads5.wikiart.org/images/oskar-kokoschka/not_detected_235852.jpg"
+        }
+      ],
+      "narrative_style": "critic",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-23T11:53:51.826175"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-23T12:13:12.685133",
+    "details": {
+      "paintings": [
+        {
+          "title": "Composition 1961 1",
+          "artist": "Marcelle Loubchansky",
+          "year": "Unknown Year",
+          "url": "https://uploads0.wikiart.org/images/marcelle-loubchansky/composition-1961-1.jpg"
+        },
+        {
+          "title": "Yellow Triptych",
+          "artist": "Terry Frost",
+          "year": "1959",
+          "url": "https://uploads2.wikiart.org/images/terry-frost/yellow-triptych-1959.jpg"
+        },
+        {
+          "title": "Seal",
+          "artist": "Morris Louis",
+          "year": "1959",
+          "url": "https://uploads1.wikiart.org/images/morris-louis/seal-1959.jpg"
+        }
+      ],
+      "narrative_style": "time_traveller",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-23T12:13:12.685124"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-23T12:21:32.377826",
+    "details": {
+      "paintings": [
+        {
+          "title": "Sleeping Herd Boy",
+          "artist": "Alexey Venetsianov",
+          "year": "Unknown Year",
+          "url": "https://uploads6.wikiart.org/images/alexey-venetsianov/sleeping-herd-boy.jpg"
+        },
+        {
+          "title": "Eva",
+          "artist": "Corneille",
+          "year": "1998",
+          "url": "https://uploads6.wikiart.org/images/corneille/eva-1998.jpg"
+        },
+        {
+          "title": "Zulma",
+          "artist": "Roger Raveel",
+          "year": "1948",
+          "url": "https://uploads2.wikiart.org/images/roger-raveel/zulma-1948.jpg"
+        }
+      ],
+      "narrative_style": "detective",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-23T12:21:32.377818"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-24T09:08:41.293974",
+    "details": {
+      "paintings": [
+        {
+          "title": "Paradise Paradise",
+          "artist": "Corneille",
+          "year": "1999",
+          "url": "https://uploads2.wikiart.org/images/corneille/paradise-paradise-1999.jpg"
+        },
+        {
+          "title": "Windy Day",
+          "artist": "Mikhail Lebedev",
+          "year": "Unknown Year",
+          "url": "https://uploads4.wikiart.org/images/mikhail-lebedev/windy-day.jpg"
+        },
+        {
+          "title": "At The Well",
+          "artist": "Martiros Saryan",
+          "year": "1908",
+          "url": "https://uploads2.wikiart.org/images/martiros-saryan/at-the-well-1908.jpg"
+        }
+      ],
+      "narrative_style": "time_traveller",
+      "user_name": "GG Band",
+      "timestamp": "2025-06-24T09:08:41.293959"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-24T11:54:00.106322",
+    "details": {
+      "paintings": [
+        {
+          "title": "Ajaccio I",
+          "artist": "Richard Mortensen",
+          "year": "1959",
+          "url": "https://uploads2.wikiart.org/images/richard-mortensen/ajaccio-i-1959.jpg"
+        },
+        {
+          "title": "Susanna And The Elders",
+          "artist": "Artemisia Gentileschi",
+          "year": "1610",
+          "url": "https://uploads1.wikiart.org/images/artemisia-gentileschi/susanna-and-the-elders-1610.jpg"
+        },
+        {
+          "title": "Hagar In The Wilderness",
+          "artist": "Camille Corot",
+          "year": "Unknown Year",
+          "url": "https://uploads7.wikiart.org/images/camille-corot/hagar-in-the-wilderness.jpg"
+        }
+      ],
+      "narrative_style": "time_traveller",
+      "user_name": "WYF",
+      "timestamp": "2025-06-24T11:54:00.106307"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-24T11:57:34.757962",
+    "details": {
+      "paintings": [
+        {
+          "title": "White Center",
+          "artist": "Mark Rothko",
+          "year": "Unknown Year",
+          "url": "https://uploads3.wikiart.org/images/mark-rothko/white-center.jpg"
+        },
+        {
+          "title": "Venetian Glow",
+          "artist": "Peter Busa",
+          "year": "1959",
+          "url": "https://uploads8.wikiart.org/images/peter-busa/venetian-glow-1959.jpg"
+        },
+        {
+          "title": "Paumgartner Altar",
+          "artist": "Albrecht Durer",
+          "year": "Unknown Year",
+          "url": "https://uploads2.wikiart.org/images/albrecht-durer/paumgartner-altar.jpg"
+        }
+      ],
+      "narrative_style": "time_traveller",
+      "user_name": "WYF",
+      "timestamp": "2025-06-24T11:57:34.757950"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-24T12:06:13.209379",
+    "details": {
+      "paintings": [
+        {
+          "title": "Hagar In The Wilderness",
+          "artist": "Camille Corot",
+          "year": "Unknown Year",
+          "url": "https://uploads7.wikiart.org/images/camille-corot/hagar-in-the-wilderness.jpg"
+        },
+        {
+          "title": "Nana Female Nude",
+          "artist": "Lovis Corinth",
+          "year": "1911",
+          "url": "https://uploads5.wikiart.org/images/lovis-corinth/nana-female-nude-1911.jpg"
+        },
+        {
+          "title": "Aeneas And Achates On The Libyan Coast",
+          "artist": "Dosso Dossi",
+          "year": "1520",
+          "url": "https://uploads7.wikiart.org/images/dosso-dossi/aeneas-and-achates-on-the-libyan-coast-1520.jpg"
+        }
+      ],
+      "narrative_style": "detective",
+      "user_name": "sushi",
+      "timestamp": "2025-06-24T12:06:13.209361"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-24T12:10:22.618802",
+    "details": {
+      "paintings": [
+        {
+          "title": "Coronation Of Philippe Auguste",
+          "artist": "Jean Fouquet",
+          "year": "1460",
+          "url": "https://uploads0.wikiart.org/images/jean-fouquet/coronation-of-philippe-auguste-1460.jpg"
+        },
+        {
+          "title": "The Nap",
+          "artist": "Gustave Caillebotte",
+          "year": "Unknown Year",
+          "url": "https://uploads6.wikiart.org/images/gustave-caillebotte/the-nap.jpg"
+        },
+        {
+          "title": "Falk Portret Van Elizabeth Sergejevna Potehinoj",
+          "artist": "Robert Falk",
+          "year": "1910",
+          "url": "https://uploads0.wikiart.org/00165/images/robert-falk/falk-portret-van-elizabeth-sergejevna-potehinoj-1910.jpg"
+        }
+      ],
+      "narrative_style": "detective",
+      "user_name": "sushi",
+      "timestamp": "2025-06-24T12:10:22.618791"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-24T12:20:29.802035",
+    "details": {
+      "paintings": [
+        {
+          "title": "Blue Balls Viii",
+          "artist": "Sam Francis",
+          "year": "1962",
+          "url": "https://uploads2.wikiart.org/images/sam-francis/blue-balls-viii-1962.jpg"
+        },
+        {
+          "title": "View Of Albano Near Rome",
+          "artist": "Mikhail Lebedev",
+          "year": "Unknown Year",
+          "url": "https://uploads1.wikiart.org/images/mikhail-lebedev/view-of-albano-near-rome.jpg"
+        },
+        {
+          "title": "Albano White Wall",
+          "artist": "Mikhail Lebedev",
+          "year": "1837",
+          "url": "https://uploads8.wikiart.org/images/mikhail-lebedev/albano-white-wall-1837.jpg"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "ljy",
+      "timestamp": "2025-06-24T12:20:29.802022"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-24T12:31:24.822579",
+    "details": {
+      "paintings": [
+        {
+          "title": "Untitled",
+          "artist": "Kazuo Shiraga",
+          "year": "1979",
+          "url": "https://uploads6.wikiart.org/images/kazuo-shiraga/untitled-1979.jpg"
+        },
+        {
+          "title": "Coronation Of Philippe Auguste",
+          "artist": "Jean Fouquet",
+          "year": "1460",
+          "url": "https://uploads0.wikiart.org/images/jean-fouquet/coronation-of-philippe-auguste-1460.jpg"
+        },
+        {
+          "title": "Crackhead",
+          "artist": "Rainer Fetting",
+          "year": "1986",
+          "url": "https://uploads8.wikiart.org/images/rainer-fetting/crackhead-1986.jpg"
+        }
+      ],
+      "narrative_style": "time_traveller",
+      "user_name": "yu",
+      "timestamp": "2025-06-24T12:31:24.822566"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-30T12:34:50.541537",
+    "details": {
+      "paintings": [
+        {
+          "title": "Back To Fishing Boats In Belle Isle En Mer",
+          "artist": "Maxime Maufra",
+          "year": "1910",
+          "url": "https://uploads4.wikiart.org/images/maxime-maufra/back-to-fishing-boats-in-belle-isle-en-mer-1910.jpg"
+        },
+        {
+          "title": "The Ship Isabella At Sea",
+          "artist": "John Wilson Carmichael",
+          "year": "1820",
+          "url": "https://uploads4.wikiart.org/images/john-wilson-carmichael/the-ship-isabella-at-sea-1820.jpg"
+        },
+        {
+          "title": "Eyes On The Table",
+          "artist": "Remedios Varo",
+          "year": "1938",
+          "url": "https://uploads6.wikiart.org/images/remedios-varo/eyes-on-the-table-1938.jpg"
+        }
+      ],
+      "narrative_style": "detective",
+      "user_name": "Haowei",
+      "timestamp": "2025-06-30T12:34:50.541519"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-30T12:42:13.534001",
+    "details": {
+      "paintings": [
+        {
+          "title": "Room",
+          "artist": "Olga Rozanova",
+          "year": "Unknown Year",
+          "url": "https://uploads6.wikiart.org/images/olga-rozanova/room.jpg"
+        },
+        {
+          "title": "The Card Players",
+          "artist": "Paul Cezanne",
+          "year": "1892",
+          "url": "https://uploads4.wikiart.org/images/paul-cezanne/the-card-players-1892.jpg"
+        },
+        {
+          "title": "Boy And Dog In A Johnnypump",
+          "artist": "Jean Michel Basquiat",
+          "year": "Unknown Year",
+          "url": "https://uploads0.wikiart.org/images/jean-michel-basquiat/boy-and-dog-in-a-johnnypump.jpg"
+        }
+      ],
+      "narrative_style": "time_traveller",
+      "user_name": "Yiwen",
+      "timestamp": "2025-06-30T12:42:13.533992"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-06-30T13:28:57.435212",
+    "details": {
+      "paintings": [
+        {
+          "title": "God S Country",
+          "artist": "Eyvind Earle",
+          "year": "1995",
+          "url": "https://uploads1.wikiart.org/images/eyvind-earle/god-s-country-1995.jpg"
+        },
+        {
+          "title": "Head Of A Tramp",
+          "artist": "Laszlo Mednyanszky",
+          "year": "1896",
+          "url": "https://uploads0.wikiart.org/images/laszlo-mednyanszky/head-of-a-tramp-1896.jpg"
+        },
+        {
+          "title": "1991 8",
+          "artist": "Oleg Holosiy",
+          "year": "Unknown Year",
+          "url": "https://uploads8.wikiart.org/00157/images/oleg-holosiy/1991-8.jpg"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "yy",
+      "timestamp": "2025-06-30T13:28:57.435195"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-07-02T21:56:58.485001",
+    "details": {
+      "paintings": [
+        {
+          "title": "Untitled",
+          "artist": "Afro",
+          "year": "1962",
+          "url": "https://uploads6.wikiart.org/images/afro/untitled-1962.jpg"
+        },
+        {
+          "title": "Lakeshore Grove",
+          "artist": "Stefan Luchian",
+          "year": "1898",
+          "url": "https://uploads5.wikiart.org/images/stefan-luchian/lakeshore-grove-1898.jpg"
+        },
+        {
+          "title": "The Lovers",
+          "artist": "Corneille",
+          "year": "1974",
+          "url": "https://uploads4.wikiart.org/images/corneille/the-lovers-1974.jpg"
+        }
+      ],
+      "narrative_style": "detective",
+      "user_name": "GG Band",
+      "timestamp": "2025-07-02T21:56:58.484990"
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-07-04T13:42:17.651335",
+    "details": {
+      "paintings": [
+        {
+          "title": "The Swan No 17 1915(1)",
+          "artist": "Hilma Af Klint"
+        },
+        {
+          "title": "Ceanothus",
+          "artist": "Peter Alexander"
+        },
+        {
+          "title": "Caja Con Piano Y Toro",
+          "artist": "Oscar Dominguez"
+        }
+      ],
+      "narrative_style": "detective",
+      "user_name": "Test User",
+      "timestamp": "2025-07-04T13:42:17.651321",
+      "with_images": true
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-07-04T13:54:10.999632",
+    "details": {
+      "paintings": [
+        {
+          "title": "Che Guevara",
+          "artist": "Andy Warhol"
+        },
+        {
+          "title": "725 78 Farbraum Geist Und Materie",
+          "artist": "Rupprecht Geiger"
+        },
+        {
+          "title": "James Bond Meets Pussy Galore",
+          "artist": "Nicholas Krushenick"
+        }
+      ],
+      "narrative_style": "poet",
+      "user_name": "GG Band",
+      "timestamp": "2025-07-04T13:54:10.999624",
+      "with_images": true
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-07-04T15:41:27.886934",
+    "details": {
+      "paintings": [
+        {
+          "title": "Crying Girl 1964(1)",
+          "artist": "Roy Lichtenstein"
+        },
+        {
+          "title": "Nude With Book",
+          "artist": "Iosif Iser"
+        },
+        {
+          "title": "Yellow Painting",
+          "artist": "Peter Joseph"
+        }
+      ],
+      "narrative_style": "time_traveller",
+      "user_name": "chichi",
+      "timestamp": "2025-07-04T15:41:27.886926",
+      "with_images": true
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-07-13T12:18:17.791336",
+    "details": {
+      "paintings": [
+        {
+          "title": "Last Supper",
+          "artist": "Nikolai Ge"
+        },
+        {
+          "title": "Apyu",
+          "artist": "Paul Feeley"
+        },
+        {
+          "title": "Medusa 1597 1",
+          "artist": "Caravaggio"
+        }
+      ],
+      "narrative_style": "critic",
+      "user_name": "kevin",
+      "timestamp": "2025-07-13T12:18:17.791327",
+      "with_images": true
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-07-13T18:46:18.130758",
+    "details": {
+      "paintings": [
+        {
+          "title": "Edison Mazda",
+          "artist": "Stuart Davis"
+        },
+        {
+          "title": "Back Bay In Bombay From The India Mother Suite Of 7 Aquatints",
+          "artist": "Patrick Procktor"
+        },
+        {
+          "title": "Untitled Blue Monochrome",
+          "artist": "Yves Klein"
+        }
+      ],
+      "narrative_style": "detective",
+      "user_name": "kevin",
+      "timestamp": "2025-07-13T18:46:18.130750",
+      "with_images": true
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-07-13T20:52:53.046221",
+    "details": {
+      "paintings": [
+        {
+          "title": "Untitled 34 8",
+          "artist": "Balcomb Greene"
+        },
+        {
+          "title": "1950 K No 1",
+          "artist": "Clyfford Still"
+        },
+        {
+          "title": "Sombra Projectada De Christa Maar",
+          "artist": "Lourdes Castro"
+        }
+      ],
+      "narrative_style": "historian",
+      "user_name": "kevin",
+      "timestamp": "2025-07-13T20:52:53.046211",
+      "with_images": true
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-07-13T20:56:36.492527",
+    "details": {
+      "paintings": [
+        {
+          "title": "Dancer",
+          "artist": "Joan Miro"
+        },
+        {
+          "title": "Zebra Ii",
+          "artist": "Dieter Asmus"
+        },
+        {
+          "title": "Untitled 1984 1",
+          "artist": "Sam Francis"
+        }
+      ],
+      "narrative_style": "critic",
+      "user_name": "kevin",
+      "timestamp": "2025-07-13T20:56:36.492517",
+      "with_images": true
+    }
+  },
+  {
+    "operation": "generate_story",
+    "timestamp": "2025-07-13T21:04:36.410717",
+    "details": {
+      "paintings": [
+        {
+          "title": "Edison Mazda",
+          "artist": "Stuart Davis"
+        },
+        {
+          "title": "Toward Disappearance Iii",
+          "artist": "Sam Francis"
+        },
+        {
+          "title": "Sombra Projectada De Christa Maar",
+          "artist": "Lourdes Castro"
+        }
+      ],
+      "narrative_style": "detective",
+      "user_name": "kevin",
+      "emotion": "fear",
+      "emotion_probability": 35.6,
+      "timestamp": "2025-07-13T21:04:36.410706",
+      "with_images": true
+    }
+  }
+]

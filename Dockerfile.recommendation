@@ -1,0 +1,197 @@
+# Recommendation Service - Python 3.13 Container
+FROM python:3.13-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies for image processing
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libjpeg-dev \
+    libpng-dev \
+    libfreetype6-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create requirements.txt for recommendation service
+RUN echo 'pandas>=2.0.0\n\
+numpy>=1.24.0\n\
+scikit-learn>=1.3.0\n\
+Pillow>=10.0.0\n\
+joblib>=1.3.0\n\
+requests>=2.31.0' > requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the recommendation script and data
+COPY Recommandations/top10_recommandations.py ./
+COPY Recommandations/*.csv ./
+COPY emotions_generation/ ./emotions_generation/
+RUN mkdir -p ./uploads
+
+# Create a modified version of the recommendation script that calls the emotion API
+COPY <<'EOF' /app/recommendation_service.py
+#!/usr/bin/env python3
+import os
+import sys
+import requests
+import json
+import pandas as pd
+
+# Fix the paths for containerized environment
+import top10_recommandations as rec_script
+
+# Override the data paths
+rec_script.ORIGINAL_DATA_PATH = "/app/interpretable_color_features_cleaned.csv"
+rec_script.RESAMPLED_DATA_PATH = "/app/resampled_emotions_data.csv"
+
+# Override the emotion prediction function to call the API
+def predict_emotion_via_api(color_features):
+    """Predict emotion by calling the containerized emotion API"""
+    try:
+        # Convert color features to the format expected by the API
+        if hasattr(color_features, "to_dict"):
+            features_dict = color_features.to_dict()
+        elif hasattr(color_features, "iloc"):
+            features_dict = color_features.iloc[0].to_dict()
+        else:
+            features_dict = color_features
+        
+        # Handle the case where features_dict might contain nested dictionaries
+        if isinstance(features_dict, dict):
+            # If it's a dictionary of dictionaries (from pandas DataFrame.to_dict())
+            if any(isinstance(v, dict) for v in features_dict.values()):
+                # Extract the first row if it's a dict of dicts
+                first_key = list(features_dict.keys())[0]
+                if isinstance(features_dict[first_key], dict):
+                    row_key = list(features_dict[first_key].keys())[0]
+                    features_dict = {k: v[row_key] for k, v in features_dict.items()}
+        
+        # Extract only the 12 basic colors for the API
+        color_data = {
+            "black": float(features_dict.get("black", 0.0)),
+            "blue": float(features_dict.get("blue", 0.0)),
+            "brown": float(features_dict.get("brown", 0.0)),
+            "green": float(features_dict.get("green", 0.0)),
+            "grey": float(features_dict.get("grey", 0.0)),
+            "orange": float(features_dict.get("orange", 0.0)),
+            "pink": float(features_dict.get("pink", 0.0)),
+            "purple": float(features_dict.get("purple", 0.0)),
+            "red": float(features_dict.get("red", 0.0)),
+            "turquoise": float(features_dict.get("turquoise", 0.0)),
+            "white": float(features_dict.get("white", 0.0)),
+            "yellow": float(features_dict.get("yellow", 0.0))
+        }
+        
+        # Prepare request payload
+        payload = {
+            "colors": color_data
+        }
+        
+        # Call the emotion API
+        response = requests.post(
+            "http://emotion-api:8000/predict",
+            json=payload,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            prediction = result.get("predictions", {})
+            
+            # Find the dominant emotion
+            if prediction:
+                dominant_emotion = max(prediction.items(), key=lambda x: x[1])
+                return {
+                    "emotion": dominant_emotion[0],
+                    "confidence": dominant_emotion[1],
+                    "all_probabilities": prediction
+                }
+            else:
+                return rec_script.simple_emotion_prediction(features_dict)
+        else:
+            print("API call failed with status", response.status_code)
+            return rec_script.simple_emotion_prediction(features_dict)
+            
+    except Exception as e:
+        print("Error calling emotion API:", e)
+        return rec_script.simple_emotion_prediction(features_dict)
+
+# Replace the original predict_emotion function
+rec_script.predict_emotion = predict_emotion_via_api
+
+# Run the main script
+if __name__ == "__main__":
+    # Get image path from command line argument if provided
+    import sys
+    if len(sys.argv) > 1:
+        image_path = sys.argv[1]
+        print(f"Using image path from argument: {image_path}")
+        rec_script.IMAGE_PATH = image_path
+    else:
+        # Default to the uploads directory
+        rec_script.IMAGE_PATH = "/app/uploads/1.png"
+    
+    # Load data and run recommendations
+    print("Loading original data from", rec_script.ORIGINAL_DATA_PATH)
+    original_data = pd.read_csv(rec_script.ORIGINAL_DATA_PATH)
+    
+    print("Loading resampled data from", rec_script.RESAMPLED_DATA_PATH)
+    resampled_data = pd.read_csv(rec_script.RESAMPLED_DATA_PATH)
+    
+    # Generate user input
+    user_colour_selection = rec_script.generate_user_colour_selection(rec_script.IMAGE_PATH)
+    user_color_features = rec_script.create_color_features_from_selection(user_colour_selection)
+    
+    # Predict emotion using containerized API
+    emotion_prediction = predict_emotion_via_api(pd.DataFrame([user_color_features]))
+    
+    print("\n=== Emotion Prediction ===")
+    print("Predicted emotion:", emotion_prediction["emotion"])
+    print("Confidence: {:.2%}".format(emotion_prediction["confidence"]))
+    
+    # Get recommendations
+    detailed_recommendations = rec_script.get_detailed_recommendations(
+        user_selection=user_colour_selection,
+        original_df=original_data,
+        resampled_df=resampled_data,
+        num_recs=rec_script.NUM_RECOMMENDATIONS
+    )
+    
+    # Display results
+    if detailed_recommendations:
+        print("\n--- Top 10 Recommended Paintings ---")
+        for i, painting in enumerate(detailed_recommendations):
+            print("\n{}. {}".format(i+1, painting["title"]))
+            print("   Artist:", painting["artist"])
+            print("   Year:", painting["year"])
+            print("   URL:", painting["url"])
+        
+        print("\n--- Top 10 Recommended Painting URLs ---")
+        for i, painting in enumerate(detailed_recommendations):
+            print("{}. {}".format(i+1, painting["url"]))
+        
+        print("\n--- DETAILED_RECOMMENDATIONS_JSON ---")
+        print(json.dumps(detailed_recommendations, indent=2))
+        print("--- END_DETAILED_RECOMMENDATIONS_JSON ---")
+        
+        print("\n--- EMOTION_PREDICTION_JSON ---")
+        emotion_output = {
+            "emotion": emotion_prediction["emotion"],
+            "confidence_percentage": "{:.1%}".format(emotion_prediction["confidence"]),
+            "all_probabilities": emotion_prediction["all_probabilities"]
+        }
+        print(json.dumps(emotion_output, indent=2))
+        print("--- END_EMOTION_PREDICTION_JSON ---")
+    else:
+        print("\nCould not generate recommendations with the given data.")
+EOF
+
+RUN chmod +x /app/recommendation_service.py
+
+# Expose port (if needed for future API endpoints)
+EXPOSE 8001
+
+# Default command
+CMD ["python", "/app/recommendation_service.py"] 
