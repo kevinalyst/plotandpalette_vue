@@ -1,0 +1,26 @@
+# Emotion Prediction API Requirements
+# ===================================
+
+# Core ML libraries
+scikit-learn>=1.3.0
+numpy>=1.24.0
+pandas>=2.0.0
+joblib>=1.3.0
+
+# FastAPI and web server
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+
+# Optional: For production deployment
+gunicorn>=21.0.0
+
+# Optional: For testing
+requests>=2.31.0
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# Optional: For monitoring and logging
+python-multipart>=0.0.6
+
+# For health checks in Docker (curl is installed via apt-get) 
