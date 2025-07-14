@@ -1,0 +1,191 @@
+[0;34m🎨 === Plot & Palette One-Click Launcher === 🎨[0m
+Intelligently detecting your environment and launching all services...
+
+[0;36m[INFO][0m Current directory: /Users/kevinlee/Desktop/wikiart painting extracion/plot&palette
+
+[0;34m=== 🔍 Environment Detection ===[0m
+[0;36m[INFO][0m Checking Docker availability...
+[0;32m[SUCCESS][0m Docker is running
+[0;32m[SUCCESS][0m Docker available - will use containerized approach
+
+[0;34m=== 📦 Dependency Check ===[0m
+[0;36m[INFO][0m Searching for Node.js installation...
+[0;36m[INFO][0m NVM found, activating default Node.js version...
+[0;32m[SUCCESS][0m Found Node.js in PATH: /Users/kevinlee/.nvm/versions/node/v24.3.0/bin/node
+Node.js version: v24.3.0
+NPM version: 11.4.2
+[0;36m[INFO][0m Checking main project dependencies...
+[0;32m[SUCCESS][0m Main project dependencies are ready
+[0;36m[INFO][0m Checking Vue project dependencies...
+[0;32m[SUCCESS][0m Vue project dependencies are ready
+
+[0;34m=== 🚀 Service Launch ===[0m
+[0;34m=== Starting Containerized Services ===[0m
+[0;36m[INFO][0m Building containers...
+#1 [internal] load local bake definitions
+#1 reading from stdin 917B done
+#1 DONE 0.0s
+
+#2 [recommendation-service internal] load build definition from Dockerfile.recommendation
+#2 transferring dockerfile: 7.58kB done
+#2 DONE 0.0s
+
+#3 [emotion-api internal] load build definition from Dockerfile
+#3 transferring dockerfile: 1.18kB done
+#3 DONE 0.0s
+
+#4 [recommendation-service internal] load metadata for docker.io/library/python:3.13-slim
+#4 DONE 0.7s
+
+#5 [emotion-api internal] load metadata for docker.io/library/python:3.10-slim
+#5 DONE 0.7s
+
+#6 [emotion-api internal] load .dockerignore
+#6 transferring context: 2B done
+#6 DONE 0.0s
+
+#7 [recommendation-service internal] load .dockerignore
+#7 transferring context: 2B done
+#7 DONE 0.0s
+
+#8 [recommendation-service internal] preparing inline document
+#8 DONE 0.0s
+
+#9 [emotion-api 1/8] FROM docker.io/library/python:3.10-slim@sha256:9dd6774a1276178f94b0cc1fb1f0edd980825d0ea7634847af9940b1b6273c13
+#9 resolve docker.io/library/python:3.10-slim@sha256:9dd6774a1276178f94b0cc1fb1f0edd980825d0ea7634847af9940b1b6273c13 0.0s done
+#9 DONE 0.0s
+
+#10 [recommendation-service  1/11] FROM docker.io/library/python:3.13-slim@sha256:6544e0e002b40ae0f59bc3618b07c1e48064c4faed3a15ae2fbd2e8f663e8283
+#10 resolve docker.io/library/python:3.13-slim@sha256:6544e0e002b40ae0f59bc3618b07c1e48064c4faed3a15ae2fbd2e8f663e8283 0.0s done
+#10 DONE 0.0s
+
+#11 [emotion-api internal] load build context
+#11 transferring context: 206B done
+#11 DONE 0.0s
+
+#12 [emotion-api 3/8] RUN apt-get update && apt-get install -y     gcc     g++     curl     && rm -rf /var/lib/apt/lists/*
+#12 CACHED
+
+#13 [emotion-api 5/8] RUN pip install --no-cache-dir -r requirements.txt
+#13 CACHED
+
+#14 [emotion-api 7/8] COPY emotion_prediction_api.py ./
+#14 CACHED
+
+#15 [emotion-api 6/8] COPY *.pkl ./
+#15 CACHED
+
+#16 [emotion-api 2/8] WORKDIR /app
+#16 CACHED
+
+#17 [emotion-api 4/8] COPY requirements.txt .
+#17 CACHED
+
+#18 [emotion-api 8/8] RUN echo '#!/bin/bash\nmkdir -p Step6.1\ncp final_emotion_model.pkl Step6.1/\ncp final_scaler.pkl Step6.1/\ncp final_feature_info.pkl Step6.1/\npython emotion_prediction_api.py --host 0.0.0.0 --port 8000' > /app/start.sh && chmod +x /app/start.sh
+#18 CACHED
+
+#19 [emotion-api] exporting to image
+#19 exporting layers done
+#19 exporting manifest sha256:a9f21c097585f308f40bac4b3a667468f01d1ff58d3ba4dbe18ffc630c9d4bd5 done
+#19 exporting config sha256:b9b0758c4a6079c29104759c73695ec1ddcd882102e3f5761f6f77b251d554c7 done
+#19 exporting attestation manifest sha256:5e64c4d3ef710fd0b6d542dee13c614d371c59f91f068fed66a5920c1d0ace75 done
+#19 exporting manifest list sha256:a0d105deb4ce9c41f3a20521ab7f00ee58b10fbd996b587213308ec2715f3da7 done
+#19 naming to docker.io/library/plotpalette-emotion-api:latest done
+#19 unpacking to docker.io/library/plotpalette-emotion-api:latest done
+#19 DONE 0.0s
+
+#20 [emotion-api] resolving provenance for metadata file
+#20 DONE 0.0s
+
+#21 [recommendation-service internal] load build context
+#21 transferring context: 783B 0.6s done
+#21 DONE 0.6s
+
+#22 [recommendation-service  7/11] COPY Recommandations/*.csv ./
+#22 CACHED
+
+#23 [recommendation-service  5/11] RUN pip install --no-cache-dir -r requirements.txt
+#23 CACHED
+
+#24 [recommendation-service  9/11] RUN mkdir -p ./uploads
+#24 CACHED
+
+#25 [recommendation-service  4/11] RUN echo 'pandas>=2.0.0\nnumpy>=1.24.0\nscikit-learn>=1.3.0\nPillow>=10.0.0\njoblib>=1.3.0\nrequests>=2.31.0' > requirements.txt
+#25 CACHED
+
+#26 [recommendation-service  8/11] COPY emotions_generation/ ./emotions_generation/
+#26 CACHED
+
+#27 [recommendation-service 10/11] COPY <<EOF /app/recommendation_service.py
+#27 CACHED
+
+#28 [recommendation-service  3/11] RUN apt-get update && apt-get install -y     gcc     g++     libjpeg-dev     libpng-dev     libfreetype6-dev     && rm -rf /var/lib/apt/lists/*
+#28 CACHED
+
+#29 [recommendation-service  2/11] WORKDIR /app
+#29 CACHED
+
+#30 [recommendation-service  6/11] COPY Recommandations/top10_recommandations.py ./
+#30 CACHED
+
+#31 [recommendation-service 11/11] RUN chmod +x /app/recommendation_service.py
+#31 CACHED
+
+#32 [recommendation-service] exporting to image
+#32 exporting layers 0.0s done
+#32 exporting manifest sha256:1960c4e4a228d367488013136d3ae6d3c95bff0349bcd01f49a6930324f9d322 done
+#32 exporting config sha256:8f3cd049efbbe12dc78fba507e8f4010255a267737895efa773ed34a0b415f98 done
+#32 exporting attestation manifest sha256:737cac74fc7f49519d235a854df3c7d1c14e15aef6c37dafca3c74871b8d7ecf done
+#32 exporting manifest list sha256:9992cf3d8c948c0853ae3d9006470eb61cfb00fc404c407bfa38d1be10a77bd8 done
+#32 naming to docker.io/library/plotpalette-recommendation-service:latest done
+#32 unpacking to docker.io/library/plotpalette-recommendation-service:latest done
+#32 DONE 0.1s
+
+#33 [recommendation-service] resolving provenance for metadata file
+#33 DONE 0.0s
+ recommendation-service  Built
+ emotion-api  Built
+[0;36m[INFO][0m Starting services...
+ Network plotpalette_palette-network  Creating
+ Network plotpalette_palette-network  Created
+ Container emotion-api  Creating
+ Container emotion-api  Created
+ Container recommendation-service  Creating
+ Container recommendation-service  Created
+ Container emotion-api  Starting
+ Container emotion-api  Started
+ Container emotion-api  Waiting
+ Container emotion-api  Healthy
+ Container recommendation-service  Starting
+ Container recommendation-service  Started
+[0;36m[INFO][0m Waiting for services to be ready...
+[0;36m[INFO][0m Checking emotion API health...
+[0;32m[SUCCESS][0m Emotion API is healthy
+[0;36m[INFO][0m Starting main server...
+[0;32m[SUCCESS][0m Main server started (PID: 17257)
+[0;36m[INFO][0m Starting Vue project...
+[0;32m[SUCCESS][0m Vue project started (PID: 17494)
+
+[0;34m=== 🎉 Launch Complete! ===[0m
+🐳 Running in containerized mode
+
+📊 Services:
+  🎨 Vue Frontend: http://localhost:8080
+  🌐 Main Server: http://localhost:3000
+  🧠 Emotion API: http://localhost:8000
+  📖 API Documentation: http://localhost:8000/docs
+  ❤️  Health Check: http://localhost:8000/health
+
+🚀 Primary Interface: http://localhost:8080 (Vue.js App)
+
+🛑 To stop services:
+  docker-compose down
+  Press Ctrl+C to stop all servers
+
+📋 Logs:
+  docker-compose logs -f
+
+💡 Pro Tip: Use the Vue.js interface at http://localhost:8080 for the best experience!
+[0;36m[INFO][0m Press Ctrl+C to stop all services
+./one-click-start.sh: line 662: 17257 Killed: 9               $NODE_PATH server.js > server.log 2>&1
+./one-click-start.sh: line 662: 17494 Killed: 9               $NPM_PATH run dev > ../vue-project.log 2>&1  (wd: ~/Desktop/wikiart painting extracion/plot&palette/vue-project)

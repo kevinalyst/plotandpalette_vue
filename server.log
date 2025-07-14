@@ -1,0 +1,33 @@
+🚀 Gradient Palette Server running on http://localhost:3000
+📁 Uploads directory: /Users/kevinlee/Desktop/wikiart painting extracion/plot&palette/uploads
+🎨 Ready to create beautiful palettes!
+Palette saved: palette-1752491710719-fa976b71-122d-4c38-a5b7-1efe8824ec9a.png
+Colours: 
+Getting recommendations for: palette-1752491710719-fa976b71-122d-4c38-a5b7-1efe8824ec9a.png
+Running Python recommendation script...
+Using embedded Python script for recommendations
+Running embedded recommendation script: python3 [
+  '/Users/kevinlee/Desktop/wikiart painting extracion/plot&palette/recommendation_service_embedded.py',
+  '/Users/kevinlee/Desktop/wikiart painting extracion/plot&palette/uploads/palette-1752491710719-fa976b71-122d-4c38-a5b7-1efe8824ec9a.png'
+]
+Embedded recommendation script error: 
+Error getting recommendations: Error: Embedded recommendation script failed with code 1: 
+    at ChildProcess.<anonymous> (/Users/kevinlee/Desktop/wikiart painting extracion/plot&palette/server.js:554:24)
+    at ChildProcess.emit (node:events:507:28)
+    at maybeClose (node:internal/child_process:1101:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:305:5)
+Palette saved: palette-1752491806898-94e7fe9f-6dd7-4cd3-84cf-7fcdd4a0493b.png
+Colours: 
+Getting recommendations for: palette-1752491806898-94e7fe9f-6dd7-4cd3-84cf-7fcdd4a0493b.png
+Running Python recommendation script...
+Using embedded Python script for recommendations
+Running embedded recommendation script: python3 [
+  '/Users/kevinlee/Desktop/wikiart painting extracion/plot&palette/recommendation_service_embedded.py',
+  '/Users/kevinlee/Desktop/wikiart painting extracion/plot&palette/uploads/palette-1752491806898-94e7fe9f-6dd7-4cd3-84cf-7fcdd4a0493b.png'
+]
+Embedded recommendation script error: 
+Error getting recommendations: Error: Embedded recommendation script failed with code 1: 
+    at ChildProcess.<anonymous> (/Users/kevinlee/Desktop/wikiart painting extracion/plot&palette/server.js:554:24)
+    at ChildProcess.emit (node:events:507:28)
+    at maybeClose (node:internal/child_process:1101:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:305:5)

@@ -1,0 +1,28 @@
+
+> plot-palette-vue@1.0.0 dev
+> vite
+
+
+  VITE v4.5.14  ready in 291 ms
+
+  ➜  Local:   http://localhost:8080/
+  ➜  Network: http://10.56.199.218:8080/
+Failed to resolve import "image/logo.png" from "src/App.vue". Does the file exist?
+12:14:10 PM [vite] Internal server error: Failed to resolve import "image/logo.png" from "src/App.vue". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/kevinlee/Desktop/wikiart painting extracion/plot&palette/vue-project/src/App.vue:6:33
+  408|  
+  409|  import { createCommentVNode as _createCommentVNode, createElementVNode as _createElementVNode, normalizeStyle as _normalizeStyle, createTextVNode as _createTextVNode, normalizeClass as _normalizeClass, toDisplayString as _toDisplayString, resolveComponent as _resolveComponent, openBlock as _openBlock, createBlock as _createBlock, createElementBlock as _createElementBlock } from "vue"
+  410|  import _imports_0 from 'image/logo.png'
+     |                          ^
+  411|  import _imports_1 from 'image/colourbar.png'
+  412|  import _imports_2 from 'image/paintings.png'
+      at formatError (file:///Users/kevinlee/Desktop/wikiart%20painting%20extracion/plot&palette/vue-project/node_modules/vite/dist/node/chunks/dep-827b23df.js:44066:46)
+      at TransformContext.error (file:///Users/kevinlee/Desktop/wikiart%20painting%20extracion/plot&palette/vue-project/node_modules/vite/dist/node/chunks/dep-827b23df.js:44062:19)
+      at normalizeUrl (file:///Users/kevinlee/Desktop/wikiart%20painting%20extracion/plot&palette/vue-project/node_modules/vite/dist/node/chunks/dep-827b23df.js:41845:33)
+      at async file:///Users/kevinlee/Desktop/wikiart%20painting%20extracion/plot&palette/vue-project/node_modules/vite/dist/node/chunks/dep-827b23df.js:41999:47
+      at async Promise.all (index 7)
+      at async TransformContext.transform (file:///Users/kevinlee/Desktop/wikiart%20painting%20extracion/plot&palette/vue-project/node_modules/vite/dist/node/chunks/dep-827b23df.js:41915:13)
+      at async Object.transform (file:///Users/kevinlee/Desktop/wikiart%20painting%20extracion/plot&palette/vue-project/node_modules/vite/dist/node/chunks/dep-827b23df.js:44356:30)
+      at async loadAndTransform (file:///Users/kevinlee/Desktop/wikiart%20painting%20extracion/plot&palette/vue-project/node_modules/vite/dist/node/chunks/dep-827b23df.js:55088:29)
+      at async viteTransformMiddleware (file:///Users/kevinlee/Desktop/wikiart%20painting%20extracion/plot&palette/vue-project/node_modules/vite/dist/node/chunks/dep-827b23df.js:64699:32)
