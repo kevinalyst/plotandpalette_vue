@@ -32,6 +32,10 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
+# Now you can securely access your variables using os.getenv()
+db_password = os.getenv('DATABASE_PASSWORD')
+gcp_credentials_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+
 # Import database after app creation
 try:
     from database import db
