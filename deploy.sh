@@ -128,22 +128,25 @@ setup_python_env() {
     
     cd $PROJECT_DIR
     
-    # Create virtual environment
-    python3 -m venv venv
-    source venv/bin/activate
+    # Remove existing virtual environment if it exists
+    rm -rf venv
     
-    # Upgrade pip
-    pip install --upgrade pip
+    # Create virtual environment as www-data user to avoid path issues
+    sudo -u $USER python3 -m venv venv
+    
+    # Install requirements as www-data user
+    sudo -u $USER venv/bin/pip install --upgrade pip
     
     # Install production requirements
     if [ -f "requirements-prod.txt" ]; then
-        pip install -r requirements-prod.txt
+        sudo -u $USER venv/bin/pip install -r requirements-prod.txt
     else
         print_warning "requirements-prod.txt not found, installing basic requirements"
-        pip install flask gunicorn mysql-connector-python
+        sudo -u $USER venv/bin/pip install flask gunicorn mysql-connector-python
     fi
     
-    deactivate
+    # Ensure correct ownership
+    chown -R $USER:$GROUP venv
     
     print_success "Python environment configured"
 }
@@ -338,6 +341,8 @@ deploy() {
     if [ "$(pwd)" != "$PROJECT_DIR" ]; then
         print_status "Copying project files..."
         cp -r . $PROJECT_DIR/
+        # Remove any existing virtual environment from copied files
+        rm -rf $PROJECT_DIR/venv
         chown -R $USER:$GROUP $PROJECT_DIR
     fi
     
