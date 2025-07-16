@@ -51,7 +51,6 @@ install_system_deps() {
     apt update
     apt install -y \
         nginx \
-        mysql-server \
         python3 \
         python3-pip \
         python3-venv \
@@ -68,24 +67,37 @@ install_system_deps() {
     print_success "System dependencies installed"
 }
 
-# Setup MySQL database
-setup_mysql() {
-    print_status "Setting up MySQL database..."
+# Test external database connection
+test_database_connection() {
+    print_status "Testing external database connection..."
     
-    # Start MySQL service
-    systemctl start mysql
-    systemctl enable mysql
+    cd $PROJECT_DIR
+    source venv/bin/activate
     
-    # Create database and user
-    mysql -u root -p <<EOF
-CREATE DATABASE IF NOT EXISTS plot_palette CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS 'plot_palette_user'@'localhost' IDENTIFIED BY 'your_secure_password_here';
-GRANT ALL PRIVILEGES ON plot_palette.* TO 'plot_palette_user'@'localhost';
-FLUSH PRIVILEGES;
-EOF
+    # Set environment variables
+    export DB_HOST="34.142.53.204"
+    export DB_USER="root"
+    export DB_PASSWORD="Lihanwen1997"
+    export DB_NAME="plotpalette-mydb"
+    export DB_PORT="3306"
     
-    print_success "MySQL database configured"
-    print_warning "Remember to change the default password in production!"
+    # Test database connection
+    python3 -c "
+from database import db
+try:
+    if db.health_check():
+        print('Database connection successful')
+    else:
+        print('Database connection failed')
+        exit(1)
+except Exception as e:
+    print(f'Error connecting to database: {e}')
+    exit(1)
+"
+    
+    deactivate
+    
+    print_success "External database connection verified"
 }
 
 # Create project directories
@@ -190,10 +202,10 @@ init_database() {
     source venv/bin/activate
     
     # Set environment variables
-    export DB_HOST="localhost"
-    export DB_USER="plot_palette_user"
-    export DB_PASSWORD="your_secure_password_here"
-    export DB_NAME="plot_palette"
+    export DB_HOST="34.142.53.204"
+    export DB_USER="root"
+    export DB_PASSWORD="Lihanwen1997"
+    export DB_NAME="plotpalette-mydb"
     
     # Initialize database
     python3 -c "
@@ -219,8 +231,7 @@ create_systemd_services() {
     cat > /etc/systemd/system/$PROJECT_NAME.service <<EOF
 [Unit]
 Description=Plot & Palette Web Application
-After=network.target mysql.service
-Wants=mysql.service
+After=network.target
 
 [Service]
 Type=forking
@@ -270,11 +281,11 @@ create_env_file() {
 FLASK_ENV=production
 FLASK_DEBUG=False
 
-# Database Configuration
-DB_HOST=localhost
-DB_USER=plot_palette_user
-DB_PASSWORD=your_secure_password_here
-DB_NAME=plot_palette
+# External Database Configuration
+DB_HOST=34.142.53.204
+DB_USER=root
+DB_PASSWORD=Lihanwen1997
+DB_NAME=plotpalette-mydb
 DB_PORT=3306
 
 # Security
@@ -333,7 +344,7 @@ deploy() {
     
     setup_python_env
     create_env_file
-    setup_mysql
+    test_database_connection
     init_database
     configure_nginx
     configure_supervisor

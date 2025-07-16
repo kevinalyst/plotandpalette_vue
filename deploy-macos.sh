@@ -47,7 +47,7 @@ install_system_deps() {
     print_status "Installing system dependencies with Homebrew..."
     
     # Check if packages are already installed
-    packages=("nginx" "mysql" "python@3.11")
+    packages=("nginx" "python@3.11")
     
     for package in "${packages[@]}"; do
         if brew list "$package" &> /dev/null; then
@@ -61,25 +61,36 @@ install_system_deps() {
     print_success "System dependencies installed"
 }
 
-# Setup MySQL database
-setup_mysql() {
-    print_status "Setting up MySQL database..."
+# Test external database connection
+test_database_connection() {
+    print_status "Testing external database connection..."
     
-    # Start MySQL service
-    brew services start mysql
+    source venv/bin/activate
     
-    print_status "Creating database and user..."
-    print_warning "You may be prompted for MySQL root password"
+    # Set environment variables
+    export DB_HOST="34.142.53.204"
+    export DB_USER="root"
+    export DB_PASSWORD="Lihanwen1997"
+    export DB_NAME="plotpalette-mydb"
+    export DB_PORT="3306"
     
-    # Create database and user
-    mysql -u root -p <<EOF
-CREATE DATABASE IF NOT EXISTS plot_palette CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS 'plot_palette_user'@'localhost' IDENTIFIED BY 'dev_password_123';
-GRANT ALL PRIVILEGES ON plot_palette.* TO 'plot_palette_user'@'localhost';
-FLUSH PRIVILEGES;
-EOF
+    # Test database connection
+    python3 -c "
+from database import db
+try:
+    if db.health_check():
+        print('Database connection successful')
+    else:
+        print('Database connection failed')
+        exit(1)
+except Exception as e:
+    print(f'Error connecting to database: {e}')
+    exit(1)
+"
     
-    print_success "MySQL database configured"
+    deactivate
+    
+    print_success "External database connection verified"
 }
 
 # Create project directories
@@ -208,10 +219,10 @@ init_database() {
     source venv/bin/activate
     
     # Set environment variables
-    export DB_HOST="localhost"
-    export DB_USER="plot_palette_user"
-    export DB_PASSWORD="dev_password_123"
-    export DB_NAME="plot_palette"
+    export DB_HOST="34.142.53.204"
+    export DB_USER="root"
+    export DB_PASSWORD="Lihanwen1997"
+    export DB_NAME="plotpalette-mydb"
     
     # Initialize database
     python3 -c "
@@ -238,11 +249,11 @@ create_env_file() {
 FLASK_ENV=development
 FLASK_DEBUG=True
 
-# Database Configuration
-DB_HOST=localhost
-DB_USER=plot_palette_user
-DB_PASSWORD=dev_password_123
-DB_NAME=plot_palette
+# External Database Configuration
+DB_HOST=34.142.53.204
+DB_USER=root
+DB_PASSWORD=Lihanwen1997
+DB_NAME=plotpalette-mydb
 DB_PORT=3306
 
 # Security
@@ -270,9 +281,6 @@ create_control_scripts() {
 #!/bin/bash
 cd "$PROJECT_DIR"
 
-# Start MySQL
-brew services start mysql
-
 # Start Nginx
 sudo nginx
 
@@ -284,7 +292,7 @@ gunicorn -c gunicorn.conf.py server:app --daemon
 echo "Services started:"
 echo "- Frontend: http://localhost:8080"
 echo "- Backend: http://localhost:5000"
-echo "- MySQL: localhost:3306"
+echo "- Database: 34.142.53.204:3306"
 EOF
     
     # Stop script
@@ -321,7 +329,7 @@ deploy() {
     create_directories
     setup_python_env
     create_env_file
-    setup_mysql
+    test_database_connection
     init_database
     configure_nginx
     create_control_scripts
@@ -339,9 +347,6 @@ deploy() {
 # Function to start services
 start_services() {
     print_status "Starting services..."
-    
-    # Start MySQL
-    brew services start mysql
     
     # Start Nginx
     sudo nginx
@@ -375,13 +380,6 @@ stop_services() {
 # Function to show status
 show_status() {
     print_status "Service Status:"
-    
-    # Check MySQL
-    if brew services list | grep mysql | grep started > /dev/null; then
-        print_success "MySQL: Running"
-    else
-        print_error "MySQL: Not running"
-    fi
     
     # Check Nginx
     if pgrep nginx > /dev/null; then

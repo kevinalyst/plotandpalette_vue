@@ -13,15 +13,17 @@ logger = logging.getLogger(__name__)
 
 # Database configuration
 DB_CONFIG = {
-    'host': os.environ.get('DB_HOST', 'localhost'),
-    'user': os.environ.get('DB_USER', 'plot_palette_user'),
-    'password': os.environ.get('DB_PASSWORD', 'your_secure_password'),
-    'database': os.environ.get('DB_NAME', 'plot_palette'),
+    'host': os.environ.get('DB_HOST', '34.142.53.204'),
+    'user': os.environ.get('DB_USER', 'root'),
+    'password': os.environ.get('DB_PASSWORD', 'Lihanwen1997'),
+    'database': os.environ.get('DB_NAME', 'plotpalette-mydb'),
     'port': int(os.environ.get('DB_PORT', 3306)),
     'charset': 'utf8mb4',
     'collation': 'utf8mb4_unicode_ci',
     'autocommit': True,
-    'raise_on_warnings': True
+    'raise_on_warnings': True,
+    'connection_timeout': 10,
+    'sql_mode': 'STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO'
 }
 
 class DatabaseManager:
