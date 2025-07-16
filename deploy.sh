@@ -234,7 +234,7 @@ Description=Plot & Palette Web Application
 After=network.target
 
 [Service]
-Type=forking
+Type=simple
 User=$USER
 Group=$GROUP
 WorkingDirectory=$PROJECT_DIR
@@ -242,7 +242,6 @@ Environment=FLASK_ENV=production
 Environment=PYTHONPATH=$PROJECT_DIR
 ExecStart=$PROJECT_DIR/venv/bin/gunicorn -c $PROJECT_DIR/gunicorn.conf.py server:app
 ExecReload=/bin/kill -s HUP \$MAINPID
-PIDFile=$PID_DIR/gunicorn.pid
 Restart=always
 RestartSec=10
 
