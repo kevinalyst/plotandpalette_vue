@@ -93,7 +93,15 @@ def run_python_script(script_path: str, image_path: str = None) -> Dict[str, Any
     try:
         # Use the embedded Python script
         embedded_script_path = os.path.join(os.getcwd(), 'recommendation_service_embedded.py')
-        args = ['python3', embedded_script_path]
+        
+        # Use virtual environment Python if available, otherwise fall back to system Python
+        venv_python = os.path.join(os.getcwd(), 'venv', 'bin', 'python3')
+        if os.path.exists(venv_python):
+            python_executable = venv_python
+        else:
+            python_executable = 'python3'
+        
+        args = [python_executable, embedded_script_path]
         
         if image_path:
             args.append(image_path)
@@ -261,8 +269,16 @@ def run_python_story_script(script_path: str, input_data: Dict[str, Any]) -> Dic
     """Run Python story generation script"""
     try:
         input_json = json.dumps(input_data)
+        
+        # Use virtual environment Python if available, otherwise fall back to system Python
+        venv_python = os.path.join(os.getcwd(), 'venv', 'bin', 'python3')
+        if os.path.exists(venv_python):
+            python_executable = venv_python
+        else:
+            python_executable = 'python3'
+        
         result = subprocess.run(
-            ['python3', script_path, input_json],
+            [python_executable, script_path, input_json],
             capture_output=True,
             text=True,
             timeout=300  # 5 minute timeout
