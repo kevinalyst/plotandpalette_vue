@@ -348,6 +348,16 @@ def run_python_story_script(script_path: str, input_data: Dict[str, Any]) -> Dic
 
 # Routes
 
+@app.route('/api/health')
+def health_check():
+    """A simple health check endpoint."""
+    return jsonify({'status': 'ok', 'message': 'Backend is healthy'}), 200
+
+@app.route('/api/status')
+def status_check():
+    """A simple status endpoint."""
+    return jsonify({'status': 'running'}), 200
+
 @app.route('/')
 def index():
     """Serve the main index.html file"""

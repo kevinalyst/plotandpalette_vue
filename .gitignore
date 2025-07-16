@@ -88,7 +88,7 @@ node_modules/
 
 # Temporary files
 tmp/
-temp/
+temp/ 
 
 # Server process files
 *.pid

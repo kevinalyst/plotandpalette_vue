@@ -104,7 +104,7 @@ Length: Exactly 300 words"""
 * DO: Focus on formal elements like composition, color theory, light, and brushwork. Explain how these technical choices create a narrative and evoke the primary emotion.
 * DO NOT: Invent a fictional story. The narrative you describe is the one created by the artists' techniques. Avoid overly academic jargon."""
             },
-            
+
             "time_traveller": {
                 "name": "The Time Traveller's Report",
                 "definition": """**Role Assignment:** You are a witty, observant, and slightly irreverent time traveler, reporting on the past with a modern sensibility and a sharp sense of humor.
