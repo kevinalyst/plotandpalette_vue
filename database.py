@@ -53,14 +53,31 @@ class DatabaseManager:
             with self.get_connection() as connection:
                 cursor = connection.cursor()
                 
-                # Create tables
-                self._create_tables(cursor)
-                connection.commit()
+                # Check if tables already exist
+                cursor.execute("SHOW TABLES")
+                existing_tables = [table[0] for table in cursor.fetchall()]
+                
+                required_tables = ['users', 'palettes', 'recommendations', 'user_selections', 'stories', 'analytics']
+                missing_tables = [table for table in required_tables if table not in existing_tables]
+                
+                if missing_tables:
+                    logger.info(f"Creating missing tables: {missing_tables}")
+                    # Create tables
+                    self._create_tables(cursor)
+                    connection.commit()
+                    logger.info("Database tables created successfully")
+                else:
+                    logger.info("All database tables already exist, skipping creation")
+                
                 logger.info("Database initialized successfully")
                 
         except Error as e:
             logger.error(f"Error initializing database: {e}")
-            raise
+            # Don't raise the exception if tables already exist
+            if "already exists" in str(e).lower():
+                logger.info("Tables already exist, continuing...")
+            else:
+                raise
 
     def _create_tables(self, cursor):
         """Create all required database tables"""
