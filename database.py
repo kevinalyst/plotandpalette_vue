@@ -375,6 +375,8 @@ class DatabaseManager:
             with self.get_connection() as connection:
                 cursor = connection.cursor()
                 cursor.execute("SELECT 1")
+                cursor.fetchone()  # Consume the result to avoid "Unread result found" error
+                cursor.close()
                 return True
         except Error as e:
             logger.error(f"Database health check failed: {e}")
