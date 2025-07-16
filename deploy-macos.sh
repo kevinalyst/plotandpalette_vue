@@ -267,7 +267,7 @@ UPLOAD_FOLDER=$PROJECT_DIR/uploads
 MAX_CONTENT_LENGTH=52428800
 EOF
     
-    chmod 600 "$PROJECT_DIR/.env"
+    chmod 640 "$PROJECT_DIR/.env"
     
     print_success "Environment file created"
 }

@@ -299,7 +299,7 @@ UPLOAD_FOLDER=/var/www/plot-palette/uploads
 MAX_CONTENT_LENGTH=52428800
 EOF
     
-    chmod 600 $PROJECT_DIR/.env
+    chmod 640 $PROJECT_DIR/.env
     chown $USER:$GROUP $PROJECT_DIR/.env
     
     print_success "Environment file created"
