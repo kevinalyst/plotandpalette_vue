@@ -99,55 +99,60 @@ def predict_emotion_via_api(color_features):
         scaler = joblib.load(SCALER_PATH)
         feature_info = joblib.load(FEATURE_INFO_PATH)
         
-        # Get the expected feature names from the model
-        feature_names = feature_info.get('feature_names', [])
+        # Get feature structure from the model info
+        color_columns = feature_info.get('color_columns', [])
+        engineered_columns = [col for col in feature_info.get('final_features', []) 
+                             if col not in color_columns]
+        emotion_columns = feature_info.get('emotion_columns', [])
         
-        # Extract only the 12 basic colors for the model
-        color_data = {
-            "black": float(features_dict.get("black", 0.0)),
-            "blue": float(features_dict.get("blue", 0.0)),
-            "brown": float(features_dict.get("brown", 0.0)),
-            "green": float(features_dict.get("green", 0.0)),
-            "grey": float(features_dict.get("grey", 0.0)),
-            "orange": float(features_dict.get("orange", 0.0)),
-            "pink": float(features_dict.get("pink", 0.0)),
-            "purple": float(features_dict.get("purple", 0.0)),
-            "red": float(features_dict.get("red", 0.0)),
-            "turquoise": float(features_dict.get("turquoise", 0.0)),
-            "white": float(features_dict.get("white", 0.0)),
-            "yellow": float(features_dict.get("yellow", 0.0))
-        }
+        print(f"Model loaded: {len(color_columns)} colors, {len(engineered_columns)} engineered features, {len(emotion_columns)} emotions")
         
         # Prepare feature vector in the expected order
-        feature_vector = []
-        for feature_name in feature_names:
-            if feature_name in color_data:
-                feature_vector.append(color_data[feature_name])
-            else:
-                feature_vector.append(0.0)
+        features = []
+        
+        # Add color features in correct order
+        for color in color_columns:
+            features.append(float(features_dict.get(color, 0.0)))
+        
+        # Add engineered features (using default values since we don't have them)
+        for feature in engineered_columns:
+            features.append(0.0)  # Default value for engineered features
         
         # Convert to numpy array and reshape for prediction
-        feature_array = np.array(feature_vector).reshape(1, -1)
+        X = np.array(features).reshape(1, -1)
         
-        # Scale the features
-        scaled_features = scaler.transform(feature_array)
+        # Scale features
+        X_scaled = scaler.transform(X)
         
-        # Make prediction
-        prediction_proba = model.predict_proba(scaled_features)[0]
-        emotion_classes = model.classes_
+        # Make prediction (multi-output classifier)
+        predictions_proba = model.predict_proba(X_scaled)
         
-        # Create prediction dictionary
-        prediction = {}
-        for i, emotion in enumerate(emotion_classes):
-            prediction[emotion] = float(prediction_proba[i])
+        # Convert to dictionary with all 15 emotions
+        emotion_predictions = {}
+        for i, emotion in enumerate(emotion_columns):
+            # Get prediction array for this emotion
+            pred_array = predictions_proba[i]
+            
+            # Handle binary classification output - get probability of positive class
+            if pred_array.shape[1] > 1:
+                # Binary classification - get positive class probability (index 1)
+                emotion_predictions[emotion] = float(pred_array[0, 1])
+            else:
+                # Single value - get the only probability
+                emotion_predictions[emotion] = float(pred_array[0, 0])
         
-        # Find the dominant emotion
-        if prediction:
-            dominant_emotion = max(prediction.items(), key=lambda x: x[1])
+        # Find dominant emotion
+        if emotion_predictions:
+            dominant_emotion = max(emotion_predictions.items(), key=lambda x: x[1])
+            
+            # Convert confidence to percentage for display
+            confidence_percentage = f"{dominant_emotion[1] * 100:.1f}%"
+            
             return {
                 "emotion": dominant_emotion[0],
                 "confidence": dominant_emotion[1],
-                "all_probabilities": prediction
+                "confidence_percentage": confidence_percentage,
+                "all_probabilities": emotion_predictions
             }
         else:
             return simple_emotion_prediction(features_dict)
