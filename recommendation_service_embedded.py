@@ -107,16 +107,19 @@ def predict_emotion_via_api(color_features):
         
         print(f"Model loaded: {len(color_columns)} colors, {len(engineered_columns)} engineered features, {len(emotion_columns)} emotions")
         
-        # Prepare feature vector in the expected order
+        # Generate full 85 color features from the basic color selection
+        full_color_features = create_color_features_from_selection(features_dict)
+        
+        # Prepare feature vector in the expected order using all 85 features
         features = []
         
         # Add color features in correct order
         for color in color_columns:
-            features.append(float(features_dict.get(color, 0.0)))
+            features.append(float(full_color_features.get(color, 0.0)))
         
-        # Add engineered features (using default values since we don't have them)
+        # Add engineered features using calculated values instead of defaults
         for feature in engineered_columns:
-            features.append(0.0)  # Default value for engineered features
+            features.append(float(full_color_features.get(feature, 0.0)))
         
         # Convert to numpy array and reshape for prediction
         X = np.array(features).reshape(1, -1)

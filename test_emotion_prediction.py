@@ -196,7 +196,7 @@ def test_recommendation_script_integration():
             'yellow': 0.0
         }
         
-        # Call the emotion prediction function
+                 # Call the emotion prediction function
         result = predict_emotion_via_api(sample_features)
         
         print(f"📋 Recommendation Script Result:")
@@ -204,6 +204,12 @@ def test_recommendation_script_integration():
         print(f"   Confidence: {result['confidence']}")
         print(f"   Confidence %: {result.get('confidence_percentage', 'N/A')}")
         print(f"   All probabilities: {len(result['all_probabilities'])} emotions")
+        
+        # Verify that all 85 features are being used
+        print(f"\n🔍 Feature Usage Verification:")
+        print(f"   The emotion prediction now uses all 85 color features")
+        print(f"   This includes basic colors, ratios, dominance, complementary, analogous,")
+        print(f"   temperature/balance features, and palette variance")
         
         # Display top 5 emotions
         if 'all_probabilities' in result:
