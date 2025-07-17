@@ -19,13 +19,18 @@ import sys
 warnings.filterwarnings('ignore', category=pd.errors.DtypeWarning)
 
 # Configuration
-ORIGINAL_DATA_PATH = "/app/recommendation_data/interpretable_color_features_cleaned.csv"
-RESAMPLED_DATA_PATH = "/app/recommendation_data/resampled_emotions_data.csv"
+ORIGINAL_DATA_PATH = "/var/www/plot-palette/emotions_generation/interpretable_color_features_cleaned.csv"
+RESAMPLED_DATA_PATH = "/var/www/plot-palette/emotions_generation/resampled_emotions_data.csv"
 NUM_RECOMMENDATIONS = 10
 NUM_FEATURES = 85
 
 # Path to the image file to analyze
-IMAGE_PATH = "/app/uploads/1.png"  # This will be replaced by the server
+IMAGE_PATH = "/var/www/plot-palette/uploads/1.png"  # This will be replaced by the server
+
+# Emotion model paths
+MODEL_PATH = "/var/www/plot-palette/emotions_generation/final_emotion_model.pkl"
+SCALER_PATH = "/var/www/plot-palette/emotions_generation/final_scaler.pkl"
+FEATURE_INFO_PATH = "/var/www/plot-palette/emotions_generation/final_feature_info.pkl"
 
 # Predefined basic colours with their RGB values
 BASIC_COLOURS = {
@@ -63,9 +68,9 @@ COLOR_FEATURES = [
 # --- Emotion Prediction Functions ---
 
 def predict_emotion_via_api(color_features):
-    """Predict emotion by calling the containerized emotion API"""
+    """Predict emotion using local ML model files"""
     try:
-        # Convert color features to the format expected by the API
+        # Convert color features to the format expected by the model
         if hasattr(color_features, "to_dict"):
             features_dict = color_features.to_dict()
         elif hasattr(color_features, "iloc"):
@@ -83,7 +88,21 @@ def predict_emotion_via_api(color_features):
                     row_key = list(features_dict[first_key].keys())[0]
                     features_dict = {k: v[row_key] for k, v in features_dict.items()}
         
-        # Extract only the 12 basic colors for the API
+        # Check if model files exist
+        if not all(os.path.exists(path) for path in [MODEL_PATH, SCALER_PATH, FEATURE_INFO_PATH]):
+            print("Model files not found, using simple prediction")
+            return simple_emotion_prediction(features_dict)
+        
+        # Load the emotion model files
+        print("Loading emotion model files...")
+        model = joblib.load(MODEL_PATH)
+        scaler = joblib.load(SCALER_PATH)
+        feature_info = joblib.load(FEATURE_INFO_PATH)
+        
+        # Get the expected feature names from the model
+        feature_names = feature_info.get('feature_names', [])
+        
+        # Extract only the 12 basic colors for the model
         color_data = {
             "black": float(features_dict.get("black", 0.0)),
             "blue": float(features_dict.get("blue", 0.0)),
@@ -99,38 +118,42 @@ def predict_emotion_via_api(color_features):
             "yellow": float(features_dict.get("yellow", 0.0))
         }
         
-        # Prepare request payload
-        payload = {
-            "colors": color_data
-        }
-        
-        # Call the emotion API
-        response = requests.post(
-            "http://emotion-api:8000/predict",
-            json=payload,
-            timeout=10
-        )
-        
-        if response.status_code == 200:
-            result = response.json()
-            prediction = result.get("predictions", {})
-            
-            # Find the dominant emotion
-            if prediction:
-                dominant_emotion = max(prediction.items(), key=lambda x: x[1])
-                return {
-                    "emotion": dominant_emotion[0],
-                    "confidence": dominant_emotion[1],
-                    "all_probabilities": prediction
-                }
+        # Prepare feature vector in the expected order
+        feature_vector = []
+        for feature_name in feature_names:
+            if feature_name in color_data:
+                feature_vector.append(color_data[feature_name])
             else:
-                return simple_emotion_prediction(features_dict)
+                feature_vector.append(0.0)
+        
+        # Convert to numpy array and reshape for prediction
+        feature_array = np.array(feature_vector).reshape(1, -1)
+        
+        # Scale the features
+        scaled_features = scaler.transform(feature_array)
+        
+        # Make prediction
+        prediction_proba = model.predict_proba(scaled_features)[0]
+        emotion_classes = model.classes_
+        
+        # Create prediction dictionary
+        prediction = {}
+        for i, emotion in enumerate(emotion_classes):
+            prediction[emotion] = float(prediction_proba[i])
+        
+        # Find the dominant emotion
+        if prediction:
+            dominant_emotion = max(prediction.items(), key=lambda x: x[1])
+            return {
+                "emotion": dominant_emotion[0],
+                "confidence": dominant_emotion[1],
+                "all_probabilities": prediction
+            }
         else:
-            print("API call failed with status", response.status_code)
             return simple_emotion_prediction(features_dict)
             
     except Exception as e:
-        print("Error calling emotion API:", e)
+        print("Error in local emotion prediction:", e)
         return simple_emotion_prediction(features_dict)
 
 def simple_emotion_prediction(color_features):
