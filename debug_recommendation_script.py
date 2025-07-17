@@ -136,7 +136,7 @@ def check_data_files():
     
     project_dir = "/var/www/plot-palette"
     
-    # Check for common data files
+    # Check for common data files in emotions_generation directory (correct location)
     data_files = [
         "interpretable_color_features_cleaned.csv",
         "resampled_emotions_data.csv",
@@ -147,19 +147,10 @@ def check_data_files():
     
     missing_files = []
     
-    for file in data_files:
-        file_path = os.path.join(project_dir, file)
-        if os.path.exists(file_path):
-            size = os.path.getsize(file_path)
-            print(f"   ✅ {file} ({size:,} bytes)")
-        else:
-            print(f"   ❌ {file} - NOT FOUND")
-            missing_files.append(file)
-    
-    # Check emotions_generation directory
+    # Check emotions_generation directory (where files should be)
     emotions_dir = os.path.join(project_dir, "emotions_generation")
     if os.path.exists(emotions_dir):
-        print(f"\n   📁 emotions_generation directory exists")
+        print(f"   📁 emotions_generation directory exists")
         for file in data_files:
             file_path = os.path.join(emotions_dir, file)
             if os.path.exists(file_path):
@@ -167,8 +158,10 @@ def check_data_files():
                 print(f"   ✅ emotions_generation/{file} ({size:,} bytes)")
             else:
                 print(f"   ❌ emotions_generation/{file} - NOT FOUND")
+                missing_files.append(file)
     else:
         print(f"   ❌ emotions_generation directory - NOT FOUND")
+        missing_files.extend(data_files)
     
     return len(missing_files) == 0
 
