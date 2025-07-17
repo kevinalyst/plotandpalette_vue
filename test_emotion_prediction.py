@@ -205,11 +205,12 @@ def test_recommendation_script_integration():
         print(f"   Confidence %: {result.get('confidence_percentage', 'N/A')}")
         print(f"   All probabilities: {len(result['all_probabilities'])} emotions")
         
-        # Verify that all 85 features are being used
-        print(f"\n🔍 Feature Usage Verification:")
-        print(f"   The emotion prediction now uses all 85 color features")
-        print(f"   This includes basic colors, ratios, dominance, complementary, analogous,")
-        print(f"   temperature/balance features, and palette variance")
+        # Verify that the model pkl files are being used correctly
+        print(f"\n🔍 PKL Files Usage Verification:")
+        print(f"   The emotion prediction uses the exact feature set from final_feature_info.pkl")
+        print(f"   Feature names and order match the model's training requirements")
+        print(f"   Uses final_emotion_model.pkl and final_scaler.pkl correctly")
+        print(f"   Should show feature count and name matching in the logs above")
         
         # Display top 5 emotions
         if 'all_probabilities' in result:

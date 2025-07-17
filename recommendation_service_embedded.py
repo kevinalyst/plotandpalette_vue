@@ -99,27 +99,50 @@ def predict_emotion_via_api(color_features):
         scaler = joblib.load(SCALER_PATH)
         feature_info = joblib.load(FEATURE_INFO_PATH)
         
-        # Get feature structure from the model info
-        color_columns = feature_info.get('color_columns', [])
-        engineered_columns = [col for col in feature_info.get('final_features', []) 
+        # Get feature structure from the model info (exact same as emotion_prediction_api.py)
+        color_columns = feature_info['color_columns']
+        engineered_columns = [col for col in feature_info['final_features'] 
                              if col not in color_columns]
-        emotion_columns = feature_info.get('emotion_columns', [])
+        emotion_columns = feature_info['emotion_columns']
         
         print(f"Model loaded: {len(color_columns)} colors, {len(engineered_columns)} engineered features, {len(emotion_columns)} emotions")
+        print(f"Final features from model: {len(feature_info['final_features'])} total")
         
-        # Generate full 85 color features from the basic color selection
+        # Generate full color features from the basic color selection
         full_color_features = create_color_features_from_selection(features_dict)
         
-        # Prepare feature vector in the expected order using all 85 features
+        # Prepare feature vector in the exact order the model expects
         features = []
         
-        # Add color features in correct order
+        # Add color features in correct order (as per model training)
         for color in color_columns:
             features.append(float(full_color_features.get(color, 0.0)))
         
-        # Add engineered features using calculated values instead of defaults
+        # Add engineered features in correct order (as per model training)
         for feature in engineered_columns:
+            # Use calculated engineered features if available, otherwise default to 0.0
             features.append(float(full_color_features.get(feature, 0.0)))
+        
+        # Verify we have the correct number of features
+        expected_features = len(feature_info['final_features'])
+        if len(features) != expected_features:
+            print(f"Warning: Feature count mismatch! Expected {expected_features}, got {len(features)}")
+        else:
+            print(f"✅ Feature vector prepared: {len(features)} features (matches model expectation)")
+        
+        # Debug: Check for missing features
+        model_features = set(feature_info['final_features'])
+        generated_features = set(full_color_features.keys())
+        missing_features = model_features - generated_features
+        extra_features = generated_features - model_features
+        
+        if missing_features:
+            print(f"⚠️  Missing features: {missing_features}")
+        if extra_features:
+            print(f"⚠️  Extra features: {extra_features}")
+        
+        if not missing_features and not extra_features:
+            print(f"✅ All feature names match the model requirements")
         
         # Convert to numpy array and reshape for prediction
         X = np.array(features).reshape(1, -1)
