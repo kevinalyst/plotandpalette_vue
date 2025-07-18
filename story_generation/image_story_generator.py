@@ -392,5 +392,45 @@ def main():
         print(json.dumps(error_result, indent=2))
         sys.exit(1)
 
+# Standalone function for easy importing
+def generate_story(paintings, narrative_style, user_name=None, emotion=None, emotion_probability=None):
+    """
+    Standalone function to generate story - can be imported directly
+    
+    Args:
+        paintings: List of painting URLs or dictionaries with imagePath
+        narrative_style: Style number (1-5) or style name
+        user_name: Optional user name
+        emotion: Optional emotion string
+        emotion_probability: Optional emotion probability
+    
+    Returns:
+        Dictionary with story result
+    """
+    try:
+        # Create generator instance
+        generator = ImageStoryGenerator()
+        
+        # Convert paintings to expected format if they're just URLs
+        if paintings and isinstance(paintings[0], str):
+            paintings = [{'imagePath': url} for url in paintings]
+        
+        # Generate story using the class method
+        result = generator.generate_story(
+            paintings=paintings,
+            narrative_style=str(narrative_style),
+            user_name=user_name,
+            emotion=emotion,
+            emotion_probability=emotion_probability
+        )
+        
+        return result
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
 if __name__ == "__main__":
     main() 
