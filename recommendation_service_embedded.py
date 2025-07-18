@@ -166,7 +166,7 @@ def predict_emotion_via_api(color_features):
             else:
                 # Single value - get the only probability
                 emotion_predictions[emotion] = float(pred_array[0, 0])
-            
+        
         # Find dominant emotion
         if emotion_predictions:
             dominant_emotion = max(emotion_predictions.items(), key=lambda x: x[1])

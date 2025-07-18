@@ -8,7 +8,7 @@ import json
 import sys
 import os
 from datetime import datetime
-from .image_story_generator import ImageStoryGenerator  # Import the new image-based generator
+from image_story_generator import ImageStoryGenerator  # Import the new image-based generator
 
 class SecureStoryGenerator:
     """Wrapper class with additional security and usage restrictions"""

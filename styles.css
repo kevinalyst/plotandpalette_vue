@@ -1405,11 +1405,11 @@ body.allow-scroll {
     border: none;
     border-radius: 25px;
     font-family: 'Poppins', sans-serif;
-    font-size: 1.2rem;
-    font-weight: 500;
+    font-size: 1.1rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    text-transform: capitalize;
+    text-transform: uppercase;
     letter-spacing: 0.5px;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
