@@ -62,9 +62,9 @@ class DatabaseManager:
                 
                 if missing_tables:
                     logger.info(f"Creating missing tables: {missing_tables}")
-                # Create tables
-                self._create_tables(cursor)
-                connection.commit()
+                    # Create tables
+                    self._create_tables(cursor)
+                    connection.commit()
                     logger.info("Database tables created successfully")
                 else:
                     logger.info("All database tables already exist, skipping creation")
@@ -77,7 +77,7 @@ class DatabaseManager:
             if "already exists" in str(e).lower():
                 logger.info("Tables already exist, continuing...")
             else:
-            raise
+                raise
 
     def _create_tables(self, cursor):
         """Create all required database tables"""
