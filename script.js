@@ -1068,7 +1068,7 @@ class GradientPalette {
         
         const stepTitle = document.createElement('div');
         stepTitle.className = 'emotion-step-title';
-        stepTitle.textContent = 'Step 1:';
+        stepTitle.textContent = 'Step 2:';
         
         const mainTitle = document.createElement('div');
         mainTitle.className = 'emotion-main-title';
@@ -2408,7 +2408,7 @@ class GradientPalette {
                 
                 <!-- Drag and Drop Selection Area -->
                 <div class="selection-area">
-                    <h3 class="selection-title"><strong>Step 2:</strong> Which paintings spark your curiosity?<br/>Pick three to craft a unique story...</h3>
+                    <h3 class="selection-title"><strong>Step 3:</strong> Which paintings spark your curiosity?<br/>Pick three to craft a unique story...</h3>
                     <br/>
                     <p class="selection-subtitle">Drag and drop paintings into the boxes</p>
                     <div class="drop-zone-container">
@@ -2435,10 +2435,10 @@ class GradientPalette {
                 
                 <!-- Step 3 Character Selection Area -->
                 <div class="character-area">
-                    <h3 class="character-title"><strong>Step 3:</strong> Which character resonates with you?<br/>Dive into their story...</h3>
+                    <h3 class="character-title"><strong>Step 4:</strong> Which character resonates with you?<br/>Dive into their story...</h3>
                     <br/>
                     <p class="character-subtitle">Select the perspective that interests you the most</p>
-                    <p class="character-hover-instruction" style="font-family: 'Poppins', sans-serif; font-weight: 200; font-size: 1rem; color: rgba(255, 255, 255, 0.7); text-align: center; margin-bottom: 30px; font-style: normal;">Move your cursor <img src="image/cursor.png" alt="cursor" class="inline-cursor-icon"> over the cards below to see each story's style</p>
+                    <p class="character-hover-instruction" style="font-family: 'Poppins', sans-serif; font-weight: 200; font-size: 1rem; color: rgba(255, 255, 255, 0.7); text-align: center; margin-bottom: 30px; font-style: normal;">Hover your cursor <img src="image/cursor.png" alt="cursor" class="inline-cursor-icon"> over the cards below to see each story's style</p>
                     <div class="character-grid">
                         <div class="character-card" data-style="1">
                             <img src="image/style1-a.png" alt="Style 1" class="character-image">

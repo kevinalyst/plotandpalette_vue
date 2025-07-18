@@ -166,7 +166,7 @@ def predict_emotion_via_api(color_features):
             else:
                 # Single value - get the only probability
                 emotion_predictions[emotion] = float(pred_array[0, 0])
-        
+            
         # Find dominant emotion
         if emotion_predictions:
             dominant_emotion = max(emotion_predictions.items(), key=lambda x: x[1])
@@ -174,13 +174,13 @@ def predict_emotion_via_api(color_features):
             # Convert confidence to percentage for display
             confidence_percentage = f"{dominant_emotion[1] * 100:.1f}%"
             
-            return {
-                "emotion": dominant_emotion[0],
-                "confidence": dominant_emotion[1],
+                return {
+                    "emotion": dominant_emotion[0],
+                    "confidence": dominant_emotion[1],
                 "confidence_percentage": confidence_percentage,
                 "all_probabilities": emotion_predictions
-            }
-        else:
+                }
+            else:
             return simple_emotion_prediction(features_dict)
             
     except Exception as e:
