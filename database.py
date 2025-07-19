@@ -401,3 +401,32 @@ class DatabaseManager:
 
 # Global database instance
 db = DatabaseManager() 
+
+# Standalone wrapper functions for backward compatibility
+def get_db_connection():
+    """Get database connection - wrapper for compatibility"""
+    return mysql.connector.connect(**DB_CONFIG)
+
+def health_check() -> bool:
+    """Database health check - wrapper function"""
+    return db.health_check()
+
+def init_database():
+    """Initialize database - wrapper function"""
+    return db.init_database()
+
+def save_palette(session_id: str, filename: str, colors: List[Dict], recommendations: List[Dict]) -> int:
+    """Save palette - wrapper function"""
+    return db.save_palette(session_id, filename, colors, recommendations)
+
+def save_emotion_selection(session_id: str, palette_filename: str, emotion: str, 
+                          probability: float, all_emotions: Dict[str, float]) -> int:
+    """Save emotion selection - wrapper function"""
+    return db.save_emotion_selection(session_id, palette_filename, emotion, probability, all_emotions)
+
+def save_story(selection_id: int, session_id: str, narrative_style: str, user_name: str,
+               emotion: str, emotion_probability: float, paintings_data: List[Dict],
+               story_content: str, word_count: int, generation_time_ms: int) -> int:
+    """Save story - wrapper function"""
+    return db.save_story(selection_id, session_id, narrative_style, user_name, emotion,
+                        emotion_probability, paintings_data, story_content, word_count, generation_time_ms) 
