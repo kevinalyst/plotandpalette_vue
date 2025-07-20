@@ -19,18 +19,18 @@ import sys
 warnings.filterwarnings('ignore', category=pd.errors.DtypeWarning)
 
 # Configuration
-ORIGINAL_DATA_PATH = "/var/www/plot-palette/emotions_generation/interpretable_color_features_cleaned.csv"
-RESAMPLED_DATA_PATH = "/var/www/plot-palette/emotions_generation/resampled_emotions_data.csv"
+ORIGINAL_DATA_PATH = "/app/emotions_generation/interpretable_color_features_cleaned.csv"
+RESAMPLED_DATA_PATH = "/app/emotions_generation/resampled_emotions_data.csv"
 NUM_RECOMMENDATIONS = 10
 NUM_FEATURES = 85
 
 # Path to the image file to analyze
-IMAGE_PATH = "/var/www/plot-palette/uploads/1.png"  # This will be replaced by the server
+IMAGE_PATH = "/app/uploads/1.png"  # This will be replaced by the server
 
 # Emotion model paths
-MODEL_PATH = "/var/www/plot-palette/emotions_generation/final_emotion_model.pkl"
-SCALER_PATH = "/var/www/plot-palette/emotions_generation/final_scaler.pkl"
-FEATURE_INFO_PATH = "/var/www/plot-palette/emotions_generation/final_feature_info.pkl"
+MODEL_PATH = "/app/emotions_generation/final_emotion_model.pkl"
+SCALER_PATH = "/app/emotions_generation/final_scaler.pkl"
+FEATURE_INFO_PATH = "/app/emotions_generation/final_feature_info.pkl"
 
 # Predefined basic colours with their RGB values
 BASIC_COLOURS = {
@@ -166,7 +166,7 @@ def predict_emotion_via_api(color_features):
             else:
                 # Single value - get the only probability
                 emotion_predictions[emotion] = float(pred_array[0, 0])
-        
+            
         # Find dominant emotion
         if emotion_predictions:
             dominant_emotion = max(emotion_predictions.items(), key=lambda x: x[1])

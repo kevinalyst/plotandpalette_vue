@@ -33,9 +33,9 @@ def load_model_components():
     """Load the trained model and preprocessing components"""
     try:
         # Load the trained model and preprocessing components
-        model = joblib.load('Step6.1/final_emotion_model.pkl')
-        scaler = joblib.load('Step6.1/final_scaler.pkl')
-        feature_info = joblib.load('Step6.1/final_feature_info.pkl')
+        model = joblib.load('final_emotion_model.pkl')
+        scaler = joblib.load('final_scaler.pkl')
+        feature_info = joblib.load('final_feature_info.pkl')
         
         # Extract feature names
         color_columns = feature_info['color_columns']

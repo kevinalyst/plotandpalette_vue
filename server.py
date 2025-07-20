@@ -364,7 +364,7 @@ def run_python_story_script(script_path: str, input_data: Dict[str, Any]) -> Dic
 
 # Routes
 
-@app.route('/api/status')
+@app.route('/status')
 def status_check():
     """A simple status endpoint."""
     return jsonify({'status': 'running'}), 200
@@ -389,7 +389,7 @@ def serve_static(filename):
     """Serve static files"""
     return send_from_directory('.', filename)
 
-@app.route('/api/save-palette', methods=['POST'])
+@app.route('/save-palette', methods=['POST'])
 def save_palette():
     """API endpoint to save palette"""
     try:
@@ -478,7 +478,7 @@ def save_palette():
             'message': str(e)
         }), 500
 
-@app.route('/api/palette/<filename>')
+@app.route('/palette/<filename>')
 def get_palette_info(filename):
     """API endpoint to get palette info"""
     try:
@@ -507,7 +507,7 @@ def get_palette_info(filename):
             'message': str(e)
         }), 500
 
-@app.route('/api/recent-palettes')
+@app.route('/recent-palettes')
 def get_recent_palettes():
     """API endpoint to list recent palettes"""
     try:
@@ -548,7 +548,7 @@ def get_recent_palettes():
             'message': str(e)
         }), 500
 
-@app.route('/api/get-recommendations', methods=['POST'])
+@app.route('/get-recommendations', methods=['POST'])
 def get_recommendations():
     """API endpoint to get painting recommendations"""
     try:
@@ -621,7 +621,7 @@ def get_recommendations():
             'message': str(e)
         }), 500
 
-@app.route('/api/save-selection', methods=['POST'])
+@app.route('/save-selection', methods=['POST'])
 def save_selection():
     """API endpoint to save user's selected paintings"""
     try:
@@ -684,7 +684,7 @@ def save_selection():
             'message': str(e)
         }), 500
 
-@app.route('/api/save-emotion', methods=['POST'])
+@app.route('/save-emotion', methods=['POST'])
 def save_emotion():
     """API endpoint to save user's emotion selection from Step 1"""
     try:
@@ -741,7 +741,7 @@ def save_emotion():
             'message': str(e)
         }), 500
 
-@app.route('/api/selection-history')
+@app.route('/selection-history')
 def get_selection_history():
     """API endpoint to get user's selection history"""
     try:
@@ -784,7 +784,7 @@ def get_selection_history():
             'message': str(e)
         }), 500
 
-@app.route('/api/generate-story', methods=['POST'])
+@app.route('/generate-story', methods=['POST'])
 def generate_story():
     """API endpoint to generate story"""
     try:
@@ -885,7 +885,7 @@ def generate_story():
             'message': str(e)
         }), 500
 
-@app.route('/api/health')
+@app.route('/health')
 def health_check():
     """Health check endpoint"""
     health_data = {
@@ -898,27 +898,29 @@ def health_check():
         }
     }
     
-    # Check database if enabled
+    # Check database if enabled (but don't fail health check if DB is temporarily down)
     if DB_ENABLED:
         try:
             if db.health_check():
                 health_data['components']['database'] = 'healthy'
             else:
                 health_data['components']['database'] = 'unhealthy'
-                health_data['status'] = 'degraded'
+                health_data['status'] = 'degraded'  # degraded but still return 200
         except Exception as e:
             health_data['components']['database'] = f'error: {str(e)}'
-            health_data['status'] = 'degraded'
+            health_data['status'] = 'degraded'  # degraded but still return 200
     else:
         health_data['components']['database'] = 'disabled'
     
-    # Check uploads directory
+    # Check uploads directory (this is critical for app function)
     if not os.path.exists(UPLOAD_FOLDER):
         health_data['components']['filesystem'] = 'uploads directory missing'
         health_data['status'] = 'unhealthy'
+        return jsonify(health_data), 503  # Only return 503 for critical failures
     
-    status_code = 200 if health_data['status'] == 'healthy' else 503
-    return jsonify(health_data), status_code
+    # Always return 200 unless there's a critical filesystem issue
+    # Database being down shouldn't restart the container
+    return jsonify(health_data), 200
 
 # Error handling
 

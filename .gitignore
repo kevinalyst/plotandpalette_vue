@@ -1,4 +1,31 @@
-# Python
+# 🐳 Docker & Container Files
+docker-compose.override.yml
+.env
+.env.local
+.env.production
+.env.staging
+*.log
+
+# Docker build cache
+.docker/
+
+# Container logs
+logs/**/*.log
+
+# 📦 Node.js & Vue.js
+frontend-vue/node_modules/
+frontend-vue/dist/
+frontend-vue/.vite/
+frontend-vue/.cache/
+*.tsbuildinfo
+
+# NPM & Yarn
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 🐍 Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -23,76 +50,102 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# Virtual Environment
+# Virtual environments
 venv/
-env/
 ENV/
-env.bak/
-venv.bak/
+env/
+.venv/
 
-# Environment variables
-.env
-.env.local
-.env.production
+# 🗄️ Database
+*.db
+*.sqlite
+*.sqlite3
 
-# IDE
+# 🔧 IDEs & Editors
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+.DS_Store
+Thumbs.db
 
-# OS
+# 📁 Uploads & User Content
+uploads/**/*
+!uploads/.gitkeep
+
+# 🤖 AI & ML Models (keep track but ignore large files)
+*.pkl.bak
+*.model.bak
+temp_models/
+
+# 📊 Logs & Monitoring
+*.log
+logs/**/*.log
+logs/nginx/**
+logs/application/**
+
+# 🔒 Security & Secrets
+.env*
+!.env.example
+*.pem
+*.key
+secrets/
+.secrets/
+
+# 🧪 Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# 📱 Frontend Build & Cache
+.cache/
+.parcel-cache/
+.next/
+out/
+.nuxt/
+dist/
+.vuepress/dist/
+.serverless/
+.fusebox/
+.dynamodb/
+
+# 🛠️ Development & Debug Files
+debug_*.py
+test_*.py
+*_debug.*
+*_test.*
+temp_*
+*.tmp
+
+# 📋 Documentation Build
+_build/
+.doctrees/
+
+# 🔄 Backup & Temporary Files
+*.bak
+*.backup
+*.old
+*.orig
+*~
+
+# 🚀 Deployment & CI/CD
+.github/workflows/deploy.yml.bak
+deploy_*.log
+deployment_*.log
+
+# OS Generated Files
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Thumbs.db
-
-# Logs
-logs/
-pids/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Uploads
-uploads/*
-!uploads/.gitkeep
-
-# Node modules (if any)
-node_modules/
-
-# Package files
-*.tar.gz
-*.zip
-
-# Cache
-.cache/
-.pytest_cache/
-
-# Backup files
-*.backup
-*~
-
-# ML models (optional - you might want to track these)
-# *.pkl
-# *.joblib
-
-# Temporary files
-tmp/
-temp/ 
-
-# Server process files
-*.pid
-
-# Nginx logs
-access.log
-error.log 
+Thumbs.db 

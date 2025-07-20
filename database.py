@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 
 # Database configuration
 DB_CONFIG = {
-    'host': os.environ.get('DB_HOST', '34.142.53.204'),
-    'user': os.environ.get('DB_USER', 'root'),
-    'password': os.environ.get('DB_PASSWORD', 'Lihanwen1997'),
+    'host': os.environ.get('DB_HOST', 'db'),  # Use 'db' for Docker, localhost for local dev
+    'user': os.environ.get('DB_USER', 'plotapp'),  # Use plotapp from docker-compose
+    'password': os.environ.get('DB_PASSWORD', 'plotapp123'),  # Use plotapp123 from docker-compose
     'database': os.environ.get('DB_NAME', 'plotpalette-mydb'),
     'port': int(os.environ.get('DB_PORT', 3306)),
     'charset': 'utf8mb4',
