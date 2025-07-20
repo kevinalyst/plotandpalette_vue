@@ -1,0 +1,128 @@
+services:
+  # MySQL Database Service
+  db:
+    image: mysql:8.0
+    container_name: plot-palette-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: Lihanwen1997
+      MYSQL_DATABASE: plotpalette-mydb
+      MYSQL_USER: plotapp
+      MYSQL_PASSWORD: plotapp123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - plot-palette-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Main Backend Service (Flask + Recommendations)
+  backend:
+    build: .
+    container_name: plot-palette-backend
+    restart: unless-stopped
+    ports:
+      - "5003:5000"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=plotpalette-mydb
+      - DB_USER=plotapp
+      - DB_PASSWORD=plotapp123
+      - EMOTION_API_URL=http://emotion-api:5001
+      - STORY_API_URL=http://story-api:5002
+      - FLASK_ENV=production
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      - db
+      - emotion-api
+      - story-api
+    networks:
+      - plot-palette-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Emotion Prediction API Service
+  emotion-api:
+    build: ./emotions_generation
+    container_name: plot-palette-emotions
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - plot-palette-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Story Generation API Service
+  story-api:
+    build: ./story_generation
+    container_name: plot-palette-stories
+    restart: unless-stopped
+    ports:
+      - "5002:5002"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - ./logs:/app/logs
+      - ./story_generation/.env:/app/.env:ro
+    networks:
+      - plot-palette-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy (will add in Phase 3)
+  nginx:
+    build: ./deployment/nginx
+    container_name: plot-palette-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./frontend-vue/dist:/usr/share/nginx/html
+      - ./image:/usr/share/nginx/html/assets/images
+      - ./15\ emotion\ illustrations:/usr/share/nginx/html/assets/emotions
+      - ./palette\ GIF:/usr/share/nginx/html/assets/palettes
+      - ./uploads:/usr/share/nginx/html/uploads
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - backend
+    networks:
+      - plot-palette-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# Networks
+networks:
+  plot-palette-network:
+    driver: bridge
+
+# Volumes
+volumes:
+  mysql_data:
+    driver: local 

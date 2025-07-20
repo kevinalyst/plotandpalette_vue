@@ -1,0 +1,614 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Standardized Button Styles */
+.btn-primary, .btn-secondary, .start-button, .stop-button, .modal-btn {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500; /* Medium */
+    font-size: 1.2rem;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+body, html {
+    height: 100vh; /* Only one full-height section */
+    width: 100vw;
+    overflow-x: hidden;
+    font-family: 'Arial', sans-serif;
+    scroll-behavior: smooth;
+}
+
+/* Initially prevent scrolling */
+body.no-scroll {
+    overflow: hidden;
+    height: 100vh;
+}
+
+/* Allow scrolling after START is clicked */
+body.allow-scroll {
+    overflow-y: auto;
+    height: 100vh;
+}
+
+/* Homepage Styles */
+.homepage {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background-image: url('~@/assets/images/backgroundtext.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Logo Refresh Button Styles */
+.logo-refresh-button {
+    position: absolute;
+    top: 30px;
+    left: 50px; /* Moved 20px to the right (from 30px to 50px) */
+    z-index: 1000;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    padding: 10px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.logo-refresh-button:hover {
+    transform: scale(1.1) rotate(180deg);
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.logo-refresh-button:active {
+    transform: scale(0.95) rotate(180deg);
+}
+
+.logo-image {
+    width: 40px;
+    height: 40px;
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.logo-refresh-button:hover .logo-image {
+    filter: brightness(1.2);
+}
+
+.homepage-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    padding-bottom: 80px;
+}
+
+.colourbar-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1.5); /* Enlarged from 1.3 to 1.5 */
+    width: calc(100% - 40px); /* Small margin on both sides */
+    max-width: 1200px; /* Reasonable max width */
+    z-index: -1; /* Place behind the background text */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.colourbar-image {
+    width: 100%;
+    height: auto;
+    opacity: 0;
+    animation: fadeInOutCycle 8s ease-in-out infinite; /* 3s fade in + 2s pause + 3s fade out = 8s total */
+    display: block;
+    margin: 0 auto;
+}
+
+@keyframes fadeInOutCycle {
+    0% {
+        opacity: 0; /* Start invisible */
+    }
+    37.5% {
+        opacity: 1; /* Fade in complete (3s / 8s = 37.5%) */
+    }
+    62.5% {
+        opacity: 1; /* Hold visible for 2s (2s / 8s = 25%, so 37.5% + 25% = 62.5%) */
+    }
+    100% {
+        opacity: 0; /* Fade out complete (3s fade out, back to 0) */
+    }
+}
+
+.paintings-container {
+    position: absolute;
+    top: calc(50% + 50px); /* Moved 50px down from center */
+    right: 260px; /* Moved 30px to the left (from 230px to 260px) */
+    transform: translateY(-50%) scale(1.7825); /* Enlarged by 15% from 1.55 */
+    z-index: 1; /* Above the background but below controls */
+    max-width: 300px; /* Reasonable max width */
+    width: 25%; /* Responsive width */
+}
+
+.paintings-image {
+    width: 100%;
+    height: auto;
+    opacity: 1; /* Always visible */
+    transition: opacity 0.3s ease;
+}
+
+/* Hover effect to change paintings.png to paintingsguide.png */
+.paintings-container::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('~@/assets/images/paintingsguide.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.paintings-container:hover::after {
+    opacity: 1;
+}
+
+.paintings-container:hover .paintings-image {
+    opacity: 0;
+}
+
+.background-image-container {
+    display: none; /* Hide the image container since we're using background-image */
+}
+
+.background-image {
+    display: none; /* Hide the img element */
+}
+
+.homepage-controls {
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.start-button {
+    position: relative;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.15);
+    border: 2px solid rgba(0, 0, 0, 0.3);
+    border-radius: 50px;
+    padding: 15px 30px;
+    color: black;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-shadow: 0 2px 4px rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    
+    /* Chrome-specific button fixes */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    isolation: isolate;
+}
+
+.start-button:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.25);
+    border-color: rgba(0, 0, 0, 0.5);
+    transform: translateY(-3px);
+    box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.start-button:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.start-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.gradient-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    /* Background will be set dynamically by JavaScript */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    z-index: 1;
+    /* Smooth transitions between GIF backgrounds */
+    transition: background-image 0.5s ease-in-out;
+}
+
+/* Capture Prompt Styles */
+.capture-prompt {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    color: black;
+    font-size: 1.1rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400; /* Regular */
+    text-align: center;
+    max-width: 600px;
+    padding: 0 20px;
+    opacity: 1;
+    text-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.3),
+        0 4px 8px rgba(0, 0, 0, 0.2),
+        0 8px 16px rgba(0, 0, 0, 0.1),
+        0 0 20px rgba(255, 255, 255, 0.8);
+    line-height: 1.5;
+}
+
+.prompt-step {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700; /* Bold */
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.prompt-text {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400; /* Regular */
+    font-size: 1.1rem;
+}
+
+/* Controls styling */
+.controls {
+    position: fixed;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1001;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.stop-button {
+    position: relative;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.15);
+    border: 2px solid rgba(0, 0, 0, 0.3);
+    border-radius: 50px;
+    padding: 15px 30px;
+    color: black;
+    cursor: pointer;
+    /* Enable smooth transitions for hover effects */
+    transition: all 0.3s ease;
+    text-shadow: 0 2px 4px rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.stop-button:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.25);
+    border-color: rgba(0, 0, 0, 0.5);
+    transform: translateY(-3px);
+    box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.stop-button:active:not(:disabled) {
+    background: rgba(0, 0, 0, 0.35);
+    border-color: rgba(0, 0, 0, 0.6);
+    transform: translateY(0);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.stop-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.3s ease;
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    transform: scale(1);
+    transition: transform 0.3s ease;
+}
+
+.modal h3 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.modal p {
+    color: #666;
+    margin-bottom: 30px;
+    word-break: break-all;
+    background: #f5f5f5;
+    padding: 15px;
+    border-radius: 10px;
+    font-family: monospace;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.modal-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-btn:hover:not(:disabled) {
+    background: #0056b3;
+    transform: translateY(-3px);
+}
+
+.modal-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.modal-btn.secondary {
+    background: #6c757d;
+}
+
+.modal-btn.secondary:hover:not(:disabled) {
+    background: #545b62;
+}
+
+/* Loading Styles */
+.loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    color: white;
+}
+
+.magic-cube-animation {
+    width: 360px;
+    height: 360px;
+    background-image: url('~@/assets/images/magiccube.gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    margin-bottom: 30px;
+}
+
+.loading-analysis-text {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: white;
+    text-align: center;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    letter-spacing: 0.5px;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+/* Animation Control */
+.gradient-container.paused {
+    animation-play-state: paused;
+}
+
+/* Mobile Responsiveness for Homepage */
+@media (max-width: 768px) {
+    .logo-refresh-button {
+        top: 20px;
+        left: 40px; /* Moved 20px to the right (from 20px to 40px) */
+        padding: 8px;
+    }
+    
+    .logo-image {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .homepage-content {
+        padding-bottom: 40px;
+    }
+    
+    .start-button {
+        padding: 12px 24px;
+        font-size: 16px;
+    }
+    
+    .colourbar-container {
+        width: calc(100% - 20px); /* Smaller margins on mobile */
+        max-width: none;
+    }
+    
+    .paintings-container {
+        top: calc(50% + 50px); /* Moved 50px down from center on mobile */
+        right: 245px; /* Moved 30px to the left (from 215px to 245px) */
+        max-width: 250px; /* Smaller max width */
+        width: 28%; /* Adjusted width for mobile */
+        transform: translateY(-50%) scale(1.7825); /* Maintain enlarged scale */
+    }
+
+    .stop-button {
+        padding: 12px 24px;
+        font-size: 16px;
+    }
+    
+    .modal-content {
+        padding: 30px 20px;
+        width: 95%;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .modal-btn {
+        width: 200px;
+    }
+    
+    .magic-cube-animation {
+        width: 270px;
+        height: 270px;
+    }
+    
+    .loading-analysis-text {
+        font-size: 0.85rem;
+    }
+    
+    .capture-prompt {
+        top: 60px;
+        font-size: 1.1rem;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 400; /* Regular */
+        max-width: 500px;
+        padding: 0 15px;
+        text-shadow: 
+            0 2px 3px rgba(0, 0, 0, 0.3),
+            0 3px 6px rgba(0, 0, 0, 0.2),
+            0 6px 12px rgba(0, 0, 0, 0.1),
+            0 0 15px rgba(255, 255, 255, 0.7);
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-refresh-button {
+        top: 10px;
+        left: 30px; /* Moved 20px to the right (from 10px to 30px) */
+        padding: 10px;
+    }
+    
+    .logo-image {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .colourbar-container {
+        width: calc(100% - 10px); /* Even smaller margins on very small screens */
+    }
+    
+    .paintings-container {
+        top: calc(50% + 50px); /* Moved 50px down from center on very small screens */
+        right: 235px; /* Moved 30px to the left (from 205px to 235px) */
+        max-width: 200px; /* Smaller max width */
+        width: 30%; /* Slightly larger percentage for better visibility */
+        transform: translateY(-50%) scale(1.7825); /* Maintain enlarged scale */
+    }
+
+    .magic-cube-animation {
+        width: 210px;
+        height: 210px;
+    }
+    
+    .loading-analysis-text {
+        font-size: 0.8rem;
+        padding: 0 20px;
+    }
+    
+    .capture-prompt {
+        top: 50px;
+        font-size: 1.1rem;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 400; /* Regular */
+        max-width: 350px;
+        padding: 0 10px;
+        line-height: 1.4;
+        text-shadow: 
+            0 1px 2px rgba(0, 0, 0, 0.3),
+            0 2px 4px rgba(0, 0, 0, 0.2),
+            0 4px 8px rgba(0, 0, 0, 0.1),
+            0 0 10px rgba(255, 255, 255, 0.6);
+    }
+}
+
+/* Vue.js specific utility classes */
+.no-scroll {
+    overflow: hidden;
+}
+
+/* Ensure animated GIF element styling */
+.animated-gif-element {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+} 
