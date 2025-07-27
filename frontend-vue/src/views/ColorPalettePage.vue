@@ -265,7 +265,7 @@ export default {
           
           // Set up captured image URL
           if (data.filename) {
-            capturedImageUrl.value = `http://localhost:5003/uploads/${data.filename}`
+            capturedImageUrl.value = `/uploads/${data.filename}`
           }
           
           console.log('🎨 colourData:', colourData.value)
