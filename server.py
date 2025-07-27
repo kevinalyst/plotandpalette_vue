@@ -51,6 +51,9 @@ UPLOAD_FOLDER = 'uploads'
 PUBLIC_FOLDER = 'public'
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
+# Session storage (in production, use Redis or database)
+session_storage = {}
+
 # Ensure directories exist
 def ensure_directory_exists(directory: str):
     Path(directory).mkdir(parents=True, exist_ok=True)
@@ -61,6 +64,41 @@ ensure_directory_exists(PUBLIC_FOLDER)
 # Configure Flask upload settings
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
+
+# Helper functions
+def generate_session_id() -> str:
+    """Generate unique session ID"""
+    return str(uuid.uuid4())
+
+def get_or_create_session(request_data: dict = None) -> str:
+    """Get existing session ID or create new one"""
+    session_id = None
+    
+    # Try to get from headers first
+    if hasattr(request, 'headers'):
+        session_id = request.headers.get('X-Session-ID')
+    
+    # Try to get from request data
+    if not session_id and request_data:
+        session_id = request_data.get('sessionId')
+    
+    # Create new session if none exists
+    if not session_id:
+        session_id = generate_session_id()
+        logger.info(f"🆕 Created new session: {session_id}")
+    
+    # Initialize session storage if not exists
+    if session_id not in session_storage:
+        session_storage[session_id] = {
+            'created_at': datetime.now().isoformat(),
+            'user_info': {},
+            'captured_palette': None,
+            'selected_emotion': None,
+            'selected_paintings': [],
+            'story_data': None
+        }
+    
+    return session_id
 
 def allowed_file(filename: str) -> bool:
     """Check if file type is allowed"""
@@ -76,7 +114,16 @@ def generate_unique_filename() -> str:
 def download_image(url: str, filename: str) -> str:
     """Download image from URL and save to uploads folder"""
     try:
-        response = requests.get(url, timeout=30, stream=True)
+        # Include headers to comply with Wikimedia policy and improve compatibility
+        headers = {
+            'User-Agent': 'PlotPaletteBot/1.0 (https://plotpalette.example.com/; contact@plotpalette.example.com) Educational-Research-Tool',
+            'Accept': 'image/*,*/*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1'
+        }
+        response = requests.get(url, headers=headers, timeout=30, stream=True, verify=True)
         response.raise_for_status()
         
         file_path = os.path.join(UPLOAD_FOLDER, filename)
@@ -143,7 +190,7 @@ def parse_recommendation_output(output: str) -> Dict[str, Any]:
     
     # Parse raw extracted colors and mapped colour percentages
     for line in lines:
-        # Parse raw RGB colors from the new format: "  Raw Color 1: RGB(255, 165, 0) - 42.36%"
+        # Parse raw RGB colors from the new format: "  Raw Color 1: RGB(139, 84, 181) - 10.27%"
         import re
         raw_color_match = re.search(r'\s*Raw Color \d+: RGB\((\d+), (\d+), (\d+)\) - ([\d.]+)%', line)
         if raw_color_match:
@@ -151,7 +198,18 @@ def parse_recommendation_output(output: str) -> Dict[str, Any]:
             g = int(raw_color_match.group(2))
             b = int(raw_color_match.group(3))
             percentage = float(raw_color_match.group(4)) / 100  # Convert percentage to decimal
-            raw_color_data.append({'r': r, 'g': g, 'b': b, 'percentage': percentage})
+            
+            # Convert RGB to hex for frontend
+            hex_color = f"#{r:02x}{g:02x}{b:02x}"
+            
+            raw_color_data.append({
+                'r': r, 
+                'g': g, 
+                'b': b, 
+                'hex': hex_color,
+                'percentage': percentage
+            })
+            logger.info(f"🎨 Parsed raw color: RGB({r}, {g}, {b}) = {hex_color} ({percentage*100:.2f}%)")
         
         # Also parse old format for backwards compatibility
         old_raw_color_match = re.search(r'Analyzing extracted color: RGB\(.*?(\d+).*?(\d+).*?(\d+)\)', line)
@@ -159,7 +217,14 @@ def parse_recommendation_output(output: str) -> Dict[str, Any]:
             r = int(old_raw_color_match.group(1))
             g = int(old_raw_color_match.group(2))
             b = int(old_raw_color_match.group(3))
-            raw_color_data.append({'r': r, 'g': g, 'b': b})
+            hex_color = f"#{r:02x}{g:02x}{b:02x}"
+            raw_color_data.append({
+                'r': r, 
+                'g': g, 
+                'b': b, 
+                'hex': hex_color,
+                'percentage': 1.0 / 5  # Default equal percentage
+            })
         
         if 'Final colour selection:' in line:
             # Start parsing colour data from the next lines
@@ -265,102 +330,8 @@ def parse_recommendation_output(output: str) -> Dict[str, Any]:
         'emotionPrediction': emotion_prediction
     }
 
-def run_python_story_script(script_path: str, input_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Run Python story generation script"""
-    try:
-        input_json = json.dumps(input_data)
-        
-        # Use virtual environment Python if available, otherwise fall back to system Python
-        venv_python = os.path.join(os.getcwd(), 'venv', 'bin', 'python3')
-        if os.path.exists(venv_python):
-            python_executable = venv_python
-        else:
-            python_executable = 'python3'
-        
-        result = subprocess.run(
-            [python_executable, script_path, input_json],
-            capture_output=True,
-            text=True,
-            timeout=300  # 5 minute timeout
-        )
-        
-        if result.returncode != 0:
-            logger.error(f"Python story script error: {result.stderr}")
-            return {
-                'success': False,
-                'error': result.stderr or 'Story generation failed'
-            }
-        
-        try:
-            # Log the raw output for debugging
-            logger.info(f"Raw Python output length: {len(result.stdout)}")
-            logger.info(f"Raw Python stderr: {result.stderr}")
-            
-            # Try to parse the entire stdout as JSON first
-            try:
-                parsed_result = json.loads(result.stdout.strip())
-                logger.info("Successfully parsed entire stdout as JSON")
-                return parsed_result
-            except json.JSONDecodeError:
-                logger.info("Direct JSON parse failed, trying line-by-line extraction...")
-            
-            # Extract JSON from stdout (may contain logging info)
-            lines = result.stdout.strip().split('\n')
-            json_start_index = -1
-            brace_count = 0
-            json_end_index = -1
-            
-            # Find the first line that contains '{'
-            for i, line in enumerate(lines):
-                if '{' in line:
-                    json_start_index = i
-                    break
-            
-            if json_start_index == -1:
-                raise Exception('No JSON start found in output')
-            
-            # Find the matching closing brace by counting braces
-            for i in range(json_start_index, len(lines)):
-                line = lines[i]
-                for char in line:
-                    if char == '{':
-                        brace_count += 1
-                    if char == '}':
-                        brace_count -= 1
-                        if brace_count == 0:
-                            json_end_index = i
-                            break
-                if json_end_index != -1:
-                    break
-            
-            if json_end_index == -1:
-                raise Exception('No JSON end found in output')
-            
-            # Extract and parse JSON
-            json_lines = lines[json_start_index:json_end_index + 1]
-            json_str = '\n'.join(json_lines)
-            
-            logger.info(f"Extracted JSON length: {len(json_str)}")
-            logger.info(f"JSON preview: {json_str[:100]}...")
-            
-            parsed_result = json.loads(json_str)
-            return parsed_result
-            
-        except Exception as e:
-            logger.error(f"Error parsing story result: {e}")
-            logger.error(f"Raw stdout (first 500 chars): {result.stdout[:500]}")
-            logger.error(f"Raw stderr: {result.stderr}")
-            return {
-                'success': False,
-                'error': 'Failed to parse story generation result'
-            }
-            
-    except Exception as e:
-        logger.error(f"Failed to start Python story script: {e}")
-        return {
-            'success': False,
-            'error': 'Failed to start story generator'
-        }
+# Story generation is now handled by the story-api microservice
+# The run_python_story_script function has been removed in favor of HTTP API calls
 
 # Routes
 
@@ -368,6 +339,396 @@ def run_python_story_script(script_path: str, input_data: Dict[str, Any]) -> Dic
 def status_check():
     """A simple status endpoint."""
     return jsonify({'status': 'running'}), 200
+
+@app.route('/username-check', methods=['POST'])
+def username_check():
+    """Check if a username exists in the database"""
+    try:
+        data = request.get_json() or {}
+        username = data.get('username', '').strip()
+        
+        if not username:
+            return jsonify({
+                'success': False,
+                'username_exist': False,
+                'message': 'Username is required'
+            }), 400
+        
+        logger.info(f"🔍 Checking username existence: {username}")
+        
+        # Check if username exists in database
+        username_exists = False
+        if DB_ENABLED:
+            try:
+                # Query database to check if username exists
+                username_exists = db.check_username_exists(username)
+                logger.info(f"📊 Database check result for '{username}': {username_exists}")
+            except Exception as e:
+                logger.error(f"❌ Database error checking username: {e}")
+                return jsonify({
+                    'success': False,
+                    'username_exist': False,
+                    'message': 'Database error occurred'
+                }), 500
+        else:
+            logger.warning("⚠️ Database not enabled, cannot verify username")
+            return jsonify({
+                'success': False,
+                'username_exist': False,
+                'message': 'Database not available'
+            }), 503
+        
+        return jsonify({
+            'success': True,
+            'username_exist': username_exists,
+            'username': username,
+            'message': f'Username {"exists" if username_exists else "not found"} in database'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error checking username: {e}")
+        return jsonify({
+            'success': False,
+            'username_exist': False,
+            'message': str(e)
+        }), 500
+
+@app.route('/test-raw-colors', methods=['GET'])
+def test_raw_colors():
+    """Test endpoint for raw colors generation"""
+    try:
+        import random
+        palette_colors = [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'
+        ]
+        selected_colors = random.sample(palette_colors, 3)
+        
+        raw_colors_rgb = []
+        for color in selected_colors:
+            hex_color = color.lstrip('#')
+            r = int(hex_color[0:2], 16)
+            g = int(hex_color[2:4], 16) 
+            b = int(hex_color[4:6], 16)
+            raw_colors_rgb.append({
+                'r': r, 'g': g, 'b': b, 
+                'hex': color,
+                'percentage': 1.0 / len(selected_colors)
+            })
+        
+        return jsonify({
+            'success': True,
+            'selectedColors': selected_colors,
+            'rawColors': raw_colors_rgb
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Global username storage (persists across all sessions for a user)
+username_storage = {}
+
+@app.route('/store-username', methods=['POST'])
+def store_username():
+    """Store username information without creating session"""
+    try:
+        data = request.get_json() or {}
+        
+        # Extract user information
+        username = data.get('name', '')
+        age = data.get('age', '')
+        gender = data.get('gender', '')
+        fieldOfStudy = data.get('fieldOfStudy', '')
+        frequency = data.get('frequency', '')
+        
+        # Store username globally (persists across sessions)
+        if username:
+            username_storage[username] = {
+                'created_at': datetime.now().isoformat(),
+                'user_info': {
+                    'name': username,
+                    'age': age,
+                    'gender': gender,
+                    'fieldOfStudy': fieldOfStudy,
+                    'frequency': frequency
+                }
+            }
+        
+        # Save to database if available
+        if DB_ENABLED and username:
+            try:
+                db.save_user_info(
+                    username=username,
+                    age=age,
+                    gender=gender,
+                    fieldOfStudy=fieldOfStudy,
+                    frequency=frequency
+                )
+                logger.info(f"✅ User info saved to database for username: {username}")
+            except Exception as e:
+                logger.error(f"❌ Failed to save user info to database: {e}")
+        
+        logger.info(f"👤 Stored username: {username} with info: age={age}, gender={gender}, field={fieldOfStudy}, frequency={frequency}")
+        return jsonify({
+            'success': True,
+            'username': username,
+            'message': 'Username stored successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error storing username: {e}")
+        return jsonify({
+            'error': 'Failed to store username',
+            'message': str(e)
+        }), 500
+
+@app.route('/create-session', methods=['POST'])
+def create_session():
+    """Create a new session with existing username"""
+    try:
+        data = request.get_json() or {}
+        session_id = generate_session_id()
+        
+        # Get username from data or storage
+        username = data.get('username', '')
+        user_info = {}
+        
+        if username and username in username_storage:
+            user_info = username_storage[username]['user_info']
+            logger.info(f"🔗 Linking session {session_id} to existing username: {username}")
+        else:
+            logger.info(f"🆕 Creating session {session_id} without existing username")
+        
+        # Create session storage
+        session_storage[session_id] = {
+            'created_at': datetime.now().isoformat(),
+            'username': username,
+            'user_info': user_info,
+            'captured_palette': None,
+            'selected_emotion': None,
+            'selected_paintings': [],
+            'story_data': None
+        }
+        
+        # Save to database if available and username exists
+        if DB_ENABLED and username:
+            try:
+                db.create_session(username=username, session_id=session_id)
+                logger.info(f"✅ Session created in database: {session_id} for username: {username}")
+            except Exception as e:
+                logger.error(f"❌ Failed to create session in database: {e}")
+        
+        return jsonify({
+            'success': True,
+            'sessionId': session_id,
+            'username': username,
+            'message': 'Session created successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error creating session: {e}")
+        return jsonify({
+            'error': 'Failed to create session',
+            'message': str(e)
+        }), 500
+
+@app.route('/capture-gif-frame', methods=['POST'])
+def capture_gif_frame():
+    """Capture a specific frame from a GIF and save it as an image"""
+    try:
+        data = request.get_json() or {}
+        gif_name = data.get('gifName', '1.gif')
+        frame_number = data.get('frameNumber', 0)  # Which frame to capture
+        
+        logger.info(f"🎬 Capturing frame {frame_number} from GIF: {gif_name}")
+        
+        # Look for the GIF in the palette GIF folder
+        gif_path = os.path.join('palette GIF', gif_name)
+        
+        if not os.path.exists(gif_path):
+            # Try alternative path
+            gif_path = os.path.join('frontend-vue/src/assets/images/palette GIF', gif_name)
+        
+        if not os.path.exists(gif_path):
+            raise FileNotFoundError(f"GIF file not found: {gif_name}")
+        
+        # Use PIL to capture the specific frame
+        from PIL import Image
+        
+        with Image.open(gif_path) as gif:
+            # Seek to the specific frame
+            if hasattr(gif, 'n_frames') and frame_number < gif.n_frames:
+                gif.seek(frame_number)
+            else:
+                # If frame_number is out of range, use the current frame
+                gif.seek(0)
+            
+            # Convert to RGB if necessary
+            frame = gif.convert('RGB')
+            
+            # Generate unique filename for captured frame
+            filename = generate_unique_filename()
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
+            # Save the captured frame
+            frame.save(file_path, 'PNG', quality=95)
+            
+            logger.info(f"✅ GIF frame captured and saved: {filename}")
+            
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'gifName': gif_name,
+                'frameNumber': frame_number,
+                'message': f'Frame {frame_number} captured from {gif_name}'
+            })
+    
+    except Exception as e:
+        logger.error(f"❌ Error capturing GIF frame: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/capture-palette', methods=['POST'])
+def capture_palette():
+    """Capture and analyze palette - with real GIF frame capture"""
+    try:
+        data = request.get_json() or {}
+        session_id = get_or_create_session(data)
+        
+        gif_name = data.get('gifName', '1.gif')
+        frame_data = data.get('frameData')  # Base64 encoded frame data from frontend
+        
+        filename = generate_unique_filename()
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        
+        if frame_data:
+            # Use the actual captured frame from frontend
+            import base64
+            from io import BytesIO
+            
+            # Remove data URL prefix if present
+            if frame_data.startswith('data:image'):
+                frame_data = frame_data.split(',')[1]
+            
+            # Decode and save the image
+            image_data = base64.b64decode(frame_data)
+            
+            with open(file_path, 'wb') as f:
+                f.write(image_data)
+            
+            logger.info(f"🖼️ Saved captured frame from frontend: {filename}")
+        else:
+            # Fallback: Create a dummy palette image with multiple colors (for testing)
+            logger.info(f"⚠️ No frame data received, creating dummy palette for: {gif_name}")
+            
+            import random
+            from PIL import Image, ImageDraw
+            
+            palette_colors = [
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+                '#F7DC6F', '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA'
+            ]
+            selected_colors = random.sample(palette_colors, 5)
+            
+            # Create image with color bands to simulate real palette
+            img = Image.new('RGB', (600, 400), '#000000')
+            draw = ImageDraw.Draw(img)
+            
+            # Draw color bands
+            band_width = 600 // len(selected_colors)
+            for i, color in enumerate(selected_colors):
+                # Convert hex to RGB
+                hex_color = color.lstrip('#')
+                rgb_color = tuple(int(hex_color[j:j+2], 16) for j in (0, 2, 4))
+                
+                x1 = i * band_width
+                x2 = (i + 1) * band_width if i < len(selected_colors) - 1 else 600
+                draw.rectangle([x1, 0, x2, 400], fill=rgb_color)
+            
+            img.save(file_path)
+        
+        # Store palette info in session
+        session_storage[session_id]['captured_palette'] = {
+            'filename': filename,
+            'gifName': gif_name,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        logger.info(f"🎨 Running palette analysis for {filename}")
+        
+        # Run the Python recommendation script
+        result = run_python_script(None, file_path)
+        
+        # Always use raw colors from Python script output if available
+        script_raw_colors = result.get('rawColors', [])
+        if script_raw_colors and len(script_raw_colors) > 0:
+            final_raw_colors = script_raw_colors
+            logger.info(f"📝 Using raw colors from Python script: {len(script_raw_colors)} colors")
+        else:
+            # Fallback: create raw colors from dummy data
+            final_raw_colors = []
+            logger.info(f"📝 No raw colors from script, using empty array")
+        
+        # Update result to ensure rawColors is set
+        result['rawColors'] = final_raw_colors
+        logger.info(f"📝 Final raw colors for frontend: {len(final_raw_colors)} colors")
+        
+        # Save palette analysis and recommendations to database if available
+        if DB_ENABLED:
+            # Save palette analysis (emotion scores) - separate try-catch
+            try:
+                emotion_data = result.get('emotionPrediction', {})
+                all_probabilities = emotion_data.get('all_probabilities', {})
+                
+                db.save_palette_analyse(
+                    session_id=session_id,
+                    gifname=gif_name,
+                    emotion_scores=all_probabilities
+                )
+                logger.info(f"✅ Palette analysis saved to database for session: {session_id}")
+            except Exception as e:
+                logger.error(f"❌ Failed to save palette analysis to database: {e}")
+            
+            # Save painting recommendations - separate try-catch
+            try:
+                painting_urls = result.get('urls', [])[:10]
+                
+                # Debug logging for painting recommendations
+                logger.info(f"🔍 DEBUG: Full result keys: {list(result.keys())}")
+                logger.info(f"🔍 DEBUG: result.get('urls'): {result.get('urls', 'NOT_FOUND')}")
+                logger.info(f"🔍 DEBUG: result.get('recommendations'): {result.get('recommendations', 'NOT_FOUND')}")
+                logger.info(f"🔍 DEBUG: result.get('detailedRecommendations'): {len(result.get('detailedRecommendations', [])) if result.get('detailedRecommendations') else 'NOT_FOUND'}")
+                logger.info(f"🔍 DEBUG: painting_urls length: {len(painting_urls)}")
+                logger.info(f"🔍 DEBUG: first 3 painting_urls: {painting_urls[:3] if painting_urls else 'EMPTY'}")
+                
+                db.save_painting_recommendations(
+                    session_id=session_id,
+                    urls=painting_urls
+                )
+                logger.info(f"✅ Painting recommendations saved to database for session: {session_id}")
+            except Exception as e:
+                logger.error(f"❌ Failed to save painting recommendations to database: {e}")
+        
+        return jsonify({
+            'success': True,
+            'sessionId': session_id,
+            'filename': filename,
+            'gifName': gif_name,
+            'colors': result.get('urls', []),  # Keep for compatibility
+            'recommendations': result.get('urls', []),
+            'colourData': result.get('colourData', {}),
+            'rawColors': final_raw_colors,
+            'detailedRecommendations': result.get('detailedRecommendations', []),
+            'emotionPrediction': result.get('emotionPrediction', {}),
+            'total': len(result.get('urls', []))
+        })
+        
+    except Exception as e:
+        logger.error(f"Error capturing palette: {e}")
+        return jsonify({
+            'error': 'Failed to capture palette',
+            'message': str(e)
+        }), 500
 
 @app.route('/')
 def index():
@@ -383,6 +744,11 @@ def favicon():
 def uploaded_file(filename):
     """Serve uploaded files"""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/15%20emotion%20illustrations/<filename>')
+def emotion_illustrations(filename):
+    """Serve emotion illustration files"""
+    return send_from_directory('15 emotion illustrations', filename)
 
 @app.route('/<path:filename>')
 def serve_static(filename):
@@ -627,54 +993,60 @@ def save_selection():
     try:
         data = request.get_json()
         
-        if not data or 'selectedPaintings' not in data or 'originalFilename' not in data:
-            return jsonify({'error': 'Selected paintings and original filename are required'}), 400
+        if not data or 'selectedPaintings' not in data:
+            return jsonify({'error': 'Selected paintings are required'}), 400
         
         selected_paintings = data['selectedPaintings']
-        original_filename = data['originalFilename']
-        session_id = data.get('sessionId', str(uuid.uuid4()))
+        character = data.get('character', '')
+        nickname = data.get('nickname', '')
+        emotion = data.get('emotion', '')
+        probability = data.get('probability', 0)
+        session_id = get_or_create_session(data)
         
         if not isinstance(selected_paintings, list) or len(selected_paintings) != 3:
             return jsonify({'error': 'Exactly 3 selected paintings are required'}), 400
         
-        logger.info(f"Saving selection for {original_filename}: {selected_paintings}")
+        # Update session storage
+        if session_id in session_storage:
+            session_storage[session_id]['selected_paintings'] = selected_paintings
+            session_storage[session_id]['character'] = character
+            session_storage[session_id]['nickname'] = nickname
+            session_storage[session_id]['emotion'] = emotion
+            session_storage[session_id]['probability'] = probability
         
-        # Create selection metadata
-        selection_data = {
-            'originalFilename': original_filename,
-            'sessionId': session_id,
-            'selectedPaintings': [
-                {
-                    'url': painting['url'],
-                    'index': painting['index'],
-                    'slot': painting['slot'],
-                    'timestamp': datetime.now().isoformat()
-                }
-                for painting in selected_paintings
-            ],
-            'totalRecommendations': 10,
-            'selectionTimestamp': datetime.now().isoformat(),
-            'userAgent': request.headers.get('User-Agent', 'Unknown')
-        }
-        
-        # Save selection to file
-        selection_filename = f"selection-{int(datetime.now().timestamp() * 1000)}-{str(uuid.uuid4())[:8]}.json"
-        selection_path = os.path.join(app.config['UPLOAD_FOLDER'], selection_filename)
-        
-        with open(selection_path, 'w') as f:
-            json.dump(selection_data, f, indent=2)
-        
-        logger.info(f"Selection saved to: {selection_filename}")
-        logger.info("Selected painting URLs:")
+        logger.info(f"🖼️ PAINTING SELECTION:")
+        logger.info(f"   Session: {session_id}")
+        logger.info(f"   Character: {character}")
+        logger.info(f"   Nickname: {nickname}")
+        logger.info(f"   Emotion: {emotion}")
+        logger.info(f"   Probability: {probability}")
+        logger.info("   Selected paintings:")
         for i, painting in enumerate(selected_paintings):
-            logger.info(f"  {i + 1}. Slot {painting['slot'] + 1}: {painting['url']}")
+            logger.info(f"     {i + 1}. {painting.get('title', 'Unknown')} by {painting.get('artist', 'Unknown')}")
+        
+        # Save to database if available
+        if DB_ENABLED:
+            try:
+                painting_urls = [p.get('url', '') for p in selected_paintings]
+                db.save_paintings_style(
+                    session_id=session_id,
+                    painting_urls=painting_urls,
+                    story_character=character,
+                    nickname=nickname
+                )
+                logger.info(f"✅ Painting selection saved to database for session: {session_id}")
+            except Exception as e:
+                logger.error(f"❌ Failed to save painting selection to database: {e}")
         
         return jsonify({
             'success': True,
-            'selectionId': selection_data['sessionId'],
-            'selectionFilename': selection_filename,
+            'sessionId': session_id,
             'message': 'Selection saved successfully',
-            'selectedPaintings': selection_data['selectedPaintings']
+            'selectedPaintings': selected_paintings,
+            'character': character,
+            'nickname': nickname,
+            'emotion': emotion,
+            'probability': probability
         })
         
     except Exception as e:
@@ -690,43 +1062,41 @@ def save_emotion():
     try:
         data = request.get_json()
         
-        if not data or 'emotion' not in data or 'filename' not in data:
-            return jsonify({'error': 'Emotion and filename are required'}), 400
+        if not data or 'emotion' not in data:
+            return jsonify({'error': 'Emotion is required'}), 400
         
         emotion = data['emotion']
         probability = data.get('probability')
-        filename = data['filename']
-        session_id = data.get('sessionId', str(uuid.uuid4()))
+        session_id = get_or_create_session(data)
+        
+        # Update session storage
+        if session_id in session_storage:
+            session_storage[session_id]['selected_emotion'] = {
+                'emotion': emotion,
+                'probability': probability,
+                'timestamp': datetime.now().isoformat()
+            }
         
         logger.info('🎭 EMOTION SELECTION:')
         logger.info(f'   User selected emotion: {emotion}')
         logger.info(f'   Probability: {probability}%')
-        logger.info(f'   For palette: {filename}')
         logger.info(f'   Session ID: {session_id}')
         
-        # Create emotion selection metadata
-        emotion_data = {
-            'emotion': emotion,
-            'probability': probability,
-            'filename': filename,
-            'sessionId': session_id,
-            'timestamp': datetime.now().isoformat(),
-            'userAgent': request.headers.get('User-Agent', 'Unknown')
-        }
-        
-        # Save emotion selection to file
-        emotion_filename = f"emotion-{int(datetime.now().timestamp() * 1000)}-{str(uuid.uuid4())[:8]}.json"
-        emotion_path = os.path.join(app.config['UPLOAD_FOLDER'], emotion_filename)
-        
-        with open(emotion_path, 'w') as f:
-            json.dump(emotion_data, f, indent=2)
-        
-        logger.info(f'   Emotion selection saved to: {emotion_filename}')
+        # Save to database if available
+        if DB_ENABLED:
+            try:
+                db.save_emotion_selection(
+                    session_id=session_id,
+                    selected_emotion=emotion,
+                    probability=probability
+                )
+                logger.info(f"✅ Emotion saved to database for session: {session_id}")
+            except Exception as e:
+                logger.error(f"❌ Failed to save emotion to database: {e}")
         
         return jsonify({
             'success': True,
-            'emotionId': emotion_data['sessionId'],
-            'emotionFilename': emotion_filename,
+            'sessionId': session_id,
             'message': 'Emotion selection saved successfully',
             'selectedEmotion': {
                 'emotion': emotion,
@@ -788,25 +1158,75 @@ def get_selection_history():
 def generate_story():
     """API endpoint to generate story"""
     try:
+        logger.info("🔮 Starting generate_story endpoint")
         data = request.get_json()
+        logger.info(f"🔮 Received data: {data is not None}")
         
-        if not data or 'paintings' not in data or 'narrative_style' not in data:
-            return jsonify({'error': 'Paintings and narrative style are required'}), 400
+        session_id = get_or_create_session(data)
+        logger.info(f"🔮 Session ID: {session_id}")
         
-        paintings = data['paintings']
-        narrative_style = data['narrative_style']
-        user_name = data.get('user_name', '')
-        emotion = data.get('emotion')
-        emotion_probability = data.get('emotion_probability')
+        # Extract data from the new format
+        paintings = data.get('paintings') if data else None
+        character = data.get('character') if data else None  
+        nickname = data.get('nickname') if data else None
+        emotion = data.get('emotion') if data else None
+        probability = data.get('probability') if data else None
+        timestamp = data.get('timestamp') if data else None
         
-        if not isinstance(paintings, list) or len(paintings) != 3:
+        logger.info(f"🔮 Received data: paintings={len(paintings) if paintings else 'None'}, character={character}, nickname={nickname}")
+        logger.info(f"🔮 Emotion data: {emotion} ({probability}%), timestamp={timestamp}")
+        
+        # Fallback to session data if not provided in request
+        session_data = session_storage.get(session_id, {})
+        
+        if not paintings:
+            paintings = session_data.get('selected_paintings', [])
+            logger.info(f"🔮 Using paintings from session: {len(paintings)}")
+        
+        if not character:
+            character = session_data.get('character', '')
+            
+        if not nickname:
+            nickname = session_data.get('nickname', '')
+            
+        if not emotion:
+            # Check for emotion data stored by save-emotion endpoint
+            selected_emotion_data = session_data.get('selected_emotion', {})
+            if selected_emotion_data and isinstance(selected_emotion_data, dict):
+                emotion = selected_emotion_data.get('emotion', '')
+            else:
+                emotion = session_data.get('emotion', '')
+            
+        if not probability:
+            # Check for probability data stored by save-emotion endpoint
+            selected_emotion_data = session_data.get('selected_emotion', {})
+            if selected_emotion_data and isinstance(selected_emotion_data, dict):
+                probability = selected_emotion_data.get('probability', 0)
+            else:
+                probability = session_data.get('probability', 0)
+        
+        logger.info(f"🔮 Final values - paintings: {len(paintings) if paintings else 'None'}, character: {character}, nickname: {nickname}")
+        logger.info(f"🔮 Final emotion values - emotion: {emotion}, probability: {probability}")
+        
+        # Debug session storage for emotion data
+        selected_emotion_data = session_data.get('selected_emotion', {})
+        logger.info(f"🔮 Session emotion debug - selected_emotion_data: {selected_emotion_data}")
+        logger.info(f"🔮 Session emotion debug - session keys: {list(session_data.keys())}")
+        logger.info(f"🔮 Request emotion debug - request emotion: {data.get('emotion') if data else 'No data'}")
+        logger.info(f"🔮 Request emotion debug - request probability: {data.get('probability') if data else 'No data'}")
+        
+        if not paintings or len(paintings) != 3:
             return jsonify({'error': 'Exactly 3 paintings are required'}), 400
         
-        logger.info(f"Generating {narrative_style} story for paintings: {[p['title'] for p in paintings]}")
-        if user_name:
-            logger.info(f"User name: {user_name}")
-        if emotion and emotion_probability is not None:
-            logger.info(f"Emotion: {emotion} ({emotion_probability}%)")
+        # Set default narrative style (could be made configurable)
+        narrative_style = data.get('narrative_style', 'adventure')
+        
+        logger.info(f"📚 STORY GENERATION:")
+        logger.info(f"   Session: {session_id}")
+        logger.info(f"   User: {nickname}")
+        logger.info(f"   Character: {character}")
+        logger.info(f"   Emotion: {emotion} ({probability}%)")
+        logger.info(f"   Paintings: {[p.get('title', 'Unknown') for p in paintings]}")
         
         # Download images for each painting
         paintings_with_images = []
@@ -833,22 +1253,57 @@ def generate_story():
                     'message': str(e)
                 }), 500
         
-        # Prepare input for Python script with image paths and emotion data
+        # Prepare input for story API service
         input_data = {
             'paintings': paintings_with_images,
-            'narrative_style': narrative_style,
-            'user_name': user_name,
+            'character': character,
+            'nickname': nickname,
             'emotion': emotion,
-            'emotion_probability': emotion_probability
+            'emotion_probability': probability,
+            'timestamp': timestamp
         }
         
-        logger.info(f"Generating story with {len(input_data['paintings'])} paintings for user: {input_data['user_name'] or 'anonymous'}")
-        if input_data['emotion'] and input_data['emotion_probability'] is not None:
-            logger.info(f"Story will incorporate emotion: {input_data['emotion']} ({input_data['emotion_probability']}%)")
+        logger.info(f"Generating {narrative_style} story with {len(input_data['paintings'])} paintings")
         
-        # Run Python story generator with secure wrapper
-        story_script_path = os.path.join(os.getcwd(), 'story_generation/secure_story_generator.py')
-        result = run_python_story_script(story_script_path, input_data)
+        # Call the story API service instead of running script directly
+        story_api_url = os.environ.get('STORY_API_URL', 'http://story-api:5002')
+        logger.info(f"🔮 Calling story API: {story_api_url}/generate")
+        logger.info(f"🔮 Input data keys: {list(input_data.keys())}")
+        logger.info(f"🔮 Number of paintings: {len(input_data.get('paintings', []))}")
+        
+        try:
+            logger.info(f"🔮 Making POST request to story API...")
+            story_response = requests.post(
+                f"{story_api_url}/generate",
+                json=input_data,
+                timeout=60  # 1 minute timeout for story generation
+            )
+            logger.info(f"🔮 Story API response status: {story_response.status_code}")
+            logger.info(f"🔮 Story API response headers: {dict(story_response.headers)}")
+            
+            story_response.raise_for_status()
+            result = story_response.json()
+            
+            logger.info(f"🔮 Story API response type: {type(result)}")
+            logger.info(f"🔮 Story API response keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"❌ Failed to call story API: {e}")
+            logger.error(f"❌ Response content: {getattr(e.response, 'content', 'No response content')}")
+            result = {
+                'success': False,
+                'error': f'Story API service unavailable: {str(e)}'
+            }
+        except Exception as e:
+            logger.error(f"❌ Unexpected error calling story API: {e}")
+            result = {
+                'success': False,
+                'error': f'Unexpected error: {str(e)}'
+            }
+        
+        # Store story in session
+        if result.get('success'):
+            session_storage[session_id]['story_data'] = result
         
         # Clean up downloaded images
         for painting in paintings_with_images:
@@ -859,17 +1314,23 @@ def generate_story():
                 logger.error(f"Failed to clean up image {painting['imageFilename']}: {e}")
         
         if result.get('success'):
-            logger.info(f"Story generated successfully ({result.get('word_count')} words)")
-            return jsonify(result)
+            logger.info(f"✅ Story generated successfully ({result.get('word_count')} words)")
+            return jsonify({
+                **result,
+                'sessionId': session_id
+            })
         else:
-            logger.error(f"Story generation failed: {result.get('error')}")
+            logger.error(f"❌ Story generation failed: {result.get('error')}")
             return jsonify({
                 'error': 'Failed to generate story',
                 'message': result.get('error')
             }), 500
         
     except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
         logger.error(f"Error generating story: {e}")
+        logger.error(f"Full traceback: {error_trace}")
         
         # Clean up downloaded images in case of error
         if 'paintings_with_images' in locals():
@@ -882,6 +1343,65 @@ def generate_story():
         
         return jsonify({
             'error': 'Failed to generate story',
+            'message': str(e)
+        }), 500
+
+@app.route('/submit-feedback', methods=['POST'])
+def submit_feedback():
+    """API endpoint to submit user feedback"""
+    try:
+        data = request.get_json()
+        session_id = get_or_create_session(data)
+        
+        # Extract answers data (q1-q13 as integers 1-5, q14-q15 as text)
+        answers = data.get('answers', {})
+        
+        logger.info(f"📝 FEEDBACK SUBMISSION:")
+        logger.info(f"   Session: {session_id}")
+        logger.info(f"   Q1-Q13 ratings: {[answers.get(f'q{i}') for i in range(1, 14)]}")
+        logger.info(f"   Q14 (liked most): {answers.get('q14', '')[:50]}...")
+        logger.info(f"   Q15 (improvements): {answers.get('q15', '')[:50]}...")
+        
+        # Save to database if available
+        if DB_ENABLED:
+            try:
+                # Prepare feedback form data
+                feedback_form_data = {
+                    'q1': answers.get('q1'),
+                    'q2': answers.get('q2'),
+                    'q3': answers.get('q3'),
+                    'q4': answers.get('q4'),
+                    'q5': answers.get('q5'),
+                    'q6': answers.get('q6'),
+                    'q7': answers.get('q7'),
+                    'q8': answers.get('q8'),
+                    'q9': answers.get('q9'),
+                    'q10': answers.get('q10'),
+                    'q11': answers.get('q11'),
+                    'q12': answers.get('q12'),
+                    'q13': answers.get('q13'),
+                    'q14': answers.get('q14') if answers.get('q14') else None,
+                    'q15': answers.get('q15') if answers.get('q15') else None
+                }
+                
+                db.save_feedback_form(
+                    session_id=session_id,
+                    feedback_data=feedback_form_data
+                )
+                logger.info(f"✅ Feedback saved to database for session: {session_id}")
+            except Exception as e:
+                logger.error(f"❌ Failed to save feedback to database: {e}")
+        
+        return jsonify({
+            'success': True,
+            'sessionId': session_id,
+            'message': 'Feedback submitted successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error submitting feedback: {e}")
+        return jsonify({
+            'error': 'Failed to submit feedback',
             'message': str(e)
         }), 500
 

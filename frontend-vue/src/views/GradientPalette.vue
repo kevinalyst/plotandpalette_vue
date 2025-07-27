@@ -9,11 +9,11 @@
     />
     
     <div 
-      :class="['capture-prompt', { 'hidden': !showCapturePrompt }]"
+      :class="['capture-prompt', { 'animate-fade': animatePrompt, 'hidden': !showCapturePrompt }]"
     >
       <div class="prompt-text">
-        <span class="prompt-step">Step 1:</span> Which palette catches your eye?<br/>
-        Take your time to view and feel...
+        <div><span class="prompt-step">Step 1:</span> <p>Which palette catches your eye?</p></div>
+        <p>Take your time to view and feel...</p>
       </div>
     </div>
     
@@ -46,6 +46,7 @@ import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Modal from '@/components/Modal.vue'
+import ApiService from '@/services/api.js'
 
 export default {
   name: 'GradientPalette',
@@ -60,10 +61,11 @@ export default {
     const currentGifSrc = ref('')
     const gifVisible = ref(false)
     const showCapturePrompt = ref(false)
+    const animatePrompt = ref(false)
     const isCapturing = ref(false)
     const showModal = ref(false)
     const showLoading = ref(false)
-    const loadingMessage = ref('Your palette is being analysed. Please hold on a moment...')
+    const loadingMessage = ref('Faster than Van Gogh\'s brush!')
     
     // Modal data
     const modalTitle = ref('')
@@ -71,19 +73,47 @@ export default {
     const modalButtons = ref([])
     
     // GIF cycling properties - use palette GIF folder
-    const allGifs = Array.from({length: 50}, (_, i) => require(`@/assets/images/palette GIF/${i + 1}.gif`))
+    const allGifs = []
+    
+    // Animation properties
+    const animationTimeout = ref(null)
+    
+    // GIF element reference for frame capture
+    const animatedGif = ref(null)
+    
+    // Import GIFs with proper Vite asset handling
+    const importGifs = async () => {
+      try {
+        console.log('📁 Loading GIFs...')
+        
+        // Method 1: Try dynamic imports
+        for (let i = 1; i <= 50; i++) {
+          try {
+            const gifModule = await import(`@/assets/images/palette GIF/${i}.gif`)
+            allGifs.push(gifModule.default || gifModule)
+          } catch (error) {
+            // Fallback to direct URL construction
+            allGifs.push(new URL(`@/assets/images/palette GIF/${i}.gif`, import.meta.url).href)
+          }
+        }
+        
+        console.log(`✅ Loaded ${allGifs.length} GIFs successfully`)
+        console.log('🔍 First few GIF URLs:', allGifs.slice(0, 3))
+      } catch (error) {
+        console.error('❌ Error loading GIFs:', error)
+        
+        // Emergency fallback - use simpler paths
+        for (let i = 1; i <= 10; i++) {
+          allGifs.push(`/src/assets/images/palette GIF/${i}.gif`)
+        }
+        console.log('⚠️ Using emergency fallback with 10 GIFs')
+      }
+    }
     const currentGifOrder = ref([])
     const currentGifIndex = ref(0)
     const gifCyclingInterval = ref(null)
-    const promptAnimationInterval = ref(null)
-    
-    // Session data
-    const sessionId = ref('')
     
     // Methods
-    const generateSessionId = () => {
-      return Date.now() + '-' + Math.random().toString(36).substr(2, 9)
-    }
     
     const generateRandomGifOrder = () => {
       const shuffled = [...allGifs].sort(() => Math.random() - 0.5)
@@ -118,7 +148,7 @@ export default {
       setTimeout(() => {
         showCapturePrompt.value = true
         startCapturePromptAnimation()
-      }, 2000)
+      }, 1000)
     }
     
     const stopGifCycling = () => {
@@ -130,111 +160,137 @@ export default {
     }
     
     const startCapturePromptAnimation = () => {
-      const promptElement = document.querySelector('.capture-prompt')
-      if (promptElement) {
-        promptAnimationInterval.value = setInterval(() => {
-          promptElement.style.animation = 'none'
-          setTimeout(() => {
-            promptElement.style.animation = 'pulse 2s ease-in-out infinite'
-          }, 10)
-        }, 4000)
-      }
+      // Start the animation after 2 seconds
+      animationTimeout.value = setTimeout(() => {
+        animatePrompt.value = true
+      }, 2000)
     }
     
     const stopCapturePromptAnimation = () => {
-      if (promptAnimationInterval.value) {
-        clearInterval(promptAnimationInterval.value)
-        promptAnimationInterval.value = null
+      if (animationTimeout.value) {
+        clearTimeout(animationTimeout.value)
+        animationTimeout.value = null
       }
+      animatePrompt.value = false
+    }
+    
+    const captureCurrentFrame = () => {
+      return new Promise((resolve, reject) => {
+        try {
+          const gifElement = animatedGif.value
+          if (!gifElement) {
+            reject(new Error('GIF element not found'))
+            return
+          }
+          
+          // Create a canvas to capture the current frame
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d')
+          
+          // Set canvas size to match the GIF
+          canvas.width = gifElement.naturalWidth || gifElement.width || 600
+          canvas.height = gifElement.naturalHeight || gifElement.height || 400
+          
+          // Draw the current frame to canvas
+          ctx.drawImage(gifElement, 0, 0, canvas.width, canvas.height)
+          
+          // Convert to base64 data URL
+          const frameData = canvas.toDataURL('image/png', 0.95)
+          
+          console.log('🖼️ Frame captured:', {
+            width: canvas.width,
+            height: canvas.height,
+            dataLength: frameData.length
+          })
+          
+          resolve(frameData)
+        } catch (error) {
+          console.error('❌ Error capturing frame:', error)
+          reject(error)
+        }
+      })
     }
     
     const capturePalette = async () => {
-      if (isCapturing.value) return
+      console.log('🎯 Capture button clicked')
       
+      if (isCapturing.value) {
+        console.log('⏳ Already capturing, ignoring click')
+        return
+      }
+      
+      console.log('🚀 Starting palette capture...')
       isCapturing.value = true
       showCapturePrompt.value = false
       showLoading.value = true
+      
+      // Stop GIF cycling and freeze at current frame
       stopGifCycling()
       
       try {
-        // Create canvas from current GIF
-        const canvas = document.createElement('canvas')
-        const ctx = canvas.getContext('2d')
-        const img = new Image()
+        // Create new session ID when capture is clicked
+        console.log('🆕 Creating new session for capture...')
+        const username = localStorage.getItem('username')
         
-        await new Promise((resolve, reject) => {
-          img.onload = () => {
-            canvas.width = img.width
-            canvas.height = img.height
-            ctx.drawImage(img, 0, 0)
-            resolve()
-          }
-          img.onerror = reject
-          img.src = currentGifSrc.value
-        })
-        
-        // Convert canvas to blob
-        const blob = await new Promise((resolve) => {
-          canvas.toBlob(resolve, 'image/png', 0.9)
-        })
-        
-        // Upload to server (following original flow)
-        const formData = new FormData()
-        formData.append('image', blob, 'palette-capture.png')
-        formData.append('colours', JSON.stringify([]))
-        
-        const uploadResponse = await fetch('/api/save-palette', {
+        const sessionResponse = await ApiService.request('/create-session', {
           method: 'POST',
-          body: formData
-        })
-        
-        if (!uploadResponse.ok) {
-          throw new Error('Failed to upload palette')
-        }
-        
-        const uploadResult = await uploadResponse.json()
-        const filename = uploadResult.filename
-        
-        // Get recommendations with emotion analysis
-        const recResponse = await fetch('/api/get-recommendations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            filename: filename,
-            session_id: sessionId.value
+          body: JSON.stringify({ 
+            username: username
           })
         })
         
-        if (!recResponse.ok) {
-          throw new Error('Failed to get recommendations')
+        const sessionId = sessionResponse.sessionId
+        console.log('✅ New session created:', sessionId)
+        
+        // Store the new session ID
+        localStorage.setItem('sessionId', sessionId)
+        
+        // Helper function for Unicode-safe base64 encoding
+        const unicodeSafeBase64Encode = (str) => {
+          try {
+            // First encode the string as UTF-8, then encode to base64
+            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+              return String.fromCharCode('0x' + p1)
+            }))
+          } catch (error) {
+            console.error('Error encoding string:', error)
+            // Fallback: remove problematic characters and try again
+            // eslint-disable-next-line no-control-regex
+            const cleanStr = str.replace(/[^\u0000-\u007F]/g, "")
+            return btoa(cleanStr)
+          }
         }
+
+        const currentGifSrc = allGifs[currentGifIndex.value] || '1.gif'
+        console.log('📷 Capturing current frame...')
         
-        const result = await recResponse.json()
+        const capturedFrame = await captureCurrentFrame()
+        console.log('📡 Sending capture request to backend...')
         
-        // Store data for next page
-        const pageData = {
-          filename: filename,
-          colourData: result.colourData,
-          rawColors: result.rawColors,
-          emotionPrediction: result.emotionPrediction,
-          recommendations: result.recommendations,
-          sessionId: sessionId.value
-        }
+        const response = await ApiService.request('/capture-palette', {
+          method: 'POST',
+          body: JSON.stringify({
+            gifName: currentGifSrc,
+            frameData: capturedFrame,
+            sessionId: sessionId
+          })
+        })
         
-        // Navigate to color palette page with data
+        console.log('✅ Palette captured successfully:', response)
+        
+        // Navigate to color palette page with the response data
         router.push({
           name: 'ColorPalettePage',
-          query: { data: btoa(JSON.stringify(pageData)) }
+          query: { data: unicodeSafeBase64Encode(JSON.stringify(response)) }
         })
         
       } catch (error) {
-        console.error('Error capturing palette:', error)
+        console.error('❌ Error in palette capture:', error)
         showLoading.value = false
+        isCapturing.value = false
         showModal.value = true
-        modalTitle.value = 'Error'
-        modalMessage.value = 'Failed to analyze palette. Please try again.'
+        modalTitle.value = 'Capture Failed'
+        modalMessage.value = `Failed to capture palette: ${error.message}`
         modalButtons.value = [
           {
             text: 'Try Again',
@@ -250,9 +306,12 @@ export default {
     }
     
     // Lifecycle
-    onMounted(() => {
-      sessionId.value = generateSessionId()
-      startGifCycling()
+    onMounted(async () => {
+      console.log('🎬 GradientPalette mounted')
+      await importGifs()
+      
+      // Wait a bit for GIFs to load before starting cycling
+      setTimeout(startGifCycling, 100)
     })
     
     onBeforeUnmount(() => {
@@ -263,6 +322,7 @@ export default {
       currentGifSrc,
       gifVisible,
       showCapturePrompt,
+      animatePrompt,
       isCapturing,
       showModal,
       showLoading,
@@ -270,6 +330,7 @@ export default {
       modalTitle,
       modalMessage,
       modalButtons,
+      animatedGif,
       capturePalette
     }
   }
@@ -286,6 +347,7 @@ export default {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  font-family: 'Poppins',regular;
 }
 
 .animated-gif-element {
@@ -300,16 +362,15 @@ export default {
 
 .capture-prompt {
   position: absolute;
-  top: 50%;
+  top: 15%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.8);
+  
   color: white;
   padding: 20px 30px;
   border-radius: 12px;
   text-align: center;
   z-index: 10;
-  animation: pulse 2s ease-in-out infinite;
   max-width: 400px;
   backdrop-filter: blur(10px);
 }
@@ -319,14 +380,19 @@ export default {
 }
 
 .prompt-text {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  justify-content: start;
   font-family: 'Poppins', sans-serif;
   font-size: 18px;
   line-height: 1.6;
+  font-weight: 400;
 }
 
 .prompt-step {
   font-weight: 600;
-  color: #4ecdc4;
+  
 }
 
 .controls {
@@ -338,29 +404,31 @@ export default {
 }
 
 .stop-button {
-  background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-  color: white;
-  border: none;
+  background: rgba(232, 232, 224, 0.15);
+  color: #2C2C2C;
+  border: 2px solid #C0C0B8;
   padding: 15px 40px;
   font-size: 18px;
   font-weight: 600;
   font-family: 'Poppins', sans-serif;
-  border-radius: 50px;
+  border-radius: 30px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .stop-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-  background: linear-gradient(45deg, #ff5252, #26a69a);
+  background: #DDD9D1;
+  border-color: #B0B0A8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .stop-button:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+  background: #F0F0E8;
 }
 
 @keyframes pulse {
@@ -372,6 +440,43 @@ export default {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1.05);
   }
+}
+
+/* Capture prompt fade animation */
+.capture-prompt.animate-fade {
+  animation: capturePromptFade 9s infinite;
+}
+
+@keyframes capturePromptFade {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Global button focus disable */
+button:focus {
+  outline: none !important;
 }
 
 /* Responsive design */

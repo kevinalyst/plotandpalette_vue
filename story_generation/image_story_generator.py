@@ -25,6 +25,19 @@ class ImageStoryGenerator:
 ## 1. CORE OBJECTIVE
 Write a cohesive and compelling micro-story of approximately 300 words. The story must connect the three paintings provided below into a single, continuous narrative, presented in a specific narrative style.
 
+{nickname_instruction}
+
+IMPORTANT: Structure your response in exactly three distinct sections, each tied to one painting. Use the following format:
+
+**PAINTING_1_SECTION**
+[Write approximately 100 words for this section]
+
+**PAINTING_2_SECTION**
+[Write approximately 100 words for this section]
+
+**PAINTING_3_SECTION**
+[Write approximately 100 words for this section]
+
 ## 2. KEY INPUTS
 * **Narrative Style:** {narrative_style_name}
 * **Primary Emotion:** {primary_emotion}
@@ -62,10 +75,10 @@ Your narrative must be anchored to the following three artworks in the specified
 
 IMPORTANT: I am also providing you with images of these three paintings. Use both the artwork information above AND your visual analysis of the actual images to create a richer, more detailed story. Incorporate what you can observe in the paintings: colors, composition, brushwork, style, mood, and visual elements to enhance your narrative.
 
-{user_name_instruction}
-
 Structure: Beginning (Painting 1) → Development (Painting 2) → Conclusion (Painting 3)
-Length: Exactly 300 words"""
+Length: Exactly 300 words total (approximately 100 words per section)
+
+CRITICAL: You must use the exact section markers **PAINTING_1_SECTION**, **PAINTING_2_SECTION**, and **PAINTING_3_SECTION** to clearly divide your story into three parts."""
         
         # Define the narrative style blocks
         self.narrative_style_blocks = {
@@ -121,20 +134,99 @@ Length: Exactly 300 words"""
             self.client = anthropic.Anthropic(api_key=self.api_key)
             print(f"[API] Claude client initialized for image story generation", file=sys.stderr)
     
-    def _encode_image(self, image_path: str) -> str:
-        """Encode image to base64 for Claude API"""
+    def _encode_image(self, image_path: str) -> tuple:
+        """Encode image to base64 for Claude API and determine media type"""
         try:
+            # Determine media type based on file extension
+            file_ext = os.path.splitext(image_path)[1].lower()
+            if file_ext in ['.jpg', '.jpeg']:
+                media_type = 'image/jpeg'
+            elif file_ext == '.png':
+                media_type = 'image/png'
+            elif file_ext == '.gif':
+                media_type = 'image/gif'
+            elif file_ext == '.webp':
+                media_type = 'image/webp'
+            else:
+                # Default to JPEG for unknown formats
+                media_type = 'image/jpeg'
+            
             with open(image_path, 'rb') as image_file:
-                return base64.b64encode(image_file.read()).decode('utf-8')
+                encoded_data = base64.b64encode(image_file.read()).decode('utf-8')
+                return encoded_data, media_type
         except Exception as e:
             print(f"[ERROR] Failed to encode image {image_path}: {e}", file=sys.stderr)
             raise
     
+    def _parse_structured_story(self, story_text: str) -> Dict:
+        """Parse the structured story response into three distinct parts"""
+        try:
+            # Split the story by section markers
+            sections = {}
+            
+            # Define section markers
+            markers = ['**PAINTING_1_SECTION**', '**PAINTING_2_SECTION**', '**PAINTING_3_SECTION**']
+            
+            # Split text by markers
+            parts = story_text.split('**PAINTING_1_SECTION**')
+            if len(parts) > 1:
+                remaining_text = parts[1]
+                
+                # Extract section 1
+                section_2_split = remaining_text.split('**PAINTING_2_SECTION**')
+                if len(section_2_split) > 1:
+                    sections['story_part_1'] = section_2_split[0].strip()
+                    remaining_text = section_2_split[1]
+                    
+                    # Extract section 2 and 3
+                    section_3_split = remaining_text.split('**PAINTING_3_SECTION**')
+                    if len(section_3_split) > 1:
+                        sections['story_part_2'] = section_3_split[0].strip()
+                        sections['story_part_3'] = section_3_split[1].strip()
+                    else:
+                        # If section 3 marker not found, put remaining text in section 2
+                        sections['story_part_2'] = remaining_text.strip()
+                        sections['story_part_3'] = ""
+                else:
+                    # If section 2 marker not found, put all text in section 1
+                    sections['story_part_1'] = remaining_text.strip()
+                    sections['story_part_2'] = ""
+                    sections['story_part_3'] = ""
+            else:
+                # If no markers found, split the story into three equal parts
+                words = story_text.split()
+                words_per_section = len(words) // 3
+                
+                sections['story_part_1'] = ' '.join(words[:words_per_section])
+                sections['story_part_2'] = ' '.join(words[words_per_section:words_per_section*2])
+                sections['story_part_3'] = ' '.join(words[words_per_section*2:])
+                
+                print(f"[WARNING] No section markers found, split story into equal parts", file=sys.stderr)
+            
+            # Ensure all sections exist
+            for key in ['story_part_1', 'story_part_2', 'story_part_3']:
+                if key not in sections:
+                    sections[key] = ""
+            
+            return sections
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to parse structured story: {e}", file=sys.stderr)
+            # Fallback: split into three equal parts
+            words = story_text.split()
+            words_per_section = len(words) // 3
+            
+            return {
+                'story_part_1': ' '.join(words[:words_per_section]),
+                'story_part_2': ' '.join(words[words_per_section:words_per_section*2]),
+                'story_part_3': ' '.join(words[words_per_section*2:])
+            }
+    
     def _classify_intensity(self, probability: float) -> str:
         """Classify emotional intensity based on probability percentage"""
-        if probability <= 30:
+        if probability <= 0.3:
             return "Low"
-        elif probability <= 50:
+        elif probability <= 0.5:
             return "Medium"
         else:
             return "High"
@@ -174,7 +266,7 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
 * **Middle (Painting 2):** Escalate the emotion to a dramatic peak, raising the stakes significantly.
 * **End (Painting 3):** Conclude with a powerful, cathartic, or overwhelming culmination of the {emotion} journey."""
     
-    def generate_story(self, paintings: List[Dict], narrative_style: str, user_name: str = None, emotion: str = None, emotion_probability: float = None) -> Dict:
+    def generate_story(self, paintings: List[Dict], narrative_style: str, nickname: str = None, emotion: str = None, emotion_probability: float = None) -> Dict:
         """Generate story based on painting images, narrative style, and user emotion"""
         
         # Validate inputs
@@ -184,7 +276,7 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
         if narrative_style not in self.narrative_style_blocks:
             raise ValueError(f"Invalid narrative style. Must be one of: {list(self.narrative_style_blocks.keys())}")
         
-        # Verify image paths exist
+        # Verify image paths exist - REQUIRED for image-based story generation
         for i, painting in enumerate(paintings):
             if 'imagePath' not in painting:
                 raise ValueError(f"Image path missing for painting {i+1}")
@@ -215,10 +307,10 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
             # Generate dynamic guidance
             dynamic_guidance = self._generate_dynamic_guidance(emotion, intensity)
             
-            # Prepare user name instruction
-            user_name_instruction = ""
-            if user_name and user_name.strip():
-                user_name_instruction = f"\n\nIMPORTANT: The story should be written in first person from the perspective of '{user_name.strip()}'. Begin the story with a brief self-introduction such as 'I am {user_name.strip()}, and...' or 'My name is {user_name.strip()}, and I...' The narrator should use first-person pronouns (I, me, my) throughout the story while clearly establishing their identity as {user_name.strip()} at the beginning."
+            # Prepare nickname instruction
+            nickname_instruction = ""
+            if nickname and nickname.strip():
+                nickname_instruction = f"\n\nCRITICAL NARRATIVE REQUIREMENT: This story MUST be written in first person from the perspective of '{nickname.strip()}'. \n\n**MANDATORY FOR PAINTING_1_SECTION**: Begin the first section with a clear self-introduction using EXACTLY this format: 'I am {nickname.strip()}, and...' or 'My name is {nickname.strip()}, and I...' \n\nThroughout ALL sections, use first-person pronouns (I, me, my, myself) and maintain the narrator's identity as {nickname.strip()}. The story should feel like {nickname.strip()} is personally experiencing and observing these artworks."
             
             # Build the complete prompt using the modular structure
             complete_prompt = self.core_framework.format(
@@ -236,7 +328,7 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
                 painting3_title=paintings[2]['title'],
                 painting3_artist=paintings[2]['artist'],
                 painting3_year=paintings[2]['year'],
-                user_name_instruction=user_name_instruction
+                nickname_instruction=nickname_instruction
             )
             
             # Prepare the message with formatted text prompt and images
@@ -247,15 +339,15 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
                 }
             ]
             
-            # Add images to the message
+            # Add images to the message - ALL images required
             for i, painting in enumerate(paintings):
                 try:
-                    image_data = self._encode_image(painting['imagePath'])
+                    image_data, media_type = self._encode_image(painting['imagePath'])
                     message_content.append({
                         "type": "image",
                         "source": {
                             "type": "base64",
-                            "media_type": "image/jpeg",
+                            "media_type": media_type,
                             "data": image_data
                         }
                     })
@@ -283,7 +375,7 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
             # Call Claude API with images
             message = self.client.messages.create(
                 model="claude-3-5-sonnet-20241022",  # Using Claude 3.5 for better vision capabilities
-                max_tokens=600,
+                max_tokens=1000,
                 temperature=0.8,
                 system="You are a creative writer specializing in art narratives. Use both the provided artwork information and your visual analysis of the images to create rich, detailed stories. Follow the modular prompt structure exactly and always write exactly 300 words.",
                 messages=[
@@ -296,27 +388,60 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
             
             story_text = message.content[0].text
             
-            # Update API call tracking
-            self._api_call_count += 1
+            # Parse the structured story into three parts
+            story_parts = self._parse_structured_story(story_text)
+            
+            # Generate a compelling story title based on the actual story content
+            title_prompt = f"""Based on the following story, create a compelling and evocative title (maximum 8 words) that captures the essence and main theme of the narrative. The title should be poetic, memorable, and reflective of the story's central message or imagery.
+
+Story:
+{story_text}
+
+Generate only the title, nothing else."""
+
+            # Generate the story title using a separate API call
+            title_message = self.client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=50,
+                temperature=0.7,
+                system="You are a skilled title writer. Create evocative, poetic titles that capture the essence of stories. Keep titles under 8 words.",
+                messages=[
+                    {
+                        "role": "user", 
+                        "content": title_prompt
+                    }
+                ]
+            )
+            
+            generated_title = title_message.content[0].text.strip()
+            # Remove quotes if the AI added them
+            if generated_title.startswith('"') and generated_title.endswith('"'):
+                generated_title = generated_title[1:-1]
+            if generated_title.startswith("'") and generated_title.endswith("'"):
+                generated_title = generated_title[1:-1]
+            
+            # Update API call tracking (now 2 calls made)
+            self._api_call_count += 2  # Story + title generation
             api_call_info['success'] = True
             api_call_info['word_count'] = len(story_text.split())
+            api_call_info['generated_title'] = generated_title
             self._api_call_log.append(api_call_info)
             
-            print(f"[API] Emotion-driven story generated successfully ({len(story_text.split())} words)", file=sys.stderr)
-            
-            # Format title using proper narrative style names and user's name
-            if user_name and user_name.strip():
-                story_title = f"{style_block['name']} - {user_name.strip()}"
-            else:
-                story_title = style_block['name']
+            print(f"[API] Story and title generated successfully ({len(story_text.split())} words)", file=sys.stderr)
+            print(f"[API] Generated title: {generated_title}", file=sys.stderr)
+            print(f"[API] Story parts parsed: {len(story_parts['story_part_1'].split())} + {len(story_parts['story_part_2'].split())} + {len(story_parts['story_part_3'].split())} words", file=sys.stderr)
             
             return {
                 'success': True,
                 'story': story_text,
-                'narrative_style': story_title,
+                'story_title': generated_title,  # The AI-generated title based on story content
+                'story_part_1': story_parts['story_part_1'],
+                'story_part_2': story_parts['story_part_2'],
+                'story_part_3': story_parts['story_part_3'],
+                'narrative_style': style_block['name'],  # Keep the narrative style separate
                 'paintings': paintings,
                 'word_count': len(story_text.split()),
-                'user_name': user_name,
+                'nickname': nickname,
                 'emotion': emotion,
                 'emotion_probability': emotion_probability,
                 'intensity': intensity
@@ -367,7 +492,7 @@ def main():
         # Extract data
         paintings = input_data.get('paintings', [])
         narrative_style = input_data.get('narrative_style', '')
-        user_name = input_data.get('user_name', '')
+        nickname = input_data.get('nickname', '')
         emotion = input_data.get('emotion', None)
         emotion_probability = input_data.get('emotion_probability', None)
         
@@ -376,7 +501,7 @@ def main():
         result = generator.generate_story(
             paintings=paintings, 
             narrative_style=narrative_style, 
-            user_name=user_name,
+            nickname=nickname,
             emotion=emotion,
             emotion_probability=emotion_probability
         )

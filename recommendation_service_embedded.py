@@ -19,7 +19,7 @@ import sys
 warnings.filterwarnings('ignore', category=pd.errors.DtypeWarning)
 
 # Configuration
-ORIGINAL_DATA_PATH = "/app/emotions_generation/interpretable_color_features_cleaned.csv"
+ORIGINAL_DATA_PATH = "/app/emotions_generation/interpretable_color_features_cleaned.csv"  # Keep for reference but won't use
 RESAMPLED_DATA_PATH = "/app/emotions_generation/resampled_emotions_data.csv"
 NUM_RECOMMENDATIONS = 10
 NUM_FEATURES = 85
@@ -679,9 +679,18 @@ def create_color_features_from_selection(user_colour_selection):
     
     return features
 
-def recommend_paintings(user_selection, original_df, resampled_df, num_recs=10):
+def is_synthetic_painting(url):
+    """
+    Check if a painting URL is synthetic (generated) or original
+    """
+    if isinstance(url, str):
+        return url.startswith('synthetic_sample_')
+    return False
+
+def recommend_paintings(user_selection, resampled_df, num_recs=10):
     """
     Recommends paintings based on color feature similarity using the 85 color features
+    Now includes synthetic painting detection and replacement logic
     """
     print("\nStarting recommendation process based on color feature similarity...")
     
@@ -719,24 +728,105 @@ def recommend_paintings(user_selection, original_df, resampled_df, num_recs=10):
     # Get indices of top similar paintings
     top_indices = np.argsort(similarities)[::-1][:num_recs]
     
-    # Get URLs of top similar paintings
-    recommendations = []
+    # Get URLs and similarity scores of top similar paintings
+    initial_recommendations = []
     for idx in top_indices:
         url = resampled_df.iloc[idx]['url']
         similarity_score = similarities[idx]
-        recommendations.append(url)
-        print(f"Similarity {similarity_score:.4f}: {url}")
+        initial_recommendations.append({
+            'url': url,
+            'similarity': similarity_score,
+            'index': idx,
+            'is_synthetic': is_synthetic_painting(url)
+        })
+        print(f"Initial similarity {similarity_score:.4f}: {url} (synthetic: {is_synthetic_painting(url)})")
+    
+    # Check for synthetic paintings
+    synthetic_paintings = [rec for rec in initial_recommendations if rec['is_synthetic']]
+    original_paintings = [rec for rec in initial_recommendations if not rec['is_synthetic']]
+    
+    print(f"Found {len(synthetic_paintings)} synthetic and {len(original_paintings)} original paintings in top {num_recs}")
+    
+    if len(synthetic_paintings) == 0:
+        # No synthetic paintings, return original recommendations
+        print("No synthetic paintings detected, proceeding with original recommendations")
+        recommendations = [rec['url'] for rec in initial_recommendations]
+    else:
+        print(f"Detected {len(synthetic_paintings)} synthetic paintings, finding replacements...")
+        
+        # Use synthetic paintings' features to find similar original paintings
+        synthetic_indices = [rec['index'] for rec in synthetic_paintings]
+        synthetic_features = resampled_features[synthetic_indices]
+        
+        # Calculate similarities between synthetic paintings and all paintings
+        synthetic_similarities = cosine_similarity(synthetic_features, resampled_features)
+        
+        # Get indices of already selected original paintings to exclude them
+        excluded_indices = set([rec['index'] for rec in original_paintings])
+        
+        replacement_recommendations = []
+        
+        for i, synthetic_rec in enumerate(synthetic_paintings):
+            print(f"Finding replacement for synthetic painting: {synthetic_rec['url']}")
+            
+            # Get similarity scores for this synthetic painting
+            sim_scores = synthetic_similarities[i]
+            
+            # Sort indices by similarity (descending)
+            sorted_indices = np.argsort(sim_scores)[::-1]
+            
+            # Find the best original painting not already selected
+            replacement_found = False
+            for candidate_idx in sorted_indices:
+                candidate_url = resampled_df.iloc[candidate_idx]['url']
+                
+                # Skip if it's synthetic, already selected, or is the synthetic painting itself
+                if (candidate_idx in excluded_indices or 
+                    is_synthetic_painting(candidate_url) or
+                    candidate_idx == synthetic_rec['index']):
+                    continue
+                
+                # Found a suitable replacement
+                replacement_recommendations.append({
+                    'url': candidate_url,
+                    'similarity': sim_scores[candidate_idx],
+                    'index': candidate_idx,
+                    'is_synthetic': False,
+                    'replaces': synthetic_rec['url']
+                })
+                excluded_indices.add(candidate_idx)
+                print(f"  → Replacement found: {candidate_url} (similarity: {sim_scores[candidate_idx]:.4f})")
+                replacement_found = True
+                break
+            
+            if not replacement_found:
+                print(f"  → Warning: Could not find replacement for {synthetic_rec['url']}")
+        
+        # Combine original paintings with replacement paintings
+        final_recommendations = original_paintings + replacement_recommendations
+        
+        # Sort by similarity score (descending) to maintain quality order
+        final_recommendations.sort(key=lambda x: x['similarity'], reverse=True)
+        
+        # Extract URLs for final output
+        recommendations = [rec['url'] for rec in final_recommendations[:num_recs]]
+        
+        print(f"Final recommendations after synthetic replacement:")
+        for i, rec in enumerate(final_recommendations[:num_recs]):
+            status = f"(replaces {rec['replaces']})" if 'replaces' in rec else "(original)"
+            print(f"  {i+1}. Similarity {rec['similarity']:.4f}: {rec['url']} {status}")
     
     print(f"Found {len(recommendations)} recommendations based on color feature similarity")
     
     return recommendations
 
-def get_detailed_recommendations(user_selection, original_df, resampled_df, num_recs=10):
+def get_detailed_recommendations(user_selection, resampled_df, num_recs=10):
     """
     Get recommendations with detailed painting information
+    Updated to only use resampled_df
     """
-    # Get basic recommendations
-    recommendations = recommend_paintings(user_selection, original_df, resampled_df, num_recs)
+    # Get basic recommendations (now handles synthetic replacement internally)
+    recommendations = recommend_paintings(user_selection, resampled_df, num_recs)
     
     # Extract detailed information for each recommendation
     detailed_recommendations = []
@@ -828,19 +918,12 @@ def main():
         image_path = sys.argv[1]
         print(f"Processing image: {image_path}")
         
-        # Check if data files exist
-        if not os.path.exists(ORIGINAL_DATA_PATH):
-            print(f"Error: Original data file not found at {ORIGINAL_DATA_PATH}")
-            sys.exit(1)
-        
+        # Check if resampled data file exists
         if not os.path.exists(RESAMPLED_DATA_PATH):
             print(f"Error: Resampled data file not found at {RESAMPLED_DATA_PATH}")
             sys.exit(1)
         
-        # Load data
-        print("Loading original data...")
-        original_data = pd.read_csv(ORIGINAL_DATA_PATH)
-        
+        # Load only the resampled data (no longer using original data)
         print("Loading resampled data...")
         resampled_data = pd.read_csv(RESAMPLED_DATA_PATH)
         
@@ -855,10 +938,9 @@ def main():
         print(f"Predicted emotion: {emotion_prediction['emotion']}")
         print(f"Confidence: {emotion_prediction['confidence']:.1%}")
         
-        # Get recommendations
+        # Get recommendations (now only uses resampled_data)
         detailed_recommendations = get_detailed_recommendations(
             user_selection=user_colour_selection,
-            original_df=original_data,
             resampled_df=resampled_data,
             num_recs=NUM_RECOMMENDATIONS
         )

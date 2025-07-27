@@ -18,7 +18,7 @@ class SecureStoryGenerator:
         self.allowed_operations = ['generate_story']
         self.usage_log_file = 'api_usage_log.json'
         
-    def generate_story(self, paintings, narrative_style, user_name=None, emotion=None, emotion_probability=None):
+    def generate_story(self, paintings, narrative_style, nickname=None, emotion=None, emotion_probability=None):
         """
         Generate story with additional validation and logging
         """
@@ -38,7 +38,7 @@ class SecureStoryGenerator:
         self._log_request('generate_story', {
             'paintings': [{'title': p.get('title'), 'artist': p.get('artist')} for p in paintings],
             'narrative_style': narrative_style,
-            'user_name': user_name,
+            'nickname': nickname,
             'emotion': emotion,
             'emotion_probability': emotion_probability,
             'timestamp': datetime.now().isoformat(),
@@ -47,11 +47,11 @@ class SecureStoryGenerator:
         
         # Call the actual story generator
         print(f"[SECURE] Authorized story generation request", file=sys.stderr)
-        if user_name:
-            print(f"[SECURE] User name: {user_name}", file=sys.stderr)
+        if nickname:
+            print(f"[SECURE] Nickname: {nickname}", file=sys.stderr)
         if emotion and emotion_probability is not None:
             print(f"[SECURE] With emotion: {emotion} ({emotion_probability}%)", file=sys.stderr)
-        result = self.generator.generate_story(paintings, narrative_style, user_name, emotion, emotion_probability)
+        result = self.generator.generate_story(paintings, narrative_style, nickname, emotion, emotion_probability)
         
         # Log the result
         self._log_result(result)
@@ -73,7 +73,7 @@ class SecureStoryGenerator:
                 print(f"[SECURE] Validation failed: Missing painting {i+1} information. Missing fields: {missing_fields}", file=sys.stderr)
                 return False
             
-            # Check image path exists
+            # Check image path exists - REQUIRED for story generation
             if 'imagePath' not in painting:
                 print(f"[SECURE] Validation failed: Missing image path for painting {i+1}", file=sys.stderr)
                 return False
@@ -137,16 +137,26 @@ def main():
         # Parse input
         input_data = json.loads(sys.argv[1])
         
+        # Map data from generate-story endpoint format
+        paintings = input_data.get('paintings', [])
+        narrative_style = input_data.get('character', '')  # character maps to narrative_style
+        nickname = input_data.get('nickname', '')
+        emotion = input_data.get('emotion', None)
+        emotion_probability = input_data.get('emotion_probability', None)
+        
+        print(f"[SECURE] Mapped data - paintings: {len(paintings)}, narrative_style: {narrative_style}, nickname: {nickname}", file=sys.stderr)
+        print(f"[SECURE] Emotion: {emotion} ({emotion_probability}%)", file=sys.stderr)
+        
         # Create secure generator
         secure_gen = SecureStoryGenerator()
         
         # Generate story
         result = secure_gen.generate_story(
-            input_data.get('paintings', []),
-            input_data.get('narrative_style', ''),
-            input_data.get('user_name', ''),
-            input_data.get('emotion', None),
-            input_data.get('emotion_probability', None)
+            paintings=paintings,
+            narrative_style=narrative_style,
+            nickname=nickname,
+            emotion=emotion,
+            emotion_probability=emotion_probability
         )
         
         # Output result to stdout (clean JSON only)

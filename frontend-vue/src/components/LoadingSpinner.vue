@@ -1,6 +1,8 @@
 <template>
   <div v-if="show" class="loading">
-    <div class="magic-cube-animation"></div>
+    <div v-if="type === 'keyboard'" class="keyboard-animation"></div>
+    <div v-else-if="type === 'dance'" class="dance-animation"></div>
+    <div v-else class="magic-cube-animation"></div>
     <p class="loading-analysis-text">{{ message }}</p>
   </div>
 </template>
@@ -16,6 +18,11 @@ export default {
     message: {
       type: String,
       default: 'Your palette is being analysed. Please hold on a moment...'
+    },
+    type: {
+      type: String,
+      default: 'magic-cube', // 'magic-cube', 'keyboard', or 'dance'
+      validator: (value) => ['magic-cube', 'keyboard', 'dance'].includes(value)
     }
   }
 }
@@ -37,9 +44,28 @@ export default {
 }
 
 .magic-cube-animation {
-  width: 60px;
-  height: 60px;
+  width: 500px;
+  height: 500px;
   background-image: url('@/assets/images/magiccube.gif');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-bottom: 20px;
+}
+
+.keyboard-animation {
+  width: 600px;
+  height: 450px;
+  background-image: url('@/assets/images/keyboard.gif');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.dance-animation {
+  width: 500px;
+  height: 400px;
+  background-image: url('@/assets/images/dance.gif');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;

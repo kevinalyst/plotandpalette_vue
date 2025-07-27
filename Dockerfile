@@ -24,11 +24,12 @@ COPY gunicorn.conf.py .
 
 # Copy static assets (needed for recommendations)
 COPY . ./temp_assets/
-RUN mkdir -p "./15 emotion illustrations" "./palette GIF" ./image ./emotions_generation && \
+RUN mkdir -p "./15 emotion illustrations" "./palette GIF" ./image ./emotions_generation ./story_generation && \
     cp -r "./temp_assets/15 emotion illustrations/"* "./15 emotion illustrations/" 2>/dev/null || true && \
     cp -r "./temp_assets/palette GIF/"* "./palette GIF/" 2>/dev/null || true && \
     cp -r ./temp_assets/image/* ./image/ 2>/dev/null || true && \
     cp -r "./temp_assets/emotions_generation/"* ./emotions_generation/ 2>/dev/null || true && \
+    cp -r "./temp_assets/story_generation/"* ./story_generation/ 2>/dev/null || true && \
     rm -rf ./temp_assets
 
 # Create uploads, logs, and runtime directories

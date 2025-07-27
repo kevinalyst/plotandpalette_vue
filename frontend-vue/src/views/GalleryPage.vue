@@ -1,6 +1,6 @@
 <template>
   <div class="gallery-page">
-    <div class="gallery-container">
+    <div class="gallery-container" v-if="allPaintings && allPaintings.length > 0">
       <!-- Step Progress Indicator -->
       <div class="progress-indicator">
         <div class="progress-step completed">1. Emotion Selected</div>
@@ -9,13 +9,71 @@
         <div :class="['progress-step', { completed: step4Complete }]">4. Create Story</div>
       </div>
 
+      <!-- Painting Gallery -->
+      <div class="gallery-section">
+        <h3>Paintings for you</h3>
+        <p class="gallery-subtitle">See the 10 paintings recommended from your captured colours</p>
+        <p class="sub-instruction">These paintings are sourced from the WikiArt-Emotion Dataset.</p>
+        
+        <!-- Navigation controls for carousel view -->
+        <div v-if="!showAllPaintings" class="gallery-navigation">
+          <button @click="prevPaintings" class="nav-btn prev-btn">
+            <img src="@/assets/images/left.png" alt="Previous" class="nav-btn-image" />
+          </button>
+          <button @click="nextPaintings" class="nav-btn next-btn">
+            <img src="@/assets/images/right.png" alt="Next" class="nav-btn-image" />
+          </button>
+        </div>
+        
+        <div class="paintings-grid-container">
+          <div class="paintings-grid" ref="paintingsGrid" v-if="allPaintings && allPaintings.length > 0">
+            <div 
+              v-for="(painting, index) in allPaintings" 
+              :key="painting.url || index"
+              class="painting-item"
+              :data-number="index + 1"
+              draggable="true"
+              @dragstart="handleDragStart($event, painting)"
+              @click="openPaintingModal(painting)"
+            >
+              <img :src="painting.url" :alt="painting.title" />
+              <div class="painting-hover-info">
+                <div class="hover-content">
+                  <h4>{{ painting.title }}</h4>
+                  <p>{{ painting.artist }}</p>
+                  <p>{{ painting.year }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Horizontal scroll bar -->
+        <div class="scroll-bar-container">
+          <div class="scroll-bar" @click="handleScrollBarClick">
+            <div class="scroll-thumb" ref="scrollThumb" :style="{ left: scrollThumbPosition + '%', width: scrollThumbWidth + '%' }"></div>
+          </div>
+        </div>
+        
+        <!-- Recapture Option -->
+        <div class="gallery-recapture">
+          <span class="recapture-text-left">I don't like any of these paintings. I want to</span>
+          <button @click="recaptureGallery" class="recapture-btn">
+            Re-capture
+          </button>
+          <span class="recapture-text-right">a palette.</span>
+        </div>
+      </div>
+
       <!-- Selected Paintings Drop Zone -->
       <div class="selection-area">
         <h2>Your Selected Paintings</h2>
         <p class="instruction">
-          <span class="step-label">Step 2:</span> 
-          Drag and drop 3 paintings that speak to you
+          <span class="step-label">Step 3:</span> <br/>
+          <span class="step-label-text">Which paintings spark your curiosity?</span> <br/>
+          <span class="step-label-text">Pick three to craft a unique story...</span>
         </p>
+        <p class="sub-instruction">Drag and drop paintings into the boxes</p>
         
         <div class="drop-zones">
           <div 
@@ -31,81 +89,89 @@
               <button @click="removePainting(i-1)" class="remove-btn">×</button>
             </div>
             <div v-else class="drop-placeholder">
-              <span>Drop painting {{ i }} here</span>
+              <img src="@/assets/images/drop.png" alt="Drop painting here" class="drop-placeholder-image" />
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Painting Gallery -->
-      <div class="gallery-section">
-        <h3>Recommended Paintings</h3>
-        <div class="paintings-grid">
-          <div 
-            v-for="(painting, index) in recommendations" 
-            :key="index"
-            class="painting-item"
-            draggable="true"
-            @dragstart="handleDragStart($event, painting)"
-            @click="selectPainting(painting)"
-          >
-            <img :src="painting.url" :alt="painting.title" />
-            <div class="painting-info">
-              <h4>{{ painting.title }}</h4>
-              <p>{{ painting.artist }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      
+      
       <!-- Character Selection -->
-      <div v-if="step2Complete" class="character-section">
-        <h3>Choose Your Narrative Style</h3>
+      <div v-if="step2Complete" class="selection-area">
         <p class="instruction">
-          <span class="step-label">Step 3:</span> 
-          Select a character to guide your story
+          <span class="step-label">Step 4:</span> <br/>
+          <span class="step-label-text">Which character resonates with you?</span> <br/>
+          <span class="step-label-text">Dive into their story...</span>
         </p>
+        <p class="sub-instruction">Select the perspective that interests you the most</p>
+                 <p class="sub-instruction">Hover your <img src="@/assets/images/cursor.png" alt="cursor" class="cursor-icon" /> over the cards to see each story's style</p>
         
-        <div class="character-cards">
+        <div class="character-cards" v-if="characters && characters.length > 0">
           <div 
             v-for="character in characters" 
             :key="character.id"
             :class="['character-card', { 'selected': selectedCharacter === character.id }]"
             @click="selectCharacter(character.id)"
+            @mouseenter="showCharacterDescription(character.id)"
+            @mouseleave="hideCharacterDescription"
           >
-            <img :src="character.image" :alt="character.name" />
-            <h4>{{ character.name }}</h4>
-            <p>{{ character.description }}</p>
+            <img :src="character.image" :alt="character.name" v-if="hoveredCharacter !== character.id"/>
+            <img :src="character.image_b" :alt="character.name" v-if="hoveredCharacter === character.id"/>
+            <!-- <div class="exit-btn" v-if="selectedCharacter === character.id" @click="closeCharacter(character.id)">x</div> -->
+            
           </div>
         </div>
       </div>
 
-      <!-- Name Input -->
-      <div v-if="step3Complete" class="name-section">
-        <h3>Tell us your name</h3>
-        <p class="instruction">This will personalize your story</p>
-        <input 
-          v-model="userName" 
-          type="text" 
-          placeholder="Enter your name"
-          class="name-input"
-          maxlength="50"
-        />
+      <!-- Name Input Modal -->
+      <div v-if="showNameInput" class="name-modal-overlay" @click="closeNameInput">
+        <div class="name-modal" @click.stop>
+          <h3>What shall we call your story's main character?</h3>
+          <h3>Pick a name (different from your username)</h3>
+          <input 
+            v-model="nickname" 
+            type="text" 
+            placeholder="Enter a name..."
+            class="name-input"
+            maxlength="50"
+            @keyup.enter="confirmName"
+            ref="nameInputField"
+          />
+          <!-- <div class="name-modal-buttons">
+            <button @click="closeNameInput" class="cancel-btn">Cancel</button>
+            <button @click="confirmName" class="confirm-btn" :disabled="!nickname.trim()">Confirm</button>
+          </div> -->
+        </div>
       </div>
 
-      <!-- Generate Story Button -->
-      <div v-if="step4Complete" class="story-section">
+      <!-- Painting Preview Modal -->
+      <div v-if="showPaintingModal" class="painting-modal-overlay" @click="closePaintingModal">
+        <div class="painting-modal" @click.stop>
+          <button @click="closePaintingModal" class="painting-modal-close">
+            <img src="@/assets/images/closebutton.png" alt="Close" />
+          </button>
+          <div class="painting-modal-content">
+            <div class="painting-modal-image">
+              <img :src="selectedPaintingForModal.url" :alt="selectedPaintingForModal.title" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- All Done Button -->
+      <div v-if="step3Complete" class="story-section">
         <button 
-          class="generate-story-btn"
+          :class="['all-done-btn', { 'interactive': step4Complete }]"
           @click="generateStory"
-          :disabled="generatingStory"
+          :disabled="!step4Complete || generatingStory"
         >
-          {{ generatingStory ? 'Creating Your Story...' : 'Generate Story' }}
+          {{ generatingStory ? 'Creating Your Story...' : 'All done!' }}
         </button>
       </div>
     </div>
     
-    <LoadingSpinner :show="loading" :message="loadingMessage" />
+    <LoadingSpinner :show="loading" :message="loadingMessage" :type="spinnerType" />
   </div>
 </template>
 
@@ -113,6 +179,7 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import ApiService from '@/services/api.js'
 
 export default {
   name: 'GalleryPage',
@@ -126,6 +193,7 @@ export default {
     // Reactive data
     const loading = ref(false)
     const loadingMessage = ref('')
+    const spinnerType = ref('magic-cube')
     const generatingStory = ref(false)
     
     // Page data
@@ -133,64 +201,193 @@ export default {
     const recommendations = ref([])
     const selectedPaintings = ref([])
     const selectedCharacter = ref('')
-    const userName = ref('')
+    const nickname = ref('')
+    const hoveredCharacter = ref('')
+    const showNameInput = ref(false)
+    const showAllPaintings = ref(false)
+    
+    // Painting modal state
+    const showPaintingModal = ref(false)
+    const selectedPaintingForModal = ref({})
     
     // Step completion tracking
-    const step2Complete = computed(() => selectedPaintings.value.length === 3)
-    const step3Complete = computed(() => step2Complete.value && selectedCharacter.value)
-    const step4Complete = computed(() => step3Complete.value && userName.value.trim().length > 0)
+    const step2Complete = computed(() => {
+      return selectedPaintings.value && selectedPaintings.value.filter(p => p !== null && p !== undefined).length === 3
+    })
+    const step3Complete = computed(() => {
+      return step2Complete.value && selectedCharacter.value
+    })
+    const step4Complete = computed(() => {
+      return step3Complete.value && nickname.value && nickname.value.trim().length > 0
+    })
     
     // Character options
     const characters = ref([
       {
+        id: 'historian',
+        name: 'Historian\'s Chronicle',
+        image: new URL('@/assets/images/style1-a.png', import.meta.url).href,
+        image_b: new URL('@/assets/images/style1-b.png', import.meta.url).href
+      },
+      {
         id: 'poet',
-        name: 'The Poet',
-        description: 'Weaves tales with lyrical beauty and emotional depth',
-        image: require('@/assets/images/style1-a.png')
+        name: 'The Poet\'s Dream', 
+        image: new URL('@/assets/images/style2-a.png', import.meta.url).href,
+        image_b: new URL('@/assets/images/style2-b.png', import.meta.url).href
       },
       {
-        id: 'storyteller',
-        name: 'The Storyteller', 
-        description: 'Creates engaging narratives with vivid descriptions',
-        image: require('@/assets/images/style2-a.png')
+        id: 'detective',
+        name: 'The Detective\'s Case',
+        image: new URL('@/assets/images/style3-a.png', import.meta.url).href,
+        image_b: new URL('@/assets/images/style3-b.png', import.meta.url).href
       },
       {
-        id: 'philosopher',
-        name: 'The Philosopher',
-        description: 'Explores deep meanings and profound insights',
-        image: require('@/assets/images/style3-a.png')
+        id: 'critic',
+        name: 'The Critic\'s Analysis',
+        image: new URL('@/assets/images/style4-a.png', import.meta.url).href,
+        image_b: new URL('@/assets/images/style4-b.png', import.meta.url).href
       },
       {
-        id: 'dreamer',
-        name: 'The Dreamer',
-        description: 'Crafts whimsical and imaginative stories',
-        image: require('@/assets/images/style4-a.png')
-      },
-      {
-        id: 'sage',
-        name: 'The Sage',
-        description: 'Shares wisdom through timeless tales',
-        image: require('@/assets/images/style5-a.png')
+        id: 'time_traveller',
+        name: 'The Time Traveller\'s Report',
+        image: new URL('@/assets/images/style5-a.png', import.meta.url).href,
+        image_b: new URL('@/assets/images/style5-b.png', import.meta.url).href
       }
     ])
     
     // Drag and drop
     const draggedPainting = ref(null)
     
+    // Gallery data - will be populated from backend recommendations
+    const allPaintings = ref([])
+
+    // Refs for scroll functionality
+    const paintingsGrid = ref(null)
+    const scrollThumb = ref(null)
+    const scrollPosition = ref(0)
+    
+    // Computed properties for scroll thumb
+    const scrollThumbPosition = computed(() => {
+      if (!paintingsGrid.value) return 0
+      const maxScroll = paintingsGrid.value.scrollWidth - paintingsGrid.value.clientWidth
+      if (maxScroll <= 0) return 0
+      return (scrollPosition.value / maxScroll) * 100
+    })
+    
+    const scrollThumbWidth = computed(() => {
+      if (!paintingsGrid.value) return 100
+      const visibleRatio = paintingsGrid.value.clientWidth / paintingsGrid.value.scrollWidth
+      return Math.max(10, visibleRatio * 100) // Minimum 10% width
+    })
+
+    // Helper function for Unicode-safe base64 decoding
+    const unicodeSafeBase64Decode = (str) => {
+      try {
+        // Decode from base64, then decode from UTF-8
+        return decodeURIComponent(atob(str).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+        }).join(''))
+      } catch (error) {
+        console.error('Error decoding string:', error)
+        // Fallback to regular atob
+        return atob(str)
+      }
+    }
+
     // Methods
     const loadPageData = () => {
       try {
         if (route.query.data) {
-          const data = JSON.parse(atob(route.query.data))
+          const data = JSON.parse(unicodeSafeBase64Decode(route.query.data))
           pageData.value = data
-          recommendations.value = data.recommendations || []
+          
+          // Use detailedRecommendations from the backend which includes title, artist, year, url
+          console.log('📊 Page data received:', data)
+          console.log('🎨 DetailedRecommendations:', data.detailedRecommendations)
+          console.log('🌐 Simple recommendations:', data.recommendations)
+          
+          if (data.detailedRecommendations && data.detailedRecommendations.length > 0) {
+            allPaintings.value = data.detailedRecommendations
+            recommendations.value = data.detailedRecommendations
+            console.log('✅ Loaded paintings:', allPaintings.value.length)
+          } else if (data.recommendations && data.recommendations.length > 0) {
+            // Fallback: convert simple URL list to detailed format
+            console.log('⚠️ Using fallback: converting URLs to painting objects')
+            const paintingObjects = data.recommendations.map((url, index) => ({
+              url: url,
+              title: `Painting ${index + 1}`,
+              artist: 'Unknown Artist', 
+              year: 'Unknown Year'
+            }))
+            allPaintings.value = paintingObjects
+            recommendations.value = paintingObjects
+          } else {
+            throw new Error('No painting recommendations received from backend')
+          }
         } else {
           router.push('/')
         }
       } catch (error) {
         console.error('Error loading page data:', error)
+        alert('Failed to load painting recommendations. Backend connection required.')
         router.push('/')
       }
+    }
+
+    const recaptureGallery = () => {
+      router.push('/gradient')
+    }
+
+    const nextPaintings = () => {
+      if (!paintingsGrid.value) return
+      const scrollAmount = paintingsGrid.value.clientWidth * 0.8 // Scroll 80% of visible width
+      const maxScroll = paintingsGrid.value.scrollWidth - paintingsGrid.value.clientWidth
+      const newScrollPosition = Math.min(scrollPosition.value + scrollAmount, maxScroll)
+      
+      paintingsGrid.value.scrollTo({
+        left: newScrollPosition,
+        behavior: 'smooth'
+      })
+    }
+
+    const prevPaintings = () => {
+      if (!paintingsGrid.value) return
+      const scrollAmount = paintingsGrid.value.clientWidth * 0.8 // Scroll 80% of visible width
+      const newScrollPosition = Math.max(scrollPosition.value - scrollAmount, 0)
+      
+      paintingsGrid.value.scrollTo({
+        left: newScrollPosition,
+        behavior: 'smooth'
+      })
+    }
+    
+    const updateScrollPosition = () => {
+      if (paintingsGrid.value) {
+        scrollPosition.value = paintingsGrid.value.scrollLeft
+      }
+    }
+    
+    const initializeScrollHandler = () => {
+      if (paintingsGrid.value) {
+        paintingsGrid.value.addEventListener('scroll', updateScrollPosition)
+        // Initialize scroll position
+        updateScrollPosition()
+      }
+    }
+    
+    const handleScrollBarClick = (event) => {
+      if (!paintingsGrid.value) return
+      const scrollBar = event.currentTarget
+      const rect = scrollBar.getBoundingClientRect()
+      const clickX = event.clientX - rect.left
+      const scrollBarWidth = rect.width
+      const maxScroll = paintingsGrid.value.scrollWidth - paintingsGrid.value.clientWidth
+      
+      const targetScrollPosition = (clickX / scrollBarWidth) * maxScroll
+      paintingsGrid.value.scrollTo({
+        left: targetScrollPosition,
+        behavior: 'smooth'
+      })
     }
     
     const handleDragStart = (event, painting) => {
@@ -198,10 +395,10 @@ export default {
       event.dataTransfer.effectAllowed = 'copy'
     }
     
-    const handleDrop = (event, slotIndex) => {
+        const handleDrop = (event, slotIndex) => {
       event.preventDefault()
       
-      if (draggedPainting.value && !selectedPaintings.value[slotIndex]) {
+      if (draggedPainting.value && selectedPaintings.value && !selectedPaintings.value[slotIndex]) {
         // Check if painting is already selected in another slot
         const existingIndex = selectedPaintings.value.findIndex(p => 
           p && p.url === draggedPainting.value.url
@@ -214,8 +411,27 @@ export default {
       
       draggedPainting.value = null
     }
-    
+
+    const openPaintingModal = (painting) => {
+      if (painting && painting.url) {
+        selectedPaintingForModal.value = {
+          url: painting.url,
+          title: painting.title,
+          artist: painting.artist,
+          year: painting.year
+        }
+        showPaintingModal.value = true
+      }
+    }
+
+    const closePaintingModal = () => {
+      showPaintingModal.value = false
+      selectedPaintingForModal.value = {}
+    }
+
     const selectPainting = (painting) => {
+      if (!selectedPaintings.value || !painting) return
+      
       // Find first empty slot
       const emptySlot = selectedPaintings.value.findIndex(slot => !slot)
       
@@ -230,85 +446,164 @@ export default {
         }
       }
     }
-    
+
     const removePainting = (index) => {
-      selectedPaintings.value[index] = null
+      if (selectedPaintings.value && selectedPaintings.value[index]) {
+        selectedPaintings.value[index] = null
+      }
     }
     
     const selectCharacter = (characterId) => {
       selectedCharacter.value = characterId
+      // Show name input modal when character is selected
+      showNameInput.value = true
+      // Focus name input after modal is shown
+      setTimeout(() => {
+        if (document.querySelector('.name-input')) {
+          document.querySelector('.name-input').focus()
+        }
+      }, 100)
+    }
+
+    const showCharacterDescription = (characterId) => {
+      hoveredCharacter.value = characterId
+    }
+
+    const hideCharacterDescription = () => {
+      hoveredCharacter.value = ''
+    }
+
+    const closeNameInput = () => {
+      showNameInput.value = false
+      // Reset character selection if no name was entered
+      if (!nickname.value.trim()) {
+        selectedCharacter.value = ''
+      }
+    }
+
+    const confirmName = () => {
+      if (nickname.value.trim()) {
+        showNameInput.value = false
+      }
+    }
+    
+    // Helper function for Unicode-safe base64 encoding
+    const unicodeSafeBase64Encode = (str) => {
+      try {
+        // First encode the string as UTF-8, then encode to base64
+        return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+          return String.fromCharCode('0x' + p1)
+        }))
+      } catch (error) {
+        console.error('Error encoding string:', error)
+        // Fallback: remove problematic characters and try again
+        // eslint-disable-next-line no-control-regex
+        const cleanStr = str.replace(/[^\u0000-\u007F]/g, "")
+        return btoa(cleanStr)
+      }
     }
     
     const generateStory = async () => {
       if (!step4Complete.value) return
       
+              console.log('🚀 Generating story with selections:')
+        console.log('- Paintings:', selectedPaintings.value.filter(p => p))
+        console.log('- Character:', selectedCharacter.value)
+        console.log('- Nickname:', nickname.value)
+        console.log('- Page data:', pageData.value)
+      
+      // Validate required data before making API calls
+      const validPaintings = selectedPaintings.value.filter(p => p && p.url && p.title && p.artist && p.year)
+      console.log('- Valid paintings count:', validPaintings.length)
+      console.log('- Valid paintings:', validPaintings)
+      
+      if (validPaintings.length !== 3) {
+        alert(`Error: Need exactly 3 valid paintings, but found ${validPaintings.length}`)
+        return
+      }
+      
+      if (!selectedCharacter.value) {
+        alert('Error: No character selected')
+        return
+      }
+      
+              if (!nickname.value || !nickname.value.trim()) {
+          alert('Error: Please enter a nickname for your story')
+          return
+        }
+      
       generatingStory.value = true
       loading.value = true
-      loadingMessage.value = 'Creating your personalized story...'
+      loadingMessage.value = 'Matisse\'s dancers are warming up!'
+      spinnerType.value = 'dance'
       
       try {
-        // Save selection first
-        const selectionResponse = await fetch('/api/save-selection', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            session_id: pageData.value.sessionId,
-            palette_filename: pageData.value.filename,
-            emotion: pageData.value.selectedEmotion,
-            emotion_probability: pageData.value.selectedProbability,
-            selected_paintings: selectedPaintings.value.filter(p => p),
-            character: selectedCharacter.value,
-            user_name: userName.value
-          })
+        const sessionId = localStorage.getItem('sessionId')
+        console.log('📋 Session ID:', sessionId)
+        
+        // First save the painting selection
+        console.log('💾 Saving selection...')
+        const selectionData = {
+          selectedPaintings: validPaintings,
+          character: selectedCharacter.value,
+          nickname: nickname.value,
+          emotion: pageData.value.selectedEmotion,
+          probability: pageData.value.selectedProbability,
+          sessionId: sessionId
+        }
+        console.log('💾 Selection data:', selectionData)
+        
+        await ApiService.saveSelection(selectionData)
+        console.log('✅ Selection saved successfully')
+        
+        // Then generate the story
+        console.log('📚 Generating story...')
+        
+        // Debug emotion data
+        console.log('📚 Debug - pageData.value:', pageData.value)
+        console.log('📚 Debug - selectedEmotion:', pageData.value.selectedEmotion)
+        console.log('📚 Debug - selectedProbability:', pageData.value.selectedProbability)
+        
+        const storyData = {
+          paintings: validPaintings,
+          character: selectedCharacter.value,
+          nickname: nickname.value,
+          emotion: pageData.value.selectedEmotion || '',
+          probability: pageData.value.selectedProbability || 0,
+          sessionId: sessionId
+        }
+        console.log('📚 Story request data:', storyData)
+        console.log('📚 Story request emotion debug:', {
+          emotion: storyData.emotion,
+          probability: storyData.probability,
+          emotionType: typeof storyData.emotion,
+          probabilityType: typeof storyData.probability
         })
         
-        if (!selectionResponse.ok) {
-          console.warn('Failed to save selection, continuing with story generation')
-        }
+        const storyResponse = await ApiService.generateStory(storyData)
+        console.log('✅ Story generated successfully:', storyResponse)
         
-        // Generate story
-        const storyResponse = await fetch('/api/generate-story', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            session_id: pageData.value.sessionId,
-            user_name: userName.value,
-            narrative_style: selectedCharacter.value,
-            emotion: pageData.value.selectedEmotion,
-            emotion_probability: pageData.value.selectedProbability,
-            selected_paintings: selectedPaintings.value.filter(p => p)
-          })
-        })
-        
-        if (!storyResponse.ok) {
-          throw new Error('Failed to generate story')
-        }
-        
-        const storyData = await storyResponse.json()
-        
-        // Navigate to story page
         const storyPageData = {
           ...pageData.value,
-          selectedPaintings: selectedPaintings.value.filter(p => p),
+          selectedPaintings: validPaintings,
           selectedCharacter: selectedCharacter.value,
-          userName: userName.value,
-          story: storyData
+          userName: nickname.value,
+          story: storyResponse,
+          sessionId: sessionId
         }
         
         router.push({
           name: 'StoryPage',
-          query: { data: btoa(JSON.stringify(storyPageData)) }
+          query: { data: unicodeSafeBase64Encode(JSON.stringify(storyPageData)) }
         })
         
       } catch (error) {
-        console.error('Error generating story:', error)
+        console.error('❌ Error generating story:', error)
+        console.error('❌ Error details:', error.message, error.stack)
         loading.value = false
         generatingStory.value = false
-        alert('Failed to generate story. Please try again.')
+        spinnerType.value = 'magic-cube'
+        alert(`Failed to generate story: ${error.message}`)
       }
     }
     
@@ -317,25 +612,51 @@ export default {
       loadPageData()
       // Initialize selectedPaintings as array of nulls
       selectedPaintings.value = [null, null, null]
+      // Initialize scroll handler after DOM is ready
+      setTimeout(initializeScrollHandler, 100)
     })
     
     return {
       loading,
       loadingMessage,
+      spinnerType,
       generatingStory,
       recommendations,
+      allPaintings,
+      paintingsGrid,
+      scrollThumb,
+      scrollPosition,
+      scrollThumbPosition,
+      scrollThumbWidth,
       selectedPaintings,
       selectedCharacter,
-      userName,
+      nickname,
+      hoveredCharacter,
+      showNameInput,
       characters,
       step2Complete,
       step3Complete,
       step4Complete,
+      showAllPaintings,
+      showPaintingModal,
+      selectedPaintingForModal,
+      recaptureGallery,
+      nextPaintings,
+      prevPaintings,
+      initializeScrollHandler,
+      updateScrollPosition,
+      handleScrollBarClick,
       handleDragStart,
       handleDrop,
+      openPaintingModal,
+      closePaintingModal,
       selectPainting,
       removePainting,
       selectCharacter,
+      showCharacterDescription,
+      hideCharacterDescription,
+      closeNameInput,
+      confirmName,
       generateStory
     }
   }
@@ -345,92 +666,95 @@ export default {
 <style scoped>
 .gallery-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #000000;
   padding: 20px;
-}
-
-.gallery-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 20px;
-  padding: 40px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
-.progress-indicator {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 40px;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.progress-step {
-  padding: 10px 20px;
-  background: #f8f9fa;
-  border: 2px solid #e9ecef;
-  border-radius: 25px;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
-  color: #6c757d;
-  transition: all 0.3s ease;
-}
-
-.progress-step.completed {
-  background: linear-gradient(135deg, #4ecdc4, #44a08d);
-  border-color: #4ecdc4;
   color: white;
 }
 
+.gallery-container {
+  width: 100%;
+  overflow: hidden;
+  /* max-width: 1400px; */
+
+  margin: 0 auto;
+  padding: 40px;
+}
+
+.progress-indicator {
+  display: none;
+}
+
 .selection-area {
-  margin-bottom: 40px;
+  background-color: rgba(40, 40, 40, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 40px;
+  border-radius: 30px;
+  margin: 60px 0;
   text-align: center;
 }
 
 .selection-area h2 {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 10px;
+  display: none;
 }
 
 .instruction {
   font-family: 'Poppins', sans-serif;
-  color: #666;
-  margin-bottom: 30px;
+  color: #ccc;
+  margin-bottom: 20px;
+  font-size: 16px;
+  font-weight: 250;
+  line-height: 1.5;
 }
 
 .step-label {
+  font-size: 18px;
   font-weight: 600;
-  color: #4ecdc4;
+  color: white;
+}
+
+.step-label-text {
+  font-size: 18px;
+  font-weight: 400;
+  color: white;
+}
+
+.sub-instruction {
+  font-family: 'Poppins', sans-serif;
+  color: #ccc;
+  font-size: 16px;
+  font-weight: 250;
+  font-style: italic;
+  text-align: center;
 }
 
 .drop-zones {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 30px;
   flex-wrap: wrap;
 }
 
 .drop-zone {
   width: 200px;
-  height: 250px;
-  border: 3px dashed #ddd;
-  border-radius: 12px;
+  height: 200px;
+  border: 2px dashed rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
   position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  margin-top: 20px;
 }
 
 .drop-zone:hover {
-  border-color: #4ecdc4;
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
 .drop-zone.has-painting {
-  border: 3px solid #4ecdc4;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  background: transparent;
 }
 
 .selected-painting {
@@ -443,89 +767,307 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .remove-btn {
   position: absolute;
-  top: -10px;
-  right: -10px;
-  width: 25px;
-  height: 25px;
-  background: #ff4757;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  background: #ff4444;
   color: white;
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .drop-placeholder {
-  color: #999;
+  color: rgba(255, 255, 255, 0.6);
   font-family: 'Poppins', sans-serif;
   text-align: center;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drop-placeholder-image {
+  max-width: 80%;
+  max-height: 80%;
+  object-fit: contain;
+  opacity: 0.6;
+}
+
+.cursor-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin: 0 2px;
 }
 
 .gallery-section {
+
   margin-bottom: 40px;
 }
 
 .gallery-section h3 {
   font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 20px;
+  font-weight: 250;
+  color: white;
+  font-size: 40px;
+  margin-bottom: 10px;
   text-align: center;
 }
 
+.gallery-subtitle {
+  font-family: 'Poppins', sans-serif;
+  color: #ccc;
+  text-align: center;
+  margin-bottom: 40px;
+  font-size: 20px;
+  font-weight: 300
+}
+
+.gallery-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.nav-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  outline: none;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.nav-btn:focus {
+  outline: none;
+}
+
+.nav-btn:active {
+  outline: none;
+  transform: scale(0.95);
+}
+
+.prev-btn {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+.next-btn {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+.nav-btn-image {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.gallery-recapture {
+  text-align: center;
+  margin-top: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.recapture-text-left,
+.recapture-text-right {
+  font-family: 'Poppins', sans-serif;
+  color: white;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.recapture-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.recapture-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.paintings-grid-container {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  margin: 20px 0;
+}
+
 .paintings-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  display: flex;
   gap: 20px;
+  padding: 20px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  /* Hide scrollbar */
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.paintings-grid::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+.scroll-bar-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+.scroll-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  position: relative;
+  cursor: pointer;
+}
+
+.scroll-thumb {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 2px;
+  position: absolute;
+  top: 0;
+  transition: left 0.1s ease;
+  cursor: pointer;
 }
 
 .painting-item {
-  background: #f8f9fa;
-  border-radius: 12px;
+  width: 400px;
+  height: 300px;
+  border-radius: 15px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
+  flex-shrink: 0;
+  border: 3px solid transparent;
 }
 
 .painting-item:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.painting-item::before {
+  content: attr(data-number);
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 200;
+  font-size: 15px;
+  z-index: 2;
 }
 
 .painting-item img {
   width: 100%;
-  height: 150px;
+  height: 100%;
   object-fit: cover;
+  display: block;
+  cursor: pointer;
+  transition: transform 0.3s ease;
 }
 
-.painting-info {
-  padding: 15px;
+.painting-item img:hover {
+  transform: scale(1.05);
 }
 
-.painting-info h4 {
+.painting-hover-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  padding: 20px 15px 15px;
+  z-index: 1;
+}
+
+.painting-item:hover .painting-hover-info {
+  opacity: 1;
+}
+
+.hover-content h4 {
   font-family: 'Poppins', sans-serif;
   font-weight: 600;
   margin-bottom: 5px;
-  color: #333;
-  font-size: 14px;
+  color: white;
+  font-size: 20px;
+  line-height: 1.2;
 }
 
-.painting-info p {
+.hover-content p {
   font-family: 'Poppins', sans-serif;
-  color: #666;
-  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  margin: 2px 0;
 }
 
 .character-section {
+  background-color: rgba(40, 40, 40, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 40px;
+  line-height: 1;
+  border-radius: 30px;
   margin-bottom: 40px;
   text-align: center;
 }
@@ -533,56 +1075,330 @@ export default {
 .character-section h3 {
   font-family: 'Poppins', sans-serif;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 20px;
+  color: white;
+  font-size: 18px;
+  text-align: center;
+}
+
+.character-subtitle {
+  font-family: 'Poppins', sans-serif;
+  color: #ffffff;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.hover-instruction {
+  font-family: 'Poppins', sans-serif;
+  color: #ccc;
+  text-align: center;
+  font-size: 16px;
+  margin-bottom: 40px;
 }
 
 .character-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  display: flex;
+  justify-content: center;
   gap: 20px;
+  flex-wrap: wrap;
 }
 
 .character-card {
-  background: #f8f9fa;
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
-  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 25px;
+  margin-top: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
+  position: relative;
+  min-height: 200px;
+  width: 200px;
 }
 
 .character-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  border-color: #4ecdc4;
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .character-card.selected {
-  border-color: #4ecdc4;
-  background: linear-gradient(135deg, #4ecdc4, #44a08d);
+  border-color: #fffefe;
+  background: rgba(255, 255, 255, 0.2);
   color: white;
+  box-shadow: 0 0 16px 4px rgba(255,255,255,0.7), 0 0 32px 8px rgba(255,255,255,0.3);
+}
+
+.character-card.selected::after {
+  
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.exit-btn{
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  background: #ff4444;
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .character-card img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
   object-fit: cover;
-  margin-bottom: 15px;
+  
 }
 
 .character-card h4 {
   font-family: 'Poppins', sans-serif;
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 10px;
+  color: white;
+  font-size: 14px;
 }
 
-.character-card p {
+.character-description-hover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 15px;
+  border-radius: 0 0 12px 12px;
+  z-index: 1000;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.character-description-hover p {
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.4;
+  margin: 0;
+  color: white;
+}
+
+/* Name Input Modal */
+.name-modal-overlay {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(40, 40, 40, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(5px);
+  line-height: 1.5;
+}
+
+.name-modal {
+  
+  padding: 40px;
+  
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  transform: scale(0.9);
+  animation: modalAppear 0.3s ease forwards;
+}
+
+@keyframes modalAppear {
+  to {
+    transform: scale(1);
+  }
+}
+
+.name-modal h3 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 400;
+  color: white;
+  font-size: 18px;
+}
+
+.name-subtitle {
+  font-family: 'Poppins', sans-serif;
+  color: #ccc;
+  margin-bottom: 15px;
+  font-style: italic;
+  font-weight: 250;
+}
+
+.name-instruction {
+  font-family: 'Poppins', sans-serif;
+  color: #ccc;
+  margin-bottom: 30px;
+  font-size: 14px;
+}
+
+.name-input {
+  width: 100%;
+  padding: 15px 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 25px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 30px;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  margin-top: 20px;
+}
+
+.name-input:focus {
+  border-color: rgba(255, 255, 255, 0.6);
+  outline: none;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.name-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.name-modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.cancel-btn, .confirm-btn {
+  padding: 12px 25px;
+  border-radius: 25px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.cancel-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ccc;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.confirm-btn {
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+}
+
+.confirm-btn:hover:not(:disabled) {
+  background: white;
+  transform: translateY(-2px);
+}
+
+.confirm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Painting Preview Modal */
+.painting-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  backdrop-filter: blur(5px);
+}
+
+.painting-modal {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  background: rgba(40, 40, 40, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: modalAppear 0.3s ease forwards;
+  overflow: hidden;
+}
+
+.painting-modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 3001;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.painting-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
+.painting-modal-close img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.painting-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+.painting-modal-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.painting-modal-image img {
+  height: 600px;
+  width: auto;
+  max-width: 90vw;
+  object-fit: contain;
+  border-radius: 10px;
 }
 
 .name-section {
@@ -610,7 +1426,7 @@ export default {
 }
 
 .name-input:focus {
-  border-color: #4ecdc4;
+  /* border-color: #4ecdc4; */
   outline: none;
 }
 
@@ -618,29 +1434,40 @@ export default {
   text-align: center;
 }
 
-.generate-story-btn {
-  background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-  color: white;
+.all-done-btn {
+  background: #666;
+  color: #999;
   border: none;
-  padding: 20px 50px;
-  font-size: 20px;
-  font-weight: 600;
+  padding: 15px 40px;
+  font-size: 18px;
+  font-weight: 400;
   font-family: 'Poppins', sans-serif;
-  border-radius: 50px;
-  cursor: pointer;
+  border-radius: 30px;
+  cursor: not-allowed;
   transition: all 0.3s ease;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  margin-top: 40px;
 }
 
-.generate-story-btn:hover:not(:disabled) {
+.all-done-btn.interactive {
+  background: #888;
+  color: white;
+  cursor: pointer;
+}
+
+.all-done-btn.interactive:hover:not(:disabled) {
+  background: #999;
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
-.generate-story-btn:disabled {
+.all-done-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Global button focus disable */
+button:focus {
+  outline: none !important;
 }
 
 /* Responsive design */
@@ -671,6 +1498,17 @@ export default {
   .generate-story-btn {
     padding: 15px 30px;
     font-size: 18px;
+  }
+  
+  .painting-modal {
+    max-width: 95vw;
+    max-height: 95vh;
+    padding: 15px;
+  }
+  
+  .painting-modal-image img {
+    height: 400px;
+    max-width: 95vw;
   }
 }
 </style> 

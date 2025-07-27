@@ -4,6 +4,9 @@ import GradientPalette from '@/views/GradientPalette.vue'
 import ColorPalettePage from '@/views/ColorPalettePage.vue'
 import GalleryPage from '@/views/GalleryPage.vue'
 import StoryPage from '@/views/StoryPage.vue'
+import FeedbackPage from '@/views/FeedbackPage.vue'
+import TeamPage from '@/views/TeamPage.vue'
+import ArticlePage from '@/views/ArticlePage.vue'
 
 const routes = [
   {
@@ -30,6 +33,21 @@ const routes = [
     path: '/story',
     name: 'StoryPage',
     component: StoryPage
+  },
+  {
+    path: '/feedback',
+    name: 'FeedbackPage',
+    component: FeedbackPage
+  },
+  {
+    path: '/team',
+    name: 'TeamPage',
+    component: TeamPage
+  },
+  {
+    path: '/article',
+    name: 'ArticlePage',
+    component: ArticlePage
   }
 ]
 

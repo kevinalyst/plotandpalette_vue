@@ -1,129 +1,107 @@
 <template>
   <div class="story-page">
+    <!-- Story Title Section -->
+    <div class="storytittle">
+      <h1>{{ storyData.story?.story_title || 'Your Story' }}</h1>
+    </div>
+    
     <div class="story-container">
-      <!-- Story Header -->
-      <div class="story-header">
-        <h1>Your Personalized Story</h1>
-        <div class="story-meta">
-          <span>Created for {{ storyData.userName || 'You' }}</span>
-          <span>•</span>
-          <span>Emotion: {{ storyData.selectedEmotion }}</span>
-          <span>•</span>
-          <span>Style: {{ getCharacterName(storyData.selectedCharacter) }}</span>
-        </div>
-      </div>
-
-      <!-- Selected Paintings Display -->
-      <div class="paintings-showcase">
-        <h3>Your Chosen Paintings</h3>
-        <div class="paintings-row">
-          <div 
-            v-for="(painting, index) in storyData.selectedPaintings" 
-            :key="index"
-            class="painting-showcase"
-          >
-            <img :src="painting.url" :alt="painting.title" />
-            <div class="painting-details">
-              <h4>{{ painting.title }}</h4>
-              <p>{{ painting.artist }}</p>
+      <!-- Story Sequence with Paintings and Corresponding Story Parts -->
+      <div class="story-sequence">
+        
+        <!-- Painting 1 and Story Part 1 -->
+        <div class="painting-story-section" v-if="storyData.selectedPaintings && storyData.selectedPaintings[0]">
+          <div class="painting-display">
+            <img :src="storyData.selectedPaintings[0]?.url" :alt="storyData.selectedPaintings[0]?.title" @click="openPaintingModal(storyData.selectedPaintings[0])" />
+            <div class="painting-info">
+              <h3>{{ storyData.selectedPaintings[0]?.title }}</h3>
+              <p>{{ storyData.selectedPaintings[0]?.artist }}, {{ storyData.selectedPaintings[0]?.year }}</p>
+            </div>
+          </div>
+          <div class="story-text-section">
+            <div class="story-text">
+              {{ storyData.story?.story_part_1 || 'Story part 1 will appear here...' }}
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Story Content -->
-      <div class="story-content">
-        <div class="story-text">
-          <div v-html="formattedStory"></div>
+        <!-- Painting 2 and Story Part 2 -->
+        <div class="painting-story-section" v-if="storyData.selectedPaintings && storyData.selectedPaintings[1]">
+          <div class="painting-display">
+            <img :src="storyData.selectedPaintings[1]?.url" :alt="storyData.selectedPaintings[1]?.title" @click="openPaintingModal(storyData.selectedPaintings[1])" />
+            <div class="painting-info">
+              <h3>{{ storyData.selectedPaintings[1]?.title }}</h3>
+              <p>{{ storyData.selectedPaintings[1]?.artist }}, {{ storyData.selectedPaintings[1]?.year }}</p>
+            </div>
+          </div>
+          <div class="story-text-section">
+            <div class="story-text">
+              {{ storyData.story?.story_part_2 || 'Story part 2 will appear here...' }}
+            </div>
+          </div>
         </div>
-      </div>
 
-      <!-- Story Stats -->
-      <div class="story-stats">
-        <div class="stat">
-          <span class="stat-number">{{ wordCount }}</span>
-          <span class="stat-label">Words</span>
+        <!-- Painting 3 and Story Part 3 -->
+        <div class="painting-story-section" v-if="storyData.selectedPaintings && storyData.selectedPaintings[2]">
+          <div class="painting-display">
+            <img :src="storyData.selectedPaintings[2]?.url" :alt="storyData.selectedPaintings[2]?.title" @click="openPaintingModal(storyData.selectedPaintings[2])" />
+            <div class="painting-info">
+              <h3>{{ storyData.selectedPaintings[2]?.title }}</h3>
+              <p>{{ storyData.selectedPaintings[2]?.artist }}, {{ storyData.selectedPaintings[2]?.year }}</p>
+            </div>
+          </div>
+          <div class="story-text-section">
+            <div class="story-text">
+              {{ storyData.story?.story_part_3 || 'Story part 3 will appear here...' }}
+            </div>
+          </div>
         </div>
-        <div class="stat">
-          <span class="stat-number">{{ Math.ceil(wordCount / 200) }}</span>
-          <span class="stat-label">Min Read</span>
-        </div>
-        <div class="stat">
-          <span class="stat-number">{{ storyData.selectedPaintings?.length || 0 }}</span>
-          <span class="stat-label">Paintings</span>
-        </div>
+
       </div>
 
       <!-- Action Buttons -->
-      <div class="story-actions">
-        <button @click="shareStory" class="action-btn primary">
-          Share Story
+      <div class="action-buttons">
+        <button @click="downloadStory" class="action-btn download-btn">
+          Download my story
         </button>
-        <button @click="copyStoryLink" class="action-btn secondary">
-          Copy Link
+        <button @click="regenerateStory" class="action-btn secondary-btn">
+          Re-generate story
         </button>
-        <button @click="createAnotherStory" class="action-btn secondary">
-          Create Another
+        <button @click="recapturepalette" class="action-btn secondary-btn">
+          Re-capture palette
         </button>
-        <button @click="backToHome" class="action-btn tertiary">
-          Start Over
-        </button>
-      </div>
-
-      <!-- Reading Mode Toggle -->
-      <div class="reading-mode">
-        <button 
-          @click="toggleReadingMode" 
-          :class="['reading-toggle', { active: readingMode }]"
-        >
-          {{ readingMode ? 'Exit Reading Mode' : 'Reading Mode' }}
+        <button @click="leaveFeedback" class="action-btn feedback-btn">
+          Leave us feedback!
+          <img src="@/assets/images/heart.png" alt="heart" class="feedback-heart-icon" />
         </button>
       </div>
     </div>
 
-    <!-- Share Modal -->
-    <Modal
-      :show="showShareModal"
-      title="Share Your Story"
-      :buttons="shareModalButtons"
-    >
-      <div class="share-options">
-        <button @click="shareToSocial('twitter')" class="social-btn twitter">
-          Share on Twitter
+    <!-- Painting Preview Modal -->
+    <div v-if="showPaintingModal" class="painting-modal-overlay" @click="closePaintingModal">
+      <div class="painting-modal" @click.stop>
+        <button @click="closePaintingModal" class="painting-modal-close">
+          <img src="@/assets/images/closebutton.png" alt="Close" />
         </button>
-        <button @click="shareToSocial('facebook')" class="social-btn facebook">
-          Share on Facebook
-        </button>
-        <button @click="shareToSocial('instagram')" class="social-btn instagram">
-          Share on Instagram
-        </button>
-        <div class="share-link">
-          <input 
-            ref="shareLinkInput"
-            :value="shareLink" 
-            readonly 
-            class="share-link-input"
-          />
-          <button @click="copyShareLink" class="copy-btn">Copy</button>
+        <div class="painting-modal-content">
+          <div class="painting-modal-image">
+            <img :src="selectedPaintingForModal.url" :alt="selectedPaintingForModal.title" />
+          </div>
         </div>
       </div>
-    </Modal>
+    </div>
 
-    <LoadingSpinner :show="loading" :message="loadingMessage" />
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import Modal from '@/components/Modal.vue'
 
 export default {
   name: 'StoryPage',
   components: {
-    LoadingSpinner,
-    Modal
+    
   },
   setup() {
     const router = useRouter()
@@ -132,68 +110,34 @@ export default {
     // Reactive data
     const loading = ref(false)
     const loadingMessage = ref('')
-    const readingMode = ref(false)
-    const showShareModal = ref(false)
-    const shareLink = ref('')
-    const shareLinkInput = ref(null)
     
     // Story data
     const storyData = ref({})
-    const rawStory = ref('')
     
-    // Character mapping
-    const characterNames = {
-      'poet': 'The Poet',
-      'storyteller': 'The Storyteller',
-      'philosopher': 'The Philosopher', 
-      'dreamer': 'The Dreamer',
-      'sage': 'The Sage'
-    }
-    
-    // Computed properties
-    const formattedStory = computed(() => {
-      if (!rawStory.value) return ''
-      
-      // Format the story text with proper paragraphs
-      return rawStory.value
-        .split('\n\n')
-        .map(paragraph => `<p>${paragraph.trim()}</p>`)
-        .join('')
-    })
-    
-    const wordCount = computed(() => {
-      if (!rawStory.value) return 0
-      return rawStory.value.split(/\s+/).filter(word => word.length > 0).length
-    })
-    
-    const shareModalButtons = computed(() => [
-      {
-        text: 'Close',
-        action: () => { showShareModal.value = false },
-        secondary: true
+    // Painting modal state
+    const showPaintingModal = ref(false)
+    const selectedPaintingForModal = ref({})
+
+    // Helper function for Unicode-safe base64 decoding
+    const unicodeSafeBase64Decode = (str) => {
+      try {
+        // Decode from base64, then decode from UTF-8
+        return decodeURIComponent(atob(str).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+        }).join(''))
+      } catch (error) {
+        console.error('Error decoding string:', error)
+        // Fallback to regular atob
+        return atob(str)
       }
-    ])
-    
+    }
+
     // Methods
     const loadPageData = () => {
       try {
         if (route.query.data) {
-          const data = JSON.parse(atob(route.query.data))
+          const data = JSON.parse(unicodeSafeBase64Decode(route.query.data))
           storyData.value = data
-          
-          // Extract story content
-          if (data.story) {
-            if (typeof data.story === 'string') {
-              rawStory.value = data.story
-            } else if (data.story.story) {
-              rawStory.value = data.story.story
-            } else if (data.story.content) {
-              rawStory.value = data.story.content
-            }
-          }
-          
-          // Generate share link
-          shareLink.value = `${window.location.origin}/story?id=${data.sessionId || 'shared'}`
           
         } else {
           router.push('/')
@@ -203,425 +147,551 @@ export default {
         router.push('/')
       }
     }
-    
-    const getCharacterName = (characterId) => {
-      return characterNames[characterId] || characterId
-    }
-    
-    const toggleReadingMode = () => {
-      readingMode.value = !readingMode.value
-      
-      if (readingMode.value) {
-        document.body.classList.add('reading-mode')
-      } else {
-        document.body.classList.remove('reading-mode')
-      }
-    }
-    
-    const shareStory = () => {
-      showShareModal.value = true
-    }
-    
-    const copyStoryLink = async () => {
+
+
+
+    const downloadStory = async () => {
       try {
-        await navigator.clipboard.writeText(shareLink.value)
-        alert('Story link copied to clipboard!')
+        loading.value = true
+        loadingMessage.value = 'Preparing your story download...'
+
+        // Import html2canvas dynamically
+        const html2canvas = await import('html2canvas')
+        
+        // Get elements
+        const storytitle = document.querySelector('.storytittle')
+        const storyContainer = document.querySelector('.story-container')
+        const actionButtons = document.querySelector('.action-buttons')
+        
+        if (!storytitle || !storyContainer) {
+          throw new Error('Required story elements not found')
+        }
+
+        // Temporarily hide action buttons
+        if (actionButtons) {
+          actionButtons.style.display = 'none'
+        }
+
+        // Create a temporary container that includes both storytitle and story content
+        const tempContainer = document.createElement('div')
+        tempContainer.style.position = 'absolute'
+        tempContainer.style.top = '0'
+        tempContainer.style.left = '0'
+        tempContainer.style.width = '100%'
+        tempContainer.style.background = '#000000'
+        tempContainer.style.zIndex = '-1000'
+        
+        // Clone and append storytitle
+        const storytitleClone = storytitle.cloneNode(true)
+        storytitleClone.style.position = 'relative'
+        storytitleClone.style.top = 'auto'
+        storytitleClone.style.left = 'auto'
+        storytitleClone.style.width = '100%'
+        tempContainer.appendChild(storytitleClone)
+        
+        // Clone and append story content (without action buttons)
+        const contentClone = storyContainer.cloneNode(true)
+        contentClone.style.marginTop = '20px' // Reduce spacing since storytitle is now relative
+        
+        // Remove action buttons from the clone if they exist
+        const clonedActionButtons = contentClone.querySelector('.action-buttons')
+        if (clonedActionButtons) {
+          clonedActionButtons.remove()
+        }
+        
+        tempContainer.appendChild(contentClone)
+        document.body.appendChild(tempContainer)
+
+        // Generate canvas from the temporary container
+        const canvas = await html2canvas.default(tempContainer, {
+          backgroundColor: '#000000',
+          useCORS: true,
+          allowTaint: true,
+          scale: 2, // Higher quality
+          scrollX: 0,
+          scrollY: 0,
+          width: tempContainer.scrollWidth,
+          height: tempContainer.scrollHeight
+        })
+
+        // Clean up
+        document.body.removeChild(tempContainer)
+        
+        // Restore action buttons
+        if (actionButtons) {
+          actionButtons.style.display = 'flex'
+        }
+
+        // Convert canvas to blob and download
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `my-story-${Date.now()}.jpeg`
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+          loading.value = false
+        }, 'image/jpeg', 0.9)
       } catch (error) {
-        console.error('Failed to copy link:', error)
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea')
-        textArea.value = shareLink.value
-        document.body.appendChild(textArea)
-        textArea.select()
-        document.execCommand('copy')
-        document.body.removeChild(textArea)
-        alert('Story link copied to clipboard!')
+        console.error('Error downloading story:', error)
+        loading.value = false
+        
+        // Ensure action buttons are restored even if there's an error
+        const actionButtons = document.querySelector('.action-buttons')
+        if (actionButtons) {
+          actionButtons.style.display = 'flex'
+        }
+        
+        alert('Failed to download story. Please try again.')
       }
     }
-    
-    const copyShareLink = () => {
-      if (shareLinkInput.value) {
-        shareLinkInput.value.select()
-        document.execCommand('copy')
-        alert('Link copied!')
+
+    const recapturepalette = () => {
+      // Go back to gradient palette page
+      router.push({ name: 'GradientPalette' })
+    }
+
+    const leaveFeedback = () => {
+      // Navigate to feedback questionnaire page
+      router.push({ name: 'FeedbackPage' })
+    }
+
+    const openPaintingModal = (painting) => {
+      selectedPaintingForModal.value = painting
+      showPaintingModal.value = true
+    }
+
+    const closePaintingModal = () => {
+      showPaintingModal.value = false
+      selectedPaintingForModal.value = {}
+    }
+
+    // Helper function for Unicode-safe base64 encoding
+    const unicodeSafeBase64Encode = (str) => {
+      try {
+        // First encode the string as UTF-8, then encode to base64
+        return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+          return String.fromCharCode('0x' + p1)
+        }))
+      } catch (error) {
+        console.error('Error encoding string:', error)
+        // Fallback: remove problematic characters and try again
+        // eslint-disable-next-line no-control-regex
+        const cleanStr = str.replace(/[^\u0000-\u007F]/g, "")
+        return btoa(cleanStr)
       }
     }
-    
-    const shareToSocial = (platform) => {
-      const storyTitle = `My Personalized Art Story`
-      const storyDescription = `I just created a unique story inspired by my emotion "${storyData.value.selectedEmotion}" and curated paintings!`
-      
-      const urls = {
-        twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(storyTitle + ' - ' + storyDescription)}&url=${encodeURIComponent(shareLink.value)}`,
-        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareLink.value)}`,
-        instagram: `https://www.instagram.com/` // Instagram doesn't support direct sharing
-      }
-      
-      if (platform === 'instagram') {
-        alert('Please copy the link and share it manually on Instagram!')
-        copyShareLink()
-      } else {
-        window.open(urls[platform], '_blank', 'width=600,height=400')
-      }
-    }
-    
-    const createAnotherStory = () => {
-      // Go back to gallery with same data
+
+    const regenerateStory = () => {
+      // Reset selections and go back to gallery page
       const galleryData = {
         ...storyData.value,
-        selectedPaintings: undefined,
-        selectedCharacter: undefined,
-        userName: undefined
+        selectedPaintings: [null, null, null],
+        selectedCharacter: null,
+        userName: storyData.value.userName,
+        sessionId: storyData.value.sessionId
       }
       
       router.push({
         name: 'GalleryPage',
-        query: { data: btoa(JSON.stringify(galleryData)) }
+        query: { data: unicodeSafeBase64Encode(JSON.stringify(galleryData)) }
       })
     }
     
-    const backToHome = () => {
-      router.push('/')
-    }
-    
     // Lifecycle
-    onMounted(() => {
+    onMounted(async () => {
+      // Ensure scroll to top with multiple methods for reliability
+      const scrollToTop = () => {
+        // Method 1: Standard window scroll
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'instant'
+        })
+        
+        // Method 2: Document element scroll (fallback)
+        if (document.documentElement) {
+          document.documentElement.scrollTop = 0
+        }
+        
+        // Method 3: Body scroll (additional fallback)
+        if (document.body) {
+          document.body.scrollTop = 0
+        }
+      }
+      
+      // Immediate scroll
+      scrollToTop()
+      
+      // Wait for DOM to be fully rendered, then scroll again
+      await nextTick()
+      scrollToTop()
+      
+      // Additional scroll after a small delay to ensure it takes effect
+      setTimeout(scrollToTop, 50)
+      
       loadPageData()
     })
     
     return {
       loading,
       loadingMessage,
-      readingMode,
-      showShareModal,
-      shareLink,
-      shareLinkInput,
       storyData,
-      formattedStory,
-      wordCount,
-      shareModalButtons,
-      getCharacterName,
-      toggleReadingMode,
-      shareStory,
-      copyStoryLink,
-      copyShareLink,
-      shareToSocial,
-      createAnotherStory,
-      backToHome
+      downloadStory,
+      regenerateStory,
+      recapturepalette,
+      leaveFeedback,
+      showPaintingModal,
+      selectedPaintingForModal,
+      openPaintingModal,
+      closePaintingModal
     }
   }
 }
 </script>
 
 <style scoped>
-.story-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+/* Ensure page starts at top */
+html, body {
+  scroll-behavior: auto !important;
 }
 
-.story-container {
-  max-width: 800px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 20px;
-  padding: 40px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+.story-page {
+  min-height: 100vh;
+  background: #000000;
+  padding: 0;
+  color: white;
   position: relative;
 }
 
-.story-header {
+.storytittle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  background: #000000;
+  z-index: 1000;
+  padding: 20px 0;
   text-align: center;
-  margin-bottom: 40px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #f1f3f4;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.story-header h1 {
+.storytittle h1 {
   font-family: 'Poppins', sans-serif;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 15px;
-  font-size: 32px;
+  font-size: 40px;
+  font-weight: 250;
+  color: white;
+  margin: 0;
 }
 
-.story-meta {
-  font-family: 'Poppins', sans-serif;
-  color: #666;
-  font-size: 14px;
+.story-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 60px 40px;
+  margin-top: 100px; /* Account for fixed storytittle section */
+}
+
+.story-sequence {
   display: flex;
-  justify-content: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 80px;
+}
+
+.painting-story-section {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
   flex-wrap: wrap;
+  padding: 40px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.paintings-showcase {
-  margin-bottom: 40px;
+.painting-story-section:last-child {
+  border-bottom: none;
 }
 
-.paintings-showcase h3 {
+.painting-display {
+  text-align: center;
+  max-width: 350px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.painting-display img {
+  width: 100%;
+  max-height: 350px;
+  object-fit: contain;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.painting-display img:hover {
+  transform: scale(1.02);
+}
+
+.painting-info {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.painting-info h3 {
   font-family: 'Poppins', sans-serif;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.paintings-row {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.painting-showcase {
-  flex: 1;
-  max-width: 200px;
-  text-align: center;
-}
-
-.painting-showcase img {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  color: white;
+  font-size: 24px;
   margin-bottom: 10px;
 }
 
-.painting-details h4 {
+.painting-info p {
   font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 5px;
-  font-size: 14px;
+  color: #ccc;
+  font-size: 16px;
+  font-style: italic;
 }
 
-.painting-details p {
-  font-family: 'Poppins', sans-serif;
-  color: #666;
-  font-size: 12px;
-}
-
-.story-content {
-  margin-bottom: 40px;
-  line-height: 1.8;
+.story-text-section {
+  flex: 1;
+  min-width: 300px; /* Ensure text section has a minimum width */
 }
 
 .story-text {
   font-family: 'Poppins', sans-serif;
-  font-size: 16px;
-  color: #333;
-}
-
-.story-text :deep(p) {
-  margin-bottom: 20px;
-  text-align: justify;
-}
-
-.story-stats {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  margin-bottom: 40px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 12px;
-}
-
-.stat {
-  text-align: center;
-}
-
-.stat-number {
-  display: block;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 700;
-  font-size: 24px;
-  color: #4ecdc4;
-}
-
-.stat-label {
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.story-actions {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  flex-wrap: wrap;
+  font-size: 18px;
+  line-height: 1.8;
+  color: white;
+  text-align: left;
+  white-space: pre-line;
   margin-bottom: 30px;
 }
 
+.fallback-story p {
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px;
+  line-height: 1.8;
+  color: #ccc;
+  text-align: center;
+  font-style: italic;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 80px;
+  flex-wrap: wrap;
+}
+
 .action-btn {
-  padding: 12px 24px;
+  padding: 15px 30px;
   border: none;
-  border-radius: 25px;
+  border-radius: 50px;
   font-family: 'Poppins', sans-serif;
   font-weight: 500;
+  font-size: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 14px;
-}
-
-.action-btn.primary {
-  background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-  color: white;
-}
-
-.action-btn.secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.action-btn.tertiary {
-  background: transparent;
-  color: #6c757d;
-  border: 2px solid #6c757d;
-}
-
-.action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.reading-mode {
+  min-width: 180px;
   text-align: center;
 }
 
-.reading-toggle {
-  background: #f8f9fa;
-  color: #333;
-  border: 2px solid #e9ecef;
-  padding: 10px 20px;
-  border-radius: 20px;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.reading-toggle.active {
-  background: #4ecdc4;
+.download-btn {
+  background: #28a745;
   color: white;
-  border-color: #4ecdc4;
 }
 
-.share-options {
+.download-btn:hover {
+  background: #218838;
+  transform: translateY(-2px);
+}
+
+.secondary-btn {
+  background: #6c757d;
+  color: white;
+  border: 2px solid transparent;
+}
+
+.secondary-btn:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+}
+
+.feedback-btn {
+  background: #8b7d8b;
+  color: white;
+  border: 2px solid #a8849a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.feedback-btn:hover {
+  background: #9d8a9d;
+  border-color: #b8949a;
+  transform: translateY(-2px);
+}
+
+.feedback-heart-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+/* Global button focus disable */
+button:focus {
+  outline: none !important;
+}
+
+/* Painting Modal Styles */
+.painting-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000; /* Ensure it's above all other content */
+}
+
+.painting-modal {
+  background: #1a1a1a;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  max-width: 800px;
+  width: 90%;
   display: flex;
   flex-direction: column;
-  gap: 15px;
   align-items: center;
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
 }
 
-.social-btn {
-  width: 200px;
-  padding: 12px 20px;
+.painting-modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
   border: none;
-  border-radius: 25px;
-  color: white;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
   cursor: pointer;
+  padding: 10px;
+  z-index: 10;
   transition: all 0.3s ease;
 }
 
-.social-btn.twitter {
-  background: #1da1f2;
+.painting-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transform: scale(1.1);
 }
 
-.social-btn.facebook {
-  background: #4267b2;
+.painting-modal-close img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
 }
 
-.social-btn.instagram {
-  background: linear-gradient(45deg, #f58529, #dd2a7b, #8134af);
-}
-
-.social-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.share-link {
+.painting-modal-content {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
-  max-width: 400px;
+  overflow: hidden;
 }
 
-.share-link-input {
-  flex: 1;
-  padding: 10px 15px;
-  border: 2px solid #e9ecef;
-  border-radius: 20px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+.painting-modal-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
 }
 
-.copy-btn {
-  padding: 10px 20px;
-  background: #4ecdc4;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-/* Reading Mode Styles */
-:global(body.reading-mode) {
-  background: #f5f5f5;
-}
-
-:global(body.reading-mode) .story-container {
-  background: #ffffff;
-  max-width: 700px;
-  padding: 60px;
-}
-
-:global(body.reading-mode) .story-text {
-  font-size: 18px;
-  line-height: 2;
+.painting-modal-image img {
+  height: 600px;
+  width: auto;
+  max-width: 90vw;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .storytittle {
+    padding: 15px 0;
+  }
+  
+  .storytittle h1 {
+    font-size: 28px;
+  }
+  
   .story-container {
-    padding: 20px;
-    margin: 10px;
+    padding: 40px 20px;
+    margin-top: 75px; /* Adjusted for smaller storytittle on mobile */
   }
   
-  .story-header h1 {
-    font-size: 24px;
+  .story-sequence {
+    gap: 40px;
   }
-  
-  .story-meta {
-    flex-direction: column;
-    gap: 5px;
-  }
-  
-  .paintings-row {
+
+  .painting-story-section {
     flex-direction: column;
     align-items: center;
+    gap: 30px;
+    padding: 30px 0;
   }
   
-  .story-stats {
-    gap: 20px;
+  .painting-display {
+    max-width: 280px;
   }
   
+  .painting-info h3 {
+    font-size: 20px;
+  }
+  
+  .painting-info p {
+    font-size: 14px;
+  }
+  
+  .story-text-section {
+    width: 100%;
+  }
+  
+  .story-text {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 25px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+
   .action-btn {
-    font-size: 12px;
-    padding: 10px 20px;
+    width: 100%;
+    max-width: 280px;
   }
-  
-  .social-btn {
-    width: 180px;
+
+  .painting-modal {
+    width: 95%;
+    max-height: 90%;
+    padding: 15px;
+  }
+
+  .painting-modal-image img {
+    height: 400px;
+    max-width: 95vw;
   }
 }
 </style> 
