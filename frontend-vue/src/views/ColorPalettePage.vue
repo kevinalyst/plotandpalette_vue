@@ -230,80 +230,165 @@ export default {
     const capturedImageUrl = ref('')
     
     // Methods
-    const loadPageData = () => {
+    const loadPageData = async () => {
       try {
         console.log('🔍 Loading page data...')
         console.log('📊 Route query:', route.query)
+        console.log('🌐 Current origin:', window.location.origin)
+        console.log('📍 Current pathname:', window.location.pathname)
         
+        let data = null
+        
+        // First try: Get data from route query (navigation from previous page)
         if (route.query.data) {
-          const data = JSON.parse(unicodeSafeBase64Decode(route.query.data))
-          console.log('📦 Parsed page data:', data)
-          
-          pageData.value = data
-          colourData.value = data.colourData || []
-          
-          // Process raw colors to handle different formats
-          const processedRawColors = processRawColors(data.rawColors)
-          rawColors.value = processedRawColors
-          
-          // Process colour data for display
-          if (data.colourData && typeof data.colourData === 'object') {
-            const processedColourData = Object.entries(data.colourData)
-              .filter(([name, percentage]) => percentage > 0)
-              .map(([name, percentage]) => ({
-                name: name,
-                percentage: percentage,
-                hex: getBasicColorHex(name),
-                color: getBasicColorHex(name)
-              }))
-              .sort((a, b) => b.percentage - a.percentage)
-            
-            colourData.value = processedColourData
+          try {
+            console.log('📦 Raw query data length:', route.query.data.length)
+            data = JSON.parse(unicodeSafeBase64Decode(route.query.data))
+            console.log('✅ Successfully loaded data from route query')
+          } catch (error) {
+            console.error('❌ Failed to parse route query data:', error)
           }
-          
-          emotionPrediction.value = data.emotionPrediction
-          
-          // Set up captured image URL
-          if (data.filename) {
-            capturedImageUrl.value = `/uploads/${data.filename}`
-          }
-          
-          console.log('🎨 colourData:', colourData.value)
-          console.log('🌈 rawColors (original):', data.rawColors)
-          console.log('🌈 rawColors (processed):', rawColors.value)
-          console.log('😊 emotionPrediction:', emotionPrediction.value)
-          console.log('🖼️ capturedImageUrl:', capturedImageUrl.value)
-          
-          if (emotionPrediction.value && emotionPrediction.value.all_probabilities) {
-            // Get all emotions sorted by probability
-            const sortedEmotions = Object.entries(emotionPrediction.value.all_probabilities)
-              .map(([name, probability]) => ({ name, probability }))
-              .sort((a, b) => b.probability - a.probability)
-            
-            topEmotions.value = sortedEmotions
-            
-            // Select initial 3 emotions from different categories
-            displayedEmotions.value = selectRandomEmotions(sortedEmotions)
-            
-            // Show emotion selection after a brief delay to show color analysis first
-            setTimeout(() => {
-              showEmotionSelection.value = true
-            }, 1500)
-            
-            console.log('🎭 Emotion data processed:', {
-              totalEmotions: sortedEmotions.length,
-              topEmotion: sortedEmotions[0],
-              displayedEmotions: displayedEmotions.value
-            })
-          } else {
-            console.warn('❌ No emotion prediction data found:', emotionPrediction.value)
-          }
-        } else {
-          // No data, redirect to home
-          router.push('/')
         }
+        
+        // Second try: Get data from backend API using session ID
+        if (!data) {
+          console.log('🔄 No route data found, fetching from backend API...')
+          
+          const sessionId = localStorage.getItem('sessionId')
+          if (!sessionId) {
+            console.error('❌ No session ID found in localStorage')
+            router.push('/')
+            return
+          }
+          
+          console.log('📡 Fetching palette data for session:', sessionId)
+          
+          // Show loading state while fetching from API
+          loading.value = true
+          loadingMessage.value = 'Loading your palette analysis...'
+          
+          try {
+            const response = await ApiService.getSessionPalette(sessionId)
+            
+            if (response.success) {
+              data = response
+              console.log('✅ Successfully loaded data from backend API')
+            } else {
+              console.error('❌ Backend API returned error:', response.error)
+              router.push('/')
+              return
+            }
+          } catch (error) {
+            console.error('❌ Failed to fetch data from backend API:', error)
+            router.push('/')
+            return
+          } finally {
+            // Hide loading state
+            loading.value = false
+          }
+        }
+        
+        // Process the data (same logic for both sources)
+        if (!data) {
+          console.error('❌ No data available from any source')
+          router.push('/')
+          return
+        }
+        
+        console.log('📦 Final data to process:', data)
+        console.log('📊 Data keys:', Object.keys(data))
+        console.log('🎨 Raw colourData:', data.colourData)
+        console.log('🌈 Raw rawColors:', data.rawColors)
+        console.log('📁 Filename:', data.filename)
+        
+        pageData.value = data
+        colourData.value = data.colourData || []
+        
+        // Process raw colors to handle different formats
+        const processedRawColors = processRawColors(data.rawColors)
+        rawColors.value = processedRawColors
+        
+        // Process colour data for display
+        if (data.colourData && typeof data.colourData === 'object') {
+          const processedColourData = Object.entries(data.colourData)
+            .filter(([name, percentage]) => percentage > 0)
+            .map(([name, percentage]) => ({
+              name: name,
+              percentage: percentage,
+              hex: getBasicColorHex(name),
+              color: getBasicColorHex(name)
+            }))
+            .sort((a, b) => b.percentage - a.percentage)
+          
+          colourData.value = processedColourData
+        }
+        
+        emotionPrediction.value = data.emotionPrediction
+        
+        // Set up captured image URL with better error handling
+        if (data.filename) {
+          // Try multiple URL formats
+          const cacheBuster = Date.now()
+          const possibleUrls = [
+            `/uploads/${data.filename}?v=${cacheBuster}`,
+            `./uploads/${data.filename}?v=${cacheBuster}`,
+            `${window.location.origin}/uploads/${data.filename}?v=${cacheBuster}`,
+            `/api/uploads/${data.filename}?v=${cacheBuster}`, // Alternative API route
+            data.capturedImageUrl // fallback if provided in data
+          ].filter(Boolean) // Remove undefined values
+          
+          // Try the first URL and set up error handling
+          capturedImageUrl.value = possibleUrls[0]
+          console.log('🖼️ Setting captured image URL:', capturedImageUrl.value)
+          console.log('🔄 Available alternative URLs:', possibleUrls.slice(1))
+          
+          // Set the first URL (will work with proper backend setup)
+          capturedImageUrl.value = possibleUrls[0]
+          console.log('🖼️ Setting captured image URL:', capturedImageUrl.value)
+        } else {
+          console.warn('⚠️ No filename provided in data')
+        }
+        
+        console.log('🎨 colourData:', colourData.value)
+        console.log('🌈 rawColors (original):', data.rawColors)
+        console.log('🌈 rawColors (processed):', rawColors.value)
+        console.log('😊 emotionPrediction:', emotionPrediction.value)
+        console.log('🖼️ capturedImageUrl:', capturedImageUrl.value)
+        
+        // Validate raw colors data
+        if (!rawColors.value || rawColors.value.length === 0) {
+          console.warn('⚠️ No raw colors data available')
+        } else {
+          console.log('✅ Raw colors data loaded successfully')
+        }
+        
+        if (emotionPrediction.value && emotionPrediction.value.all_probabilities) {
+          // Get all emotions sorted by probability
+          const sortedEmotions = Object.entries(emotionPrediction.value.all_probabilities)
+            .map(([name, probability]) => ({ name, probability }))
+            .sort((a, b) => b.probability - a.probability)
+          
+          topEmotions.value = sortedEmotions
+          
+          // Select initial 3 emotions from different categories
+          displayedEmotions.value = selectRandomEmotions(sortedEmotions)
+          
+          // Show emotion selection after a brief delay to show color analysis first
+          setTimeout(() => {
+            showEmotionSelection.value = true
+          }, 1500)
+          
+          console.log('🎭 Emotion data processed:', {
+            totalEmotions: sortedEmotions.length,
+            topEmotion: sortedEmotions[0],
+            displayedEmotions: displayedEmotions.value
+          })
+        } else {
+          console.warn('❌ No emotion prediction data found:', emotionPrediction.value)
+        }
+        
       } catch (error) {
-        console.error('Error loading page data:', error)
+        console.error('❌ Error loading page data:', error)
         router.push('/')
       }
     }
@@ -506,58 +591,96 @@ export default {
           // Already a hex string
           const hexColor = color.startsWith('#') ? color : `#${color}`
           console.log(`✅ String format -> ${hexColor}`)
-          return hexColor
+          return {
+            hex: hexColor,
+            percentage: 1.0 / rawColorsData.length // Equal distribution for strings
+          }
         } else if (color && typeof color === 'object') {
           
           // RGB format like {r: 235, g: 164, b: 253, percentage: 0.187}
           if (typeof color.r === 'number' && typeof color.g === 'number' && typeof color.b === 'number') {
             const hexColor = rgbToHex(color.r, color.g, color.b)
-            console.log(`✅ RGB format {r: ${color.r}, g: ${color.g}, b: ${color.b}} -> ${hexColor}`)
-            return hexColor
+            const percentage = typeof color.percentage === 'number' ? color.percentage : 1.0 / rawColorsData.length
+            console.log(`✅ RGB format {r: ${color.r}, g: ${color.g}, b: ${color.b}} -> ${hexColor} (${(percentage * 100).toFixed(2)}%)`)
+            return {
+              hex: hexColor,
+              percentage: percentage
+            }
           }
           
           // Hex object format like {hex: '#ff0000', percentage: 0.25}
           else if (color.hex) {
             const hexColor = color.hex.startsWith('#') ? color.hex : `#${color.hex}`
-            console.log(`✅ Hex object format -> ${hexColor}`)
-            return hexColor
+            const percentage = typeof color.percentage === 'number' ? color.percentage : 1.0 / rawColorsData.length
+            console.log(`✅ Hex object format -> ${hexColor} (${(percentage * 100).toFixed(2)}%)`)
+            return {
+              hex: hexColor,
+              percentage: percentage
+            }
           }
           
           // Color object format like {color: '#ff0000', percentage: 0.25}  
           else if (color.color) {
             const hexColor = color.color.startsWith('#') ? color.color : `#${color.color}`
-            console.log(`✅ Color object format -> ${hexColor}`)
-            return hexColor
+            const percentage = typeof color.percentage === 'number' ? color.percentage : 1.0 / rawColorsData.length
+            console.log(`✅ Color object format -> ${hexColor} (${(percentage * 100).toFixed(2)}%)`)
+            return {
+              hex: hexColor,
+              percentage: percentage
+            }
           }
         }
         
         console.warn('⚠️ Unknown color format:', color)
-        return '#000000' // fallback
+        return {
+          hex: '#000000',
+          percentage: 1.0 / rawColorsData.length
+        } // fallback
       }).filter(Boolean)
       
       console.log('🎨 Final processed colors:', processed)
+      console.log('📊 Color percentages:', processed.map(c => `${c.hex}: ${(c.percentage * 100).toFixed(2)}%`))
       return processed
     }
     
     const getColorFromRawColor = (colorData) => {
+      // Handle new object format with hex property
+      if (colorData && typeof colorData === 'object' && colorData.hex) {
+        return colorData.hex
+      }
+      
+      // Legacy string format
       if (typeof colorData === 'string') {
         return colorData.startsWith('#') ? colorData : `#${colorData}`
-      } else if (colorData && typeof colorData === 'object') {
-        if (colorData.hex) {
-          return colorData.hex.startsWith('#') ? colorData.hex : `#${colorData.hex}`
+      } 
+      
+      // Legacy object formats
+      else if (colorData && typeof colorData === 'object') {
+        if (colorData.color) {
+          return colorData.color.startsWith('#') ? colorData.color : `#${colorData.color}`
         } else if (typeof colorData.r === 'number' && typeof colorData.g === 'number' && typeof colorData.b === 'number') {
           return `rgb(${colorData.r}, ${colorData.g}, ${colorData.b})`
         }
       }
+      
+      console.warn('⚠️ Unable to extract color from:', colorData)
       return '#000000' // fallback
     }
     
     const getRawColorPercentage = (colorData) => {
+      // Handle new object format with percentage property
       if (colorData && typeof colorData === 'object' && typeof colorData.percentage === 'number') {
         return colorData.percentage
       }
+      
       // Fallback: equal distribution
-      return rawColors.value.length > 0 ? 1.0 / rawColors.value.length : 0
+      const total = rawColors.value.length
+      if (total > 0) {
+        return 1.0 / total
+      }
+      
+      console.warn('⚠️ Unable to determine percentage for color:', colorData)
+      return 0
     }
     
     const getEmotionImageSrc = (emotionName) => {

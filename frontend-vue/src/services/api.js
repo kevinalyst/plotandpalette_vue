@@ -61,6 +61,11 @@ class ApiService {
     return this.request('/recent-palettes')
   }
 
+  // Get current session's palette data
+  async getSessionPalette(sessionId) {
+    return this.request(`/session-palette/${sessionId}`)
+  }
+
   // Emotion endpoints
   async saveEmotion(data) {
     return this.request('/save-emotion', {

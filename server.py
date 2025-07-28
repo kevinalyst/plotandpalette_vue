@@ -914,6 +914,85 @@ def get_recent_palettes():
             'message': str(e)
         }), 500
 
+@app.route('/session-palette/<session_id>')
+def get_session_palette(session_id):
+    """API endpoint to get the latest palette data for a specific session"""
+    try:
+        logger.info(f"📦 Getting palette data for session: {session_id}")
+        
+        # Check if session exists in memory
+        if session_id not in session_storage:
+            logger.warning(f"⚠️ Session not found in memory: {session_id}")
+            return jsonify({'error': 'Session not found'}), 404
+        
+        session_data = session_storage[session_id]
+        captured_palette = session_data.get('captured_palette')
+        
+        if not captured_palette:
+            logger.warning(f"⚠️ No captured palette found for session: {session_id}")
+            return jsonify({'error': 'No palette data found for this session'}), 404
+        
+        filename = captured_palette['filename']
+        logger.info(f"🎨 Found palette file: {filename}")
+        
+        # Get the corresponding JSON metadata file
+        metadata_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{Path(filename).stem}.json")
+        
+        if not os.path.exists(metadata_path):
+            logger.warning(f"⚠️ Metadata file not found: {metadata_path}")
+            # Run analysis if metadata doesn't exist
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            if os.path.exists(image_path):
+                logger.info(f"🔄 Re-running analysis for {filename}")
+                result = run_python_script(None, image_path)
+                
+                # Return the fresh analysis result
+                base_url = f"{request.scheme}://{request.host}"
+                return jsonify({
+                    'success': True,
+                    'filename': filename,
+                    'colourData': result.get('colourData', {}),
+                    'rawColors': result.get('rawColors', []),
+                    'emotionPrediction': result.get('emotionPrediction', {}),
+                    'detailedRecommendations': result.get('detailedRecommendations', []),
+                    'capturedImageUrl': f"{base_url}/uploads/{filename}",
+                    'sessionId': session_id,
+                    'timestamp': captured_palette.get('timestamp'),
+                    'gifName': captured_palette.get('gifName')
+                })
+            else:
+                return jsonify({'error': 'Palette image file not found'}), 404
+        
+        # Read existing metadata
+        with open(metadata_path, 'r') as f:
+            metadata = json.load(f)
+        
+        base_url = f"{request.scheme}://{request.host}"
+        
+        # Return the complete palette data
+        response_data = {
+            'success': True,
+            'filename': filename,
+            'colourData': metadata.get('colourData', {}),
+            'rawColors': metadata.get('rawColors', []),
+            'emotionPrediction': metadata.get('emotionPrediction', {}),
+            'detailedRecommendations': metadata.get('detailedRecommendations', []),
+            'capturedImageUrl': f"{base_url}/uploads/{filename}",
+            'sessionId': session_id,
+            'timestamp': captured_palette.get('timestamp'),
+            'gifName': captured_palette.get('gifName')
+        }
+        
+        logger.info(f"✅ Successfully retrieved palette data for session: {session_id}")
+        return jsonify(response_data)
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching session palette: {e}")
+        return jsonify({
+            'error': 'Failed to fetch session palette',
+            'message': str(e)
+        }), 500
+
 @app.route('/get-recommendations', methods=['POST'])
 def get_recommendations():
     """API endpoint to get painting recommendations"""
