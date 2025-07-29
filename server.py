@@ -673,6 +673,27 @@ def capture_palette():
         result['rawColors'] = final_raw_colors
         logger.info(f"📝 Final raw colors for frontend: {len(final_raw_colors)} colors")
         
+        # Save complete metadata file for session-palette endpoint
+        metadata_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{Path(filename).stem}.json")
+        metadata = {
+            'filename': filename,
+            'gifName': gif_name,
+            'timestamp': datetime.now().isoformat(),
+            'sessionId': session_id,
+            'colourData': result.get('colourData', {}),
+            'rawColors': final_raw_colors,
+            'emotionPrediction': result.get('emotionPrediction', {}),
+            'detailedRecommendations': result.get('detailedRecommendations', []),
+            'urls': result.get('urls', [])
+        }
+        
+        try:
+            with open(metadata_path, 'w') as f:
+                json.dump(metadata, f, indent=2)
+            logger.info(f"✅ Saved metadata file: {metadata_path}")
+        except Exception as e:
+            logger.error(f"❌ Failed to save metadata file: {e}")
+        
         # Save palette analysis and recommendations to database if available
         if DB_ENABLED:
             # Save palette analysis (emotion scores) - separate try-catch

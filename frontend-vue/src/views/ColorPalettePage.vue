@@ -14,11 +14,16 @@
         <!-- Captured Image Section -->
         <div class="captured-image-section">
           <h3 class="captured-image-title">Your captured palette</h3>
+          <div v-if="!capturedImageUrl" class="no-colors-message">
+            <p>⏳ Loading captured image...</p>
+          </div>
           <img 
-            v-if="capturedImageUrl"
+            v-else
             :src="capturedImageUrl" 
             class="captured-palette-image" 
             alt="Your captured gradient palette"
+            @error="handleImageError"
+            @load="handleImageLoad"
           />
         </div>
         
@@ -41,8 +46,11 @@
                 :title="`Color ${index + 1}: ${getColorFromRawColor(color)} (${Math.round(getRawColorPercentage(color) * 100)}%)`"
               ></div>
             </div>
-            <div v-else class="no-colors-message">
+            <div v-else-if="loading" class="no-colors-message">
               <p>⏳ Loading colors...</p>
+            </div>
+            <div v-else class="no-colors-message">
+              <p>❌ No color data available</p>
             </div>
           </div>
         </div>
@@ -715,6 +723,14 @@ export default {
       return null
     }
     
+    const handleImageError = () => {
+      console.error('❌ Captured palette image failed to load:', capturedImageUrl.value)
+    }
+    
+    const handleImageLoad = () => {
+      console.log('✅ Captured palette image loaded successfully:', capturedImageUrl.value)
+    }
+    
     // Lifecycle
     onMounted(() => {
       console.log('🎬 ColorPalettePage mounted!')
@@ -747,7 +763,9 @@ export default {
       getEmotionImageSrc,
       getColorFromRawColor,
       getRawColorPercentage,
-      pageData
+      pageData,
+      handleImageError,
+      handleImageLoad
     }
   }
 }
