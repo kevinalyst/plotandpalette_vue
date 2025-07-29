@@ -46,9 +46,6 @@
                 :title="`Color ${index + 1}: ${getColorFromRawColor(color)} (${Math.round(getRawColorPercentage(color) * 100)}%)`"
               ></div>
             </div>
-            <div v-else-if="loading" class="no-colors-message">
-              <p>⏳ Loading colors...</p>
-            </div>
             <div v-else class="no-colors-message">
               <p>❌ No color data available</p>
             </div>
@@ -338,10 +335,9 @@ export default {
           // Try multiple URL formats
           const cacheBuster = Date.now()
           const possibleUrls = [
-            `/uploads/${data.filename}?v=${cacheBuster}`,
-            `./uploads/${data.filename}?v=${cacheBuster}`,
-            `${window.location.origin}/uploads/${data.filename}?v=${cacheBuster}`,
-            `/api/uploads/${data.filename}?v=${cacheBuster}`, // Alternative API route
+            `/static/uploads/${data.filename}?v=${cacheBuster}`,
+            `./static/uploads/${data.filename}?v=${cacheBuster}`,
+            `${window.location.origin}/static/uploads/${data.filename}?v=${cacheBuster}`,
             data.capturedImageUrl // fallback if provided in data
           ].filter(Boolean) // Remove undefined values
           
@@ -572,6 +568,23 @@ export default {
     const processRawColors = (rawColorsData) => {
       console.log('🎨 Processing raw colors:', rawColorsData)
       
+      // Handle new dictionary format: {'#8b54b5': 0.1027, '#ffc0cb': 0.2515, ...}
+      if (rawColorsData && typeof rawColorsData === 'object' && !Array.isArray(rawColorsData)) {
+        console.log('✅ New dictionary format detected')
+        const processed = Object.entries(rawColorsData).map(([hexColor, percentage]) => {
+          const cleanHex = hexColor.startsWith('#') ? hexColor : `#${hexColor}`
+          console.log(`✅ Dictionary format: ${cleanHex} -> ${(percentage * 100).toFixed(2)}%`)
+          return {
+            hex: cleanHex,
+            percentage: percentage
+          }
+        })
+        console.log('🎨 Final processed colors (dictionary):', processed)
+        console.log('📊 Color percentages:', processed.map(c => `${c.hex}: ${(c.percentage * 100).toFixed(2)}%`))
+        return processed
+      }
+      
+      // Legacy array format handling for backwards compatibility
       if (!rawColorsData || !Array.isArray(rawColorsData)) {
         console.log('❌ No valid raw colors data')
         return []

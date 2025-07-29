@@ -47,7 +47,7 @@ except ImportError as e:
 
 # Configuration
 PORT = int(os.environ.get('PORT', 3000))
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = 'frontend-vue/dist/static/uploads'
 PUBLIC_FOLDER = 'public'
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
@@ -184,7 +184,7 @@ def parse_recommendation_output(output: str) -> Dict[str, Any]:
     
     in_recommendation_section = False
     colour_data = {}
-    raw_color_data = []
+    raw_color_data = {}
     detailed_recommendations = []
     emotion_prediction = None
     
@@ -202,13 +202,8 @@ def parse_recommendation_output(output: str) -> Dict[str, Any]:
             # Convert RGB to hex for frontend
             hex_color = f"#{r:02x}{g:02x}{b:02x}"
             
-            raw_color_data.append({
-                'r': r, 
-                'g': g, 
-                'b': b, 
-                'hex': hex_color,
-                'percentage': percentage
-            })
+            # Store as hex-color: percentage mapping (same format as colourData)
+            raw_color_data[hex_color] = percentage
             logger.info(f"🎨 Parsed raw color: RGB({r}, {g}, {b}) = {hex_color} ({percentage*100:.2f}%)")
         
         # Also parse old format for backwards compatibility
@@ -218,13 +213,8 @@ def parse_recommendation_output(output: str) -> Dict[str, Any]:
             g = int(old_raw_color_match.group(2))
             b = int(old_raw_color_match.group(3))
             hex_color = f"#{r:02x}{g:02x}{b:02x}"
-            raw_color_data.append({
-                'r': r, 
-                'g': g, 
-                'b': b, 
-                'hex': hex_color,
-                'percentage': 1.0 / 5  # Default equal percentage
-            })
+            # Store as hex-color: percentage mapping (default equal distribution)
+            raw_color_data[hex_color] = 1.0 / 5  # Default equal percentage
         
         if 'Final colour selection:' in line:
             # Start parsing colour data from the next lines
@@ -976,7 +966,7 @@ def get_session_palette(session_id):
                     'rawColors': result.get('rawColors', []),
                     'emotionPrediction': result.get('emotionPrediction', {}),
                     'detailedRecommendations': result.get('detailedRecommendations', []),
-                    'capturedImageUrl': f"{base_url}/uploads/{filename}",
+                    'capturedImageUrl': f"{base_url}/static/uploads/{filename}",
                     'sessionId': session_id,
                     'timestamp': captured_palette.get('timestamp'),
                     'gifName': captured_palette.get('gifName')
@@ -998,7 +988,7 @@ def get_session_palette(session_id):
             'rawColors': metadata.get('rawColors', []),
             'emotionPrediction': metadata.get('emotionPrediction', {}),
             'detailedRecommendations': metadata.get('detailedRecommendations', []),
-            'capturedImageUrl': f"{base_url}/uploads/{filename}",
+            'capturedImageUrl': f"{base_url}/static/uploads/{filename}",
             'sessionId': session_id,
             'timestamp': captured_palette.get('timestamp'),
             'gifName': captured_palette.get('gifName')
@@ -1026,7 +1016,7 @@ def get_recommendations():
         logger.info(f"Getting recommendations for: {filename}")
         
         # Construct the full image path
-        image_path = f"uploads/{filename}"
+        image_path = f"frontend-vue/dist/static/uploads/{filename}"
         full_image_path = os.path.join(os.getcwd(), image_path)
         
         # Check if the image file exists

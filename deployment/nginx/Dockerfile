@@ -16,7 +16,8 @@ COPY site.conf /etc/nginx/conf.d/site.conf
 RUN mkdir -p /usr/share/nginx/html/assets/images \
              /usr/share/nginx/html/assets/emotions \
              /usr/share/nginx/html/assets/palettes \
-             /usr/share/nginx/html/uploads
+             /usr/share/nginx/html/uploads \
+             /usr/share/nginx/html/static/uploads
 
 # Set proper permissions
 RUN chown -R nginx:nginx /usr/share/nginx/html

@@ -33,7 +33,7 @@ RUN mkdir -p "./15 emotion illustrations" "./palette GIF" ./image ./emotions_gen
     rm -rf ./temp_assets
 
 # Create uploads, logs, and runtime directories
-RUN mkdir -p uploads /var/log/plot-palette /var/run/plot-palette
+RUN mkdir -p uploads frontend-vue/dist/static/uploads /var/log/plot-palette /var/run/plot-palette
 
 # Set environment variables
 ENV FLASK_APP=server.py

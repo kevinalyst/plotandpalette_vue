@@ -25,7 +25,7 @@ NUM_RECOMMENDATIONS = 10
 NUM_FEATURES = 85
 
 # Path to the image file to analyze
-IMAGE_PATH = "/app/uploads/1.png"  # This will be replaced by the server
+IMAGE_PATH = "/app/frontend-vue/dist/static/uploads/1.png"  # This will be replaced by the server
 
 # Emotion model paths
 MODEL_PATH = "/app/emotions_generation/final_emotion_model.pkl"
