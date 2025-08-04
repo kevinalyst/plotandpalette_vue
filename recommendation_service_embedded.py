@@ -414,9 +414,12 @@ def extract_colours_from_image(image_path, n_colours=5):
     
     print(f"Image loaded with {len(pixels)} total pixels, {len(unique_pixels)} unique colours")
     
+    # Adjust n_colours if we have fewer unique pixels than clusters
+    actual_clusters = min(n_colours, len(unique_pixels))
+    print(f"Clustering colours into {actual_clusters} groups...")
+    
     # Apply k-means clustering
-    print(f"Clustering colours into {n_colours} groups...")
-    kmeans = KMeans(n_clusters=n_colours, random_state=42, n_init=10)
+    kmeans = KMeans(n_clusters=actual_clusters, random_state=42, n_init=10)
     kmeans.fit(unique_pixels)
     
     # Get cluster centers (dominant colours)
@@ -502,7 +505,7 @@ def generate_user_colour_selection(image_path):
         # Display raw extracted colors first
         print(f"\nRaw colors extracted from image:")
         for i, (colour, percentage) in enumerate(zip(dominant_colours, percentages)):
-            print(f"  Raw Color {i+1}: RGB({colour[0]}, {colour[1]}, {colour[2]}) - {percentage*100:.2f}%")
+            print(f"  Raw Color {i+1}: RGB({int(colour[0])}, {int(colour[1])}, {int(colour[2])}) - {percentage*100:.2f}%")
         
         # Map to basic colours
         colour_selection = map_to_basic_colours(dominant_colours, percentages)

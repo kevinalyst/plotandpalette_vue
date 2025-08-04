@@ -137,6 +137,12 @@
       </div>
     </div>
     
+    <!-- GIF Preloading Spinner -->
+    <LoadingSpinner
+      :show="isGifPreloading"
+      type="palette"
+      message="Hang tight! The palettes are coming..."
+    />
 
 
     <!-- <div class="homepage-content">
@@ -155,9 +161,14 @@
 
 <script>
 import ApiService from '@/services/api.js'
+import GifPreloader from '@/services/gifPreloader.js'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 export default {
   name: 'HomePage',
+  components: {
+    LoadingSpinner
+  },
   data() {
     return {
       isGetInTouch: false,
@@ -165,6 +176,7 @@ export default {
       disableGetInTouch: false,
       disableStartJourney: false,
       disablePeople: false,
+      isGifPreloading: false,
       
 
 
@@ -234,8 +246,8 @@ export default {
           
           if (response.success && response.username_exist) {
             console.log('✅ Returning user verified in database:', existingUsername)
-            // Navigate directly to gradient page for verified returning users
-            this.$router.push('/gradient')
+            // Start GIF preloading for verified returning users
+            await this.preloadGifsAndNavigate()
           } else {
             console.log('❌ Username not found in database, clearing localStorage')
             // Clear invalid username and show form
@@ -284,8 +296,8 @@ export default {
         // Store username for future use (persists across sessions)
         localStorage.setItem('username', response.username)
         
-        // Navigate to gradient palette page (session will be created on capture)
-        this.$router.push('/gradient')
+        // Navigate to gradient palette page with GIF preloading
+        await this.preloadGifsAndNavigate()
         
       } catch (error) {
         console.error('❌ Error storing username:', error)
@@ -303,6 +315,32 @@ export default {
       } catch (error) {
         console.error('❌ Backend connection failed:', error)
         alert('❌ Backend connection failed. Check console for details.')
+      }
+    },
+    async preloadGifsAndNavigate() {
+      try {
+        console.log('🎯 Starting GIF preloading process...')
+        this.isGifPreloading = true
+        
+        // Preload first batch of 3 random GIFs
+        const preloadedGifs = await GifPreloader.preloadRandomGifs(3)
+        
+        if (preloadedGifs.length > 0) {
+          console.log('✅ GIFs preloaded successfully, navigating to gradient page')
+          // Navigate to gradient palette page with preloaded GIFs
+          this.$router.push('/gradient')
+        } else {
+          console.log('⚠️ No GIFs preloaded, navigating anyway')
+          // Navigate even if preloading failed
+          this.$router.push('/gradient')
+        }
+        
+      } catch (error) {
+        console.error('❌ Error preloading GIFs:', error)
+        // Navigate to gradient page even if preloading fails
+        this.$router.push('/gradient')
+      } finally {
+        this.isGifPreloading = false
       }
     }
   },

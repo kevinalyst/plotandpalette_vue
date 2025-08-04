@@ -47,6 +47,8 @@ import { useRouter } from 'vue-router'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Modal from '@/components/Modal.vue'
 import ApiService from '@/services/api.js'
+import html2canvas from 'html2canvas'
+import GifPreloader from '@/services/gifPreloader.js'
 
 export default {
   name: 'GradientPalette',
@@ -72,8 +74,11 @@ export default {
     const modalMessage = ref('')
     const modalButtons = ref([])
     
-    // GIF cycling properties - use palette GIF folder
-    const allGifs = []
+    // GIF cycling properties - use preloaded GIFs
+    const allGifs = ref([])
+    const currentGifOrder = ref([])
+    const currentGifIndex = ref(0)
+    const gifCyclingInterval = ref(null)
     
     // Animation properties
     const animationTimeout = ref(null)
@@ -81,68 +86,133 @@ export default {
     // GIF element reference for frame capture
     const animatedGif = ref(null)
     
-    // Import GIFs with proper Vite asset handling
-    const importGifs = async () => {
+    // Load GIFs from preloader or fallback to manual loading
+    const loadGifs = async () => {
       try {
-        console.log('📁 Loading GIFs...')
+        console.log('📁 Loading GIFs from preloader...')
         
-        // Method 1: Try dynamic imports
-        for (let i = 1; i <= 50; i++) {
+        // First, try to get preloaded GIFs
+        if (GifPreloader.isReady()) {
+          allGifs.value = GifPreloader.getPreloadedGifs()
+          console.log(`✅ Using ${allGifs.value.length} preloaded GIFs`)
+        } else {
+          console.log('⚠️ No preloaded GIFs available, loading fresh batch...')
+          // If no preloaded GIFs, load a fresh batch
+          const newGifs = await GifPreloader.preloadInitialGifs(3)
+          allGifs.value = newGifs
+          console.log(`✅ Loaded ${allGifs.value.length} fresh GIFs`)
+        }
+        
+        // If still no GIFs, fallback to manual loading
+        if (allGifs.value.length === 0) {
+          console.log('⚠️ Fallback to manual GIF loading...')
+          await importGifsManually()
+        }
+        
+      } catch (error) {
+        console.error('❌ Error loading GIFs:', error)
+        // Final fallback
+        await importGifsManually()
+      }
+    }
+    
+    // Fallback manual GIF import (keep original logic as backup)
+    const importGifsManually = async () => {
+      try {
+        console.log('📁 Manual GIF loading fallback...')
+        const manualGifs = []
+        
+        // Try to load a few GIFs manually
+        for (let i = 1; i <= 10; i++) {
           try {
             const gifModule = await import(`@/assets/images/palette GIF/${i}.gif`)
-            allGifs.push(gifModule.default || gifModule)
+            manualGifs.push(gifModule.default || gifModule)
           } catch (error) {
-            // Fallback to direct URL construction
-            allGifs.push(new URL(`@/assets/images/palette GIF/${i}.gif`, import.meta.url).href)
+            // Skip missing GIFs
           }
         }
         
-        console.log(`✅ Loaded ${allGifs.length} GIFs successfully`)
-        console.log('🔍 First few GIF URLs:', allGifs.slice(0, 3))
+        allGifs.value = manualGifs
+        console.log(`✅ Manually loaded ${allGifs.value.length} GIFs as fallback`)
       } catch (error) {
-        console.error('❌ Error loading GIFs:', error)
-        
-        // Emergency fallback - use simpler paths
-        for (let i = 1; i <= 10; i++) {
-          allGifs.push(`/src/assets/images/palette GIF/${i}.gif`)
+        console.error('❌ Manual GIF loading also failed:', error)
+        // Use static paths as last resort
+        for (let i = 1; i <= 5; i++) {
+          allGifs.value.push(`/src/assets/images/palette GIF/${i}.gif`)
         }
-        console.log('⚠️ Using emergency fallback with 10 GIFs')
       }
     }
-    const currentGifOrder = ref([])
-    const currentGifIndex = ref(0)
-    const gifCyclingInterval = ref(null)
     
     // Methods
     
     const generateRandomGifOrder = () => {
-      const shuffled = [...allGifs].sort(() => Math.random() - 0.5)
+      const shuffled = [...allGifs.value].sort(() => Math.random() - 0.5)
       currentGifOrder.value = shuffled
       currentGifIndex.value = 0
     }
     
-    const switchToNextGif = () => {
+    const switchToNextGif = async () => {
       if (currentGifOrder.value.length === 0) {
         generateRandomGifOrder()
       }
       
-      currentGifSrc.value = currentGifOrder.value[currentGifIndex.value]
-      currentGifIndex.value = (currentGifIndex.value + 1) % currentGifOrder.value.length
+      const previousGif = currentGifSrc.value
       
-      if (currentGifIndex.value === 0) {
-        generateRandomGifOrder()
+      // Try to get next GIF from preloader first
+      const nextGif = GifPreloader.getNextGif()
+      if (nextGif) {
+        currentGifSrc.value = nextGif
+        console.log('🔄 GIF switched to preloaded:', {
+          from: previousGif,
+          to: currentGifSrc.value
+        })
+      } else {
+        // Fallback to local array if preloader doesn't have next GIF
+        currentGifSrc.value = currentGifOrder.value[currentGifIndex.value]
+        currentGifIndex.value = (currentGifIndex.value + 1) % currentGifOrder.value.length
+        
+        console.log('🔄 GIF switched (fallback):', {
+          from: previousGif,
+          to: currentGifSrc.value,
+          index: currentGifIndex.value
+        })
+        
+        // If we've cycled through all current GIFs, regenerate order
+        if (currentGifIndex.value === 0) {
+          console.log('🔄 Regenerating GIF order for fallback')
+          generateRandomGifOrder()
+        }
+      }
+    }
+    
+    // Load more GIFs for continuous cycling
+    const loadMoreGifs = async () => {
+      try {
+        console.log('📦 Loading more GIFs for continuous cycling...')
+        const newBatch = await GifPreloader.getNextBatch(3)
+        
+        if (newBatch.length > 0) {
+          // Add new GIFs to current collection
+          allGifs.value = [...allGifs.value, ...newBatch]
+          console.log(`✅ Added ${newBatch.length} new GIFs. Total: ${allGifs.value.length}`)
+        } else {
+          console.log('⚠️ No new GIFs loaded, continuing with current batch')
+        }
+      } catch (error) {
+        console.error('❌ Error loading more GIFs:', error)
+        // Continue with existing GIFs
       }
     }
     
     const startGifCycling = () => {
       generateRandomGifOrder()
-      switchToNextGif()
+      switchToNextGif() // Initial switch (async, but we don't need to wait)
       gifVisible.value = true
       
       // Start cycling
-      gifCyclingInterval.value = setInterval(() => {
-        switchToNextGif()
-      }, 3000) // Change every 3 seconds
+      gifCyclingInterval.value = setInterval(async () => {
+        await switchToNextGif()
+      }, 5000) // Change every 5 seconds
       
       // Show capture prompt after delay
       setTimeout(() => {
@@ -177,35 +247,53 @@ export default {
     const captureCurrentFrame = () => {
       return new Promise((resolve, reject) => {
         try {
-          const gifElement = animatedGif.value
-          if (!gifElement) {
-            reject(new Error('GIF element not found'))
-            return
-          }
+          console.log('📸 Starting clean page capture with html2canvas...')
+          console.log('🎯 Current GIF being displayed:', currentGifSrc.value)
           
-          // Create a canvas to capture the current frame
-          const canvas = document.createElement('canvas')
-          const ctx = canvas.getContext('2d')
-          
-          // Set canvas size to match the GIF
-          canvas.width = gifElement.naturalWidth || gifElement.width || 600
-          canvas.height = gifElement.naturalHeight || gifElement.height || 400
-          
-          // Draw the current frame to canvas
-          ctx.drawImage(gifElement, 0, 0, canvas.width, canvas.height)
-          
-          // Convert to base64 data URL
-          const frameData = canvas.toDataURL('image/png', 0.95)
-          
-          console.log('🖼️ Frame captured:', {
-            width: canvas.width,
-            height: canvas.height,
-            dataLength: frameData.length
+          // Use html2canvas to capture the entire page with optimized settings
+          html2canvas(document.body, {
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#000000',
+            width: window.innerWidth,
+            height: window.innerHeight,
+            scrollX: 0,
+            scrollY: 0,
+            scale: 1,
+            logging: false, // Disable logging for cleaner capture
+            removeContainer: true, // Remove html2canvas container after capture
+            ignoreElements: function(element) {
+              // Ignore any remaining UI elements that might interfere
+              return element.classList.contains('loading-spinner') ||
+                     element.classList.contains('modal') ||
+                     element.classList.contains('capture-prompt') ||
+                     element.classList.contains('controls')
+            }
+          }).then(canvas => {
+            try {
+              // Convert to base64 data URL with high quality
+              const frameData = canvas.toDataURL('image/png', 0.95)
+              
+              console.log('🖼️ Clean page captured successfully:', {
+                gifDisplayed: currentGifSrc.value,
+                canvasWidth: canvas.width,
+                canvasHeight: canvas.height,
+                dataLength: frameData.length,
+                hasImageData: frameData.length > 1000 // Basic check for non-empty image
+              })
+              
+              resolve(frameData)
+            } catch (error) {
+              console.error('❌ Error converting canvas to data URL:', error)
+              reject(error)
+            }
+          }).catch(error => {
+            console.error('❌ html2canvas capture failed:', error)
+            reject(error)
           })
           
-          resolve(frameData)
         } catch (error) {
-          console.error('❌ Error capturing frame:', error)
+          console.error('❌ Error in captureCurrentFrame:', error)
           reject(error)
         }
       })
@@ -222,13 +310,39 @@ export default {
       console.log('🚀 Starting palette capture...')
       isCapturing.value = true
       showCapturePrompt.value = false
-      showLoading.value = true
       
       // Stop GIF cycling and freeze at current frame
       stopGifCycling()
       
       try {
-        // Create new session ID when capture is clicked
+        // STEP 1: Hide UI elements for clean capture
+        console.log('🎭 Hiding UI elements for clean capture...')
+        const controlsElement = document.querySelector('.controls')
+        const capturePrompt = document.querySelector('.capture-prompt')
+        
+        // Temporarily hide UI elements
+        if (controlsElement) controlsElement.style.display = 'none'
+        if (capturePrompt) capturePrompt.style.display = 'none'
+        
+        // Wait a moment for DOM to update
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        // STEP 2: Capture the page BEFORE showing loading spinner
+        console.log('📷 Capturing clean frame...')
+        const currentlyDisplayedGif = currentGifSrc.value
+        console.log('🎯 Current GIF being displayed:', currentlyDisplayedGif)
+        
+        const capturedFrame = await captureCurrentFrame()
+        console.log('✅ Clean frame captured successfully')
+        
+        // STEP 3: Restore UI elements and show loading
+        if (controlsElement) controlsElement.style.display = 'block'
+        if (capturePrompt) capturePrompt.style.display = 'block'
+        
+        // NOW show loading spinner for backend processing
+        showLoading.value = true
+        
+        // STEP 4: Create session and process backend
         console.log('🆕 Creating new session for capture...')
         const username = localStorage.getItem('username')
         
@@ -261,16 +375,12 @@ export default {
           }
         }
 
-        const currentGifSrc = allGifs[currentGifIndex.value] || '1.gif'
-        console.log('📷 Capturing current frame...')
-        
-        const capturedFrame = await captureCurrentFrame()
         console.log('📡 Sending capture request to backend...')
         
         const response = await ApiService.request('/capture-palette', {
           method: 'POST',
           body: JSON.stringify({
-            gifName: currentGifSrc,
+            gifName: currentlyDisplayedGif,
             frameData: capturedFrame,
             sessionId: sessionId
           })
@@ -308,7 +418,7 @@ export default {
     // Lifecycle
     onMounted(async () => {
       console.log('🎬 GradientPalette mounted')
-      await importGifs()
+      await loadGifs()
       
       // Wait a bit for GIFs to load before starting cycling
       setTimeout(startGifCycling, 100)
@@ -477,6 +587,14 @@ export default {
 /* Global button focus disable */
 button:focus {
   outline: none !important;
+}
+
+/* Capture utility class */
+.capturing .controls,
+.capturing .capture-prompt,
+.capturing .loading-spinner,
+.capturing .modal {
+  display: none !important;
 }
 
 /* Responsive design */

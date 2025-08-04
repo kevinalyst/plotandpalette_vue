@@ -47,7 +47,7 @@ except ImportError as e:
 
 # Configuration
 PORT = int(os.environ.get('PORT', 3000))
-UPLOAD_FOLDER = 'frontend-vue/dist/static/uploads'
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'uploads')
 PUBLIC_FOLDER = 'public'
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 

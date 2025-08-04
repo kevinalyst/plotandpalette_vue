@@ -123,7 +123,9 @@ services:
     volumes:
       - ./frontend-vue/dist:/usr/share/nginx/html
       - ./uploads:/usr/share/nginx/html/uploads
+      - ./uploads:/usr/share/nginx/html/static/uploads
       - ./logs/nginx:/var/log/nginx
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
     networks:

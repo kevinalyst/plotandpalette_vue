@@ -2,6 +2,7 @@
   <div v-if="show" class="loading">
     <div v-if="type === 'keyboard'" class="keyboard-animation"></div>
     <div v-else-if="type === 'dance'" class="dance-animation"></div>
+    <div v-else-if="type === 'palette'" class="palette-animation"></div>
     <div v-else class="magic-cube-animation"></div>
     <p class="loading-analysis-text">{{ message }}</p>
   </div>
@@ -21,8 +22,8 @@ export default {
     },
     type: {
       type: String,
-      default: 'magic-cube', // 'magic-cube', 'keyboard', or 'dance'
-      validator: (value) => ['magic-cube', 'keyboard', 'dance'].includes(value)
+      default: 'magic-cube', // 'magic-cube', 'keyboard', 'dance', or 'palette'
+      validator: (value) => ['magic-cube', 'keyboard', 'dance', 'palette'].includes(value)
     }
   }
 }
@@ -66,6 +67,16 @@ export default {
   width: 500px;
   height: 400px;
   background-image: url('@/assets/images/dance.gif');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-bottom: 20px;
+}
+
+.palette-animation {
+  width: 500px;
+  height: 500px;
+  background-image: url('@/assets/images/paletteloading.gif');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
