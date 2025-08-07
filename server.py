@@ -135,11 +135,11 @@ def download_image(url: str, filename: str) -> str:
         logger.error(f"Failed to download image {url}: {e}")
         raise
 
-def run_python_script(script_path: str, image_path: str = None) -> Dict[str, Any]:
-    """Run Python recommendation script and parse output"""
+def run_emotion_prediction_service(image_path: str) -> Dict[str, Any]:
+    """Run emotion prediction service and parse output"""
     try:
-        # Use the embedded Python script
-        embedded_script_path = os.path.join(os.getcwd(), 'recommendation_service_embedded.py')
+        # Use the emotion prediction script in the emotions_generation container
+        script_path = os.path.join(os.getcwd(), 'emotions_generation', 'emotion_prediction.py')
         
         # Use virtual environment Python if available, otherwise fall back to system Python
         venv_python = os.path.join(os.getcwd(), 'venv', 'bin', 'python3')
@@ -148,12 +148,9 @@ def run_python_script(script_path: str, image_path: str = None) -> Dict[str, Any
         else:
             python_executable = 'python3'
         
-        args = [python_executable, embedded_script_path]
+        args = [python_executable, script_path, image_path]
         
-        if image_path:
-            args.append(image_path)
-        
-        logger.info(f"Running embedded recommendation script: {' '.join(args)}")
+        logger.info(f"Running emotion prediction service: {' '.join(args)}")
         
         result = subprocess.run(
             args,
@@ -164,18 +161,240 @@ def run_python_script(script_path: str, image_path: str = None) -> Dict[str, Any
         )
         
         if result.returncode != 0:
-            logger.error(f"Embedded recommendation script error: {result.stderr}")
-            raise Exception(f"Embedded recommendation script failed with code {result.returncode}: {result.stderr}")
+            logger.error(f"Emotion prediction service error: {result.stderr}")
+            raise Exception(f"Emotion prediction service failed with code {result.returncode}: {result.stderr}")
         
-        logger.info("Embedded recommendation script completed successfully")
+        logger.info("Emotion prediction service completed successfully")
         
-        # Parse the output to extract URLs, colour data, and detailed recommendations
-        parsed_result = parse_recommendation_output(result.stdout)
+        # Parse the output to extract emotion prediction and raw colors
+        parsed_result = parse_emotion_prediction_output(result.stdout)
         return parsed_result
         
     except Exception as e:
-        logger.error(f"Error running Python recommendation script: {e}")
+        logger.error(f"Error running emotion prediction service: {e}")
         raise
+
+def run_recommendation_service(raw_colors_json: str) -> Dict[str, Any]:
+    """Run recommendation service with raw colors and parse output"""
+    try:
+        # Use the recommendation script in the painting_recommendation folder
+        script_path = os.path.join(os.getcwd(), 'painting_recommendation', 'recommendation_service.py')
+        
+        # Use virtual environment Python if available, otherwise fall back to system Python
+        venv_python = os.path.join(os.getcwd(), 'venv', 'bin', 'python3')
+        if os.path.exists(venv_python):
+            python_executable = venv_python
+        else:
+            python_executable = 'python3'
+        
+        args = [python_executable, script_path, raw_colors_json]
+        
+        logger.info(f"Running recommendation service: {' '.join(args[:2])} [raw_colors_json]")
+        
+        result = subprocess.run(
+            args,
+            cwd=os.getcwd(),
+            capture_output=True,
+            text=True,
+            timeout=300  # 5 minute timeout
+        )
+        
+        if result.returncode != 0:
+            logger.error(f"Recommendation service error: {result.stderr}")
+            raise Exception(f"Recommendation service failed with code {result.returncode}: {result.stderr}")
+        
+        logger.info("Recommendation service completed successfully")
+        
+        # Parse the output to extract recommendations
+        parsed_result = parse_recommendation_service_output(result.stdout)
+        return parsed_result
+        
+    except Exception as e:
+        logger.error(f"Error running recommendation service: {e}")
+        raise
+
+def run_python_script(script_path: str, image_path: str = None) -> Dict[str, Any]:
+    """Legacy function - now runs both services sequentially"""
+    try:
+        logger.info("Running separated emotion prediction and recommendation services...")
+        
+        # Step 1: Run emotion prediction service
+        emotion_result = run_emotion_prediction_service(image_path)
+        
+        # Step 2: Run recommendation service with raw colors from emotion prediction
+        raw_colors_json = json.dumps(emotion_result['rawColors'])
+        recommendation_result = run_recommendation_service(raw_colors_json)
+        
+        # Combine results
+        combined_result = {
+            'urls': recommendation_result['urls'],
+            'colourData': emotion_result['colourData'],
+            'rawColors': emotion_result['rawColorsForFrontend'],
+            'detailedRecommendations': recommendation_result['detailedRecommendations'],
+            'emotionPrediction': emotion_result['emotionPrediction']
+        }
+        
+        return combined_result
+        
+    except Exception as e:
+        logger.error(f"Error running separated services: {e}")
+        raise
+
+def parse_emotion_prediction_output(output: str) -> Dict[str, Any]:
+    """Parse emotion prediction service output"""
+    colour_data = {}
+    raw_colors = []
+    raw_colors_for_frontend = {}
+    emotion_prediction = None
+    
+    lines = output.split('\n')
+    
+    # Parse mapped colour percentages
+    for line in lines:
+        # Parse colour percentage lines like "  black: 0.5302"
+        import re
+        colour_match = re.match(r'^\s+([a-z]+):\s+([\d.]+)$', line)
+        if colour_match:
+            colour_name = colour_match.group(1)
+            percentage = float(colour_match.group(2))
+            colour_data[colour_name] = percentage
+        
+        # Parse raw RGB colors from the new format: "  Raw Color 1: RGB(139, 84, 181) - 10.27%"
+        raw_color_match = re.search(r'\s*Raw Color \d+: RGB\((\d+), (\d+), (\d+)\) - ([\d.]+)%', line)
+        if raw_color_match:
+            r = int(raw_color_match.group(1))
+            g = int(raw_color_match.group(2))
+            b = int(raw_color_match.group(3))
+            percentage = float(raw_color_match.group(4)) / 100  # Convert percentage to decimal
+            
+            # Convert RGB to hex for frontend
+            hex_color = f"#{r:02x}{g:02x}{b:02x}"
+            
+            # Store as hex-color: percentage mapping for frontend
+            raw_colors_for_frontend[hex_color] = percentage
+            logger.info(f"🎨 Parsed raw color: RGB({r}, {g}, {b}) = {hex_color} ({percentage*100:.2f}%)")
+    
+    # Parse raw colors JSON
+    raw_colors_start_index = output.find('--- RAW_COLORS_JSON ---')
+    raw_colors_end_index = output.find('--- END_RAW_COLORS_JSON ---')
+    
+    if raw_colors_start_index != -1 and raw_colors_end_index != -1:
+        raw_colors_json_str = output[
+            raw_colors_start_index + len('--- RAW_COLORS_JSON ---'):
+            raw_colors_end_index
+        ].strip()
+        
+        try:
+            raw_colors = json.loads(raw_colors_json_str)
+            logger.info(f"Parsed {len(raw_colors)} raw colors for recommendation service")
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing raw colors JSON: {e}")
+            raw_colors = []
+    
+    # Parse emotion prediction JSON
+    emotion_start_index = output.find('--- EMOTION_PREDICTION_JSON ---')
+    emotion_end_index = output.find('--- END_EMOTION_PREDICTION_JSON ---')
+    
+    if emotion_start_index != -1 and emotion_end_index != -1:
+        emotion_json_str = output[
+            emotion_start_index + len('--- EMOTION_PREDICTION_JSON ---'):
+            emotion_end_index
+        ].strip()
+        
+        try:
+            emotion_prediction = json.loads(emotion_json_str)
+            logger.info(f"Parsed emotion prediction: {emotion_prediction['emotion']} ({emotion_prediction['confidence_percentage']})")
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing emotion prediction JSON: {e}")
+            emotion_prediction = {
+                'emotion': 'unknown',
+                'confidence_percentage': '0%',
+                'all_probabilities': {}
+            }
+    else:
+        # Fallback: create default emotion prediction
+        emotion_prediction = {
+            'emotion': 'unknown',
+            'confidence_percentage': '0%',
+            'all_probabilities': {}
+        }
+    
+    return {
+        'colourData': colour_data,
+        'rawColors': raw_colors,
+        'rawColorsForFrontend': raw_colors_for_frontend,
+        'emotionPrediction': emotion_prediction
+    }
+
+def parse_recommendation_service_output(output: str) -> Dict[str, Any]:
+    """Parse recommendation service output"""
+    urls = []
+    detailed_recommendations = []
+    
+    lines = output.split('\n')
+    
+    # Parse URLs
+    in_recommendation_section = False
+    for line in lines:
+        # Look for the section with recommendations
+        if 'Top 10 Recommended Painting URLs' in line:
+            in_recommendation_section = True
+            continue
+        
+        if in_recommendation_section:
+            # Look for numbered lines with URLs
+            import re
+            match = re.match(r'^\d+\.\s+(.+)$', line)
+            if match:
+                url = match.group(1).strip()
+                if url and url.startswith('http'):
+                    urls.append(url)
+        
+        # Stop if we've found URLs and hit an empty line or other content
+        if in_recommendation_section and len(urls) > 0 and line.strip() == '':
+            break
+    
+    # Parse detailed recommendations JSON
+    json_start_index = output.find('--- DETAILED_RECOMMENDATIONS_JSON ---')
+    json_end_index = output.find('--- END_DETAILED_RECOMMENDATIONS_JSON ---')
+    
+    if json_start_index != -1 and json_end_index != -1:
+        json_str = output[
+            json_start_index + len('--- DETAILED_RECOMMENDATIONS_JSON ---'):
+            json_end_index
+        ].strip()
+        
+        try:
+            detailed_recommendations = json.loads(json_str)
+            logger.info(f"Parsed {len(detailed_recommendations)} detailed recommendations")
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing detailed recommendations JSON: {e}")
+            # Fallback: create basic objects from URLs
+            detailed_recommendations = [
+                {
+                    'url': url,
+                    'page': '',
+                    'title': f'Painting {index + 1}',
+                    'artist': 'Unknown Artist'
+                }
+                for index, url in enumerate(urls)
+            ]
+    else:
+        # Fallback: create basic objects from URLs
+        detailed_recommendations = [
+            {
+                'url': url,
+                'page': '',
+                'title': f'Painting {index + 1}',
+                'artist': 'Unknown Artist'
+            }
+            for index, url in enumerate(urls)
+        ]
+    
+    return {
+        'urls': urls,
+        'detailedRecommendations': detailed_recommendations
+    }
 
 def parse_recommendation_output(output: str) -> Dict[str, Any]:
     """Parse Python script output and extract URLs, colour data, and detailed recommendations"""
@@ -1072,6 +1291,86 @@ def get_recommendations():
         
     except Exception as e:
         logger.error(f"Error getting recommendations: {e}")
+        return jsonify({
+            'error': 'Failed to get recommendations',
+            'message': str(e)
+        }), 500
+
+@app.route('/predict-emotion', methods=['POST'])
+def predict_emotion():
+    """API endpoint for emotion prediction service (called after Capture button)"""
+    try:
+        data = request.get_json()
+        if not data or 'filename' not in data:
+            return jsonify({'error': 'Filename is required'}), 400
+        
+        filename = data['filename']
+        logger.info(f"Predicting emotion for: {filename}")
+        
+        # Construct the full image path
+        image_path = f"frontend-vue/dist/static/uploads/{filename}"
+        full_image_path = os.path.join(os.getcwd(), image_path)
+        
+        # Check if the image file exists
+        if not os.path.exists(full_image_path):
+            return jsonify({'error': 'Image file not found'}), 404
+        
+        logger.info('Running emotion prediction service...')
+        
+        # Run the emotion prediction service
+        emotion_result = run_emotion_prediction_service(full_image_path)
+        
+        logger.info(f"Emotion prediction completed: {emotion_result['emotionPrediction']['emotion']}")
+        
+        return jsonify({
+            'success': True,
+            'emotionPrediction': emotion_result['emotionPrediction'],
+            'colourData': emotion_result['colourData'],
+            'rawColors': emotion_result['rawColorsForFrontend'],
+            'rawColorsForRecommendation': emotion_result['rawColors']  # This will be used by recommendation service
+        })
+        
+    except Exception as e:
+        logger.error(f"Error predicting emotion: {e}")
+        return jsonify({
+            'error': 'Failed to predict emotion',
+            'message': str(e)
+        }), 500
+
+@app.route('/get-recommendations-from-colors', methods=['POST'])
+def get_recommendations_from_colors():
+    """API endpoint for recommendation service (called after Continue button)"""
+    try:
+        data = request.get_json()
+        if not data or 'rawColors' not in data:
+            return jsonify({'error': 'Raw colors data is required'}), 400
+        
+        raw_colors = data['rawColors']
+        logger.info(f"Getting recommendations from {len(raw_colors)} raw colors")
+        
+        # Validate raw colors format
+        if not isinstance(raw_colors, list) or len(raw_colors) != 5:
+            return jsonify({'error': 'Expected 5 raw colors'}), 400
+        
+        logger.info('Running recommendation service...')
+        
+        # Convert raw colors to JSON string for the recommendation service
+        raw_colors_json = json.dumps(raw_colors)
+        
+        # Run the recommendation service
+        recommendation_result = run_recommendation_service(raw_colors_json)
+        
+        logger.info(f"Found {len(recommendation_result['urls'])} recommendations")
+        
+        return jsonify({
+            'success': True,
+            'recommendations': recommendation_result['urls'],
+            'detailedRecommendations': recommendation_result['detailedRecommendations'],
+            'total': len(recommendation_result['urls'])
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting recommendations from colors: {e}")
         return jsonify({
             'error': 'Failed to get recommendations',
             'message': str(e)

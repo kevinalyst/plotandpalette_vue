@@ -19,16 +19,16 @@ RUN pip install --no-cache-dir -r requirements-prod.txt
 # Copy backend files
 COPY server.py .
 COPY database.py .
-COPY recommendation_service_embedded.py .
 COPY gunicorn.conf.py .
 
-# Copy static assets (needed for recommendations)
+# Copy static assets and service directories
 COPY . ./temp_assets/
-RUN mkdir -p "./15 emotion illustrations" "./palette GIF" ./image ./emotions_generation ./story_generation && \
+RUN mkdir -p "./15 emotion illustrations" "./palette GIF" ./image ./emotions_generation ./painting_recommendation ./story_generation && \
     cp -r "./temp_assets/15 emotion illustrations/"* "./15 emotion illustrations/" 2>/dev/null || true && \
     cp -r "./temp_assets/palette GIF/"* "./palette GIF/" 2>/dev/null || true && \
     cp -r ./temp_assets/image/* ./image/ 2>/dev/null || true && \
     cp -r "./temp_assets/emotions_generation/"* ./emotions_generation/ 2>/dev/null || true && \
+    cp -r "./temp_assets/painting_recommendation/"* ./painting_recommendation/ 2>/dev/null || true && \
     cp -r "./temp_assets/story_generation/"* ./story_generation/ 2>/dev/null || true && \
     rm -rf ./temp_assets
 

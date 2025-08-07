@@ -21,28 +21,28 @@ services:
   #     timeout: 20s
   #     retries: 10
 
-  # Main Backend Service (Flask + Recommendations)
+  # Main Backend Service (Flask)
   backend:
     build: .
     container_name: plot-palette-backend
     restart: unless-stopped
     ports:
-      - "5003:5000"
+      - "5000:5000"
     environment:
       - DB_HOST=34.142.53.204
       - DB_PORT=3306
       - DB_NAME=plot-palette-mydb
       - DB_USER=root
       - DB_PASSWORD=Lihanwen1997
-      - EMOTION_API_URL=http://emotion-api:5001
       - STORY_API_URL=http://story-api:5002
       - FLASK_ENV=production
       - CLAUDE_API_KEY=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
     volumes:
       - ./uploads:/app/uploads
       - ./logs:/app/logs
+      - ./emotions_generation:/app/emotions_generation
+      - ./painting_recommendation:/app/painting_recommendation
     depends_on:
-      - emotion-api
       - story-api
     networks:
       - plot-palette-network
@@ -71,24 +71,43 @@ services:
       timeout: 10s
       retries: 3
 
-  # Emotion Prediction API Service
-  emotion-api:
-    build: ./emotions_generation
-    container_name: plot-palette-emotions
-    restart: unless-stopped
-    ports:
-      - "5001:5001"
-    environment:
-      - PYTHONUNBUFFERED=1
-    volumes:
-      - ./logs:/app/logs
-    networks:
-      - plot-palette-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+  # Emotion Prediction Service (embedded in backend)
+  # emotion-service:
+  #   build: ./emotions_generation
+  #   container_name: plot-palette-emotions
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5001:5001"
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+  #   volumes:
+  #     - ./logs:/app/logs
+  #   networks:
+  #     - plot-palette-network
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+
+  # Painting Recommendation Service (embedded in backend)
+  # recommendation-service:
+  #   build: ./painting_recommendation
+  #   container_name: plot-palette-recommendations
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5003:5003"
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+  #   volumes:
+  #     - ./logs:/app/logs
+  #   networks:
+  #     - plot-palette-network
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
 
   # Story Generation API Service
   story-api:

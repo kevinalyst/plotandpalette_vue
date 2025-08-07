@@ -1,5 +1,5 @@
-# Emotion Prediction API Microservice
-# Plot & Palette - 15-Emotion Classification Service
+# Painting Recommendation Service
+# Plot & Palette - Cluster-based Painting Recommendation Service
 FROM python:3.11-slim
 
 # Set working directory
@@ -17,21 +17,20 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
-COPY emotion_prediction.py .
-COPY final_emotion_model.pkl .
-COPY final_scaler.pkl .
-COPY final_feature_info.pkl .
+COPY recommendation_service.py .
+COPY cluster_color_palettes.csv .
+COPY colour_data_with_clusters_3.0.csv .
 
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
 # Expose port
-EXPOSE 5001
+EXPOSE 5003
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5001/health || exit 1
+    CMD curl -f http://localhost:5003/health || exit 1
 
-# Run the emotion prediction service
-CMD ["python3", "emotion_prediction.py"] 
+# Run the recommendation service
+CMD ["python3", "recommendation_service.py"]
