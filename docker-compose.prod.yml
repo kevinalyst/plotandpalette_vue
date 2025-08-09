@@ -15,7 +15,7 @@ services:
       - EMOTION_API_URL=http://emotion-api:5001
       - STORY_API_URL=http://story-api:5002
       - FLASK_ENV=production
-      - CLAUDE_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
       - ./uploads:/app/uploads
       - ./logs:/app/logs
@@ -79,7 +79,7 @@ services:
       - "5002:5002"
     environment:
       - PYTHONUNBUFFERED=1
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
       - ./uploads:/app/uploads
       - ./logs:/app/logs

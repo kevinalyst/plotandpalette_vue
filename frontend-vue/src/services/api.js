@@ -13,6 +13,13 @@ class ApiService {
       ...options,
     }
 
+    // If sending FormData, let the browser set the correct multipart boundary
+    if (config.body instanceof FormData) {
+      if (config.headers && 'Content-Type' in config.headers) {
+        delete config.headers['Content-Type']
+      }
+    }
+
     try {
       console.log(`🌐 API Request: ${config.method || 'GET'} ${url}`)
       const response = await fetch(url, config)
@@ -50,6 +57,13 @@ class ApiService {
     return this.request('/get-recommendations', {
       method: 'POST',
       body: JSON.stringify(data)
+    })
+  }
+
+  async getRecommendationsFromColors(rawColors) {
+    return this.request('/get-recommendations-from-colors', {
+      method: 'POST',
+      body: JSON.stringify({ rawColors })
     })
   }
 
@@ -101,8 +115,8 @@ class ApiService {
     
     for (let i = 0; i < data.paintings.length; i++) {
       const painting = data.paintings[i]
-      if (!painting.url || !painting.title || !painting.artist || !painting.year) {
-        throw new Error(`Painting ${i + 1} is missing required fields: url=${!!painting.url}, title=${!!painting.title}, artist=${!!painting.artist}, year=${!!painting.year}`)
+      if (!painting.url || !painting.title || !painting.artist) {
+        throw new Error(`Painting ${i + 1} is missing required fields: url=${!!painting.url}, title=${!!painting.title}, artist=${!!painting.artist}`)
       }
     }
     

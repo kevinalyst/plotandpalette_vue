@@ -13,19 +13,34 @@
       <div class="gallery-section">
         <h3>Paintings for you</h3>
         <p class="gallery-subtitle">See the 10 paintings recommended from your captured colours</p>
-        <p class="sub-instruction">These paintings are sourced from the WikiArt-Emotion Dataset.</p>
-        
-        <!-- Navigation controls for carousel view -->
-        <div v-if="!showAllPaintings" class="gallery-navigation">
-          <button @click="prevPaintings" class="nav-btn prev-btn">
-            <img src="@/assets/images/left.png" alt="Previous" class="nav-btn-image" />
-          </button>
-          <button @click="nextPaintings" class="nav-btn next-btn">
-            <img src="@/assets/images/right.png" alt="Next" class="nav-btn-image" />
-          </button>
+        <div class="top-row-info">
+          <p class="sub-instruction">These paintings are sourced from the Google Arts & Culture.</p>
+          <div 
+            class="previous-selection"
+            @mouseenter="showPrevious = true"
+            @mouseleave="showPrevious = false"
+          >
+            <span>Hover to see your previous selection:</span>
+            <img src="@/assets/images/hoverpalette.png" alt="Previous selection" class="previous-icon" />
+            <div v-if="showPrevious" class="previous-popup">
+              <div class="previous-title">Your captured palette:</div>
+              <div class="previous-image-wrapper">
+                <img :src="previousCapturedUrl" alt="captured palette" class="previous-image" />
+              </div>
+              <div class="previous-emotion">Your selected emotion: <span class="emotion-highlight">{{ previousEmotion || '—' }}</span></div>
+            </div>
+          </div>
         </div>
         
         <div class="paintings-grid-container">
+          <!-- Integrated overlay navigation within the grid container -->
+          <button 
+            v-if="!showAllPaintings" 
+            @click="prevPaintings" 
+            class="grid-nav-btn grid-nav-left" 
+            aria-label="Previous"
+          >‹</button>
+          
           <div class="paintings-grid" ref="paintingsGrid" v-if="allPaintings && allPaintings.length > 0">
             <div 
               v-for="(painting, index) in allPaintings" 
@@ -36,7 +51,12 @@
               @dragstart="handleDragStart($event, painting)"
               @click="openPaintingModal(painting)"
             >
-              <img :src="painting.url" :alt="painting.title" />
+              <img 
+                :src="painting.url" 
+                :alt="painting.title"
+                @error="handleImageError($event, painting)"
+                loading="lazy"
+              />
               <div class="painting-hover-info">
                 <div class="hover-content">
                   <h4>{{ painting.title }}</h4>
@@ -46,22 +66,29 @@
               </div>
             </div>
           </div>
+          
+          <button 
+            v-if="!showAllPaintings" 
+            @click="nextPaintings" 
+            class="grid-nav-btn grid-nav-right" 
+            aria-label="Next"
+          >›</button>
         </div>
         
-        <!-- Horizontal scroll bar -->
-        <div class="scroll-bar-container">
-          <div class="scroll-bar" @click="handleScrollBarClick">
-            <div class="scroll-thumb" ref="scrollThumb" :style="{ left: scrollThumbPosition + '%', width: scrollThumbWidth + '%' }"></div>
-          </div>
-        </div>
+        <!-- Removed custom scroll bar -->
         
         <!-- Recapture Option -->
         <div class="gallery-recapture">
           <span class="recapture-text-left">I don't like any of these paintings. I want to</span>
-          <button @click="recaptureGallery" class="recapture-btn">
-            Re-capture
+          <button 
+            @click="reloadRecommendations" 
+            class="recapture-btn"
+            :disabled="remainingReloads <= 0"
+          >
+            Reload
+            <span :class="['reload-counter', { zero: remainingReloads === 0 }]">{{ remainingReloads }}/3</span>
           </button>
-          <span class="recapture-text-right">a palette.</span>
+          <span class="recapture-text-right">recommendations.</span>
         </div>
       </div>
 
@@ -155,6 +182,15 @@
             <div class="painting-modal-image">
               <img :src="selectedPaintingForModal.url" :alt="selectedPaintingForModal.title" />
             </div>
+            <div class="painting-modal-meta">
+              <a 
+                v-if="selectedPaintingForModal.page"
+                :href="selectedPaintingForModal.page"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="check-source-link"
+              >See the original source</a>
+            </div>
           </div>
         </div>
       </div>
@@ -205,6 +241,11 @@ export default {
     const hoveredCharacter = ref('')
     const showNameInput = ref(false)
     const showAllPaintings = ref(false)
+    const emotionFromPalette = ref('')
+    const rawColorsFromPalette = ref([])
+    const capturedFilename = ref('')
+    const reloadCount = ref(0)
+    const remainingReloads = ref(3)
     
     // Painting modal state
     const showPaintingModal = ref(false)
@@ -261,9 +302,13 @@ export default {
     // Gallery data - will be populated from backend recommendations
     const allPaintings = ref([])
 
+    // Previous selection hover state
+    const showPrevious = ref(false)
+    const previousCapturedUrl = ref('')
+    const previousEmotion = ref('')
+
     // Refs for scroll functionality
     const paintingsGrid = ref(null)
-    const scrollThumb = ref(null)
     const scrollPosition = ref(0)
     
     // Computed properties for scroll thumb
@@ -294,12 +339,122 @@ export default {
       }
     }
 
+    // Normalize various raw color formats to backend-expected [{r,g,b,percentage}] x 5
+    const normalizeToBackendRawColors = (rawColorsInput) => {
+      try {
+        if (!rawColorsInput) return []
+
+        // Already in backend format
+        if (Array.isArray(rawColorsInput) && rawColorsInput.length === 5 &&
+            rawColorsInput.every(c => typeof c === 'object' && ('bgr' in c || 'hsv' in c || 'lab' in c))) {
+          return rawColorsInput
+        }
+
+        // Legacy minimal RGB format
+        if (Array.isArray(rawColorsInput) && rawColorsInput.length === 5 &&
+            rawColorsInput.every(c => typeof c === 'object' && 'r' in c && 'g' in c && 'b' in c)) {
+          return rawColorsInput
+        }
+
+        // Helper: hex to rgb
+        const hexToRgb = (hex) => {
+          const clean = hex.startsWith('#') ? hex.slice(1) : hex
+          const bigint = parseInt(clean, 16)
+          if (Number.isNaN(bigint)) return { r: 0, g: 0, b: 0 }
+          if (clean.length === 3) {
+            const r = parseInt(clean[0] + clean[0], 16)
+            const g = parseInt(clean[1] + clean[1], 16)
+            const b = parseInt(clean[2] + clean[2], 16)
+            return { r, g, b }
+          }
+          const r = (bigint >> 16) & 255
+          const g = (bigint >> 8) & 255
+          const b = bigint & 255
+          return { r, g, b }
+        }
+
+        // Dictionary format: {"#aabbcc": 0.12, ...}
+        if (!Array.isArray(rawColorsInput) && typeof rawColorsInput === 'object') {
+          const entries = Object.entries(rawColorsInput).slice(0, 5)
+          return entries.map(([hex, percentage]) => ({
+            ...hexToRgb(hex),
+            percentage: typeof percentage === 'number' ? percentage : (1 / entries.length)
+          }))
+        }
+
+        if (Array.isArray(rawColorsInput)) {
+          const list = rawColorsInput.slice(0, 5)
+          return list.map((item) => {
+            if (typeof item === 'string') {
+              const { r, g, b } = hexToRgb(item)
+              return { r, g, b, percentage: 1 / list.length }
+            }
+            if (item && typeof item === 'object') {
+              if ('hex' in item) {
+                const { r, g, b } = hexToRgb(item.hex)
+                return { r, g, b, percentage: typeof item.percentage === 'number' ? item.percentage : (1 / list.length) }
+              }
+              if ('color' in item) {
+                const { r, g, b } = hexToRgb(item.color)
+                return { r, g, b, percentage: typeof item.percentage === 'number' ? item.percentage : (1 / list.length) }
+              }
+              if ('r' in item && 'g' in item && 'b' in item) {
+                return { r: item.r, g: item.g, b: item.b, percentage: typeof item.percentage === 'number' ? item.percentage : (1 / list.length) }
+              }
+            }
+            // Fallback
+            return { r: 0, g: 0, b: 0, percentage: 1 / list.length }
+          })
+        }
+
+        return []
+      } catch (e) {
+        console.error('Failed to normalize raw colors:', e)
+        return []
+      }
+    }
+
+    // Helper function to get proxied image URL
+    const getProxiedImageUrl = (originalUrl) => {
+      if (!originalUrl) return ''
+      // Use the backend proxy to avoid CORS/ORB issues
+      return `/api/proxy-image?url=${encodeURIComponent(originalUrl)}`
+    }
+
     // Methods
     const loadPageData = () => {
       try {
         if (route.query.data) {
           const data = JSON.parse(unicodeSafeBase64Decode(route.query.data))
           pageData.value = data
+          // Prepare previous selection data (from ColorPalettePage payload)
+          const filename = data.filename || (data?.pageData?.filename)
+          const cacheBuster = Date.now()
+          const possibleUrls = [
+            `/api/uploads/${filename}?v=${cacheBuster}`,
+            `/uploads/${filename}?v=${cacheBuster}`,
+            `./uploads/${filename}?v=${cacheBuster}`,
+            `${window.location.origin}/uploads/${filename}?v=${cacheBuster}`,
+            data.capturedImageUrl
+          ].filter(Boolean)
+           if (filename) {
+            previousCapturedUrl.value = possibleUrls[0]
+          } else if (data.capturedImageUrl) {
+            previousCapturedUrl.value = data.capturedImageUrl
+          }
+          previousEmotion.value = (data.selectedEmotion || data?.emotionPrediction?.emotion || '').toString()
+
+           // store for reloads – prefer backend-ready format if present
+           emotionFromPalette.value = data.selectedEmotion || data?.emotionPrediction?.emotion || ''
+           if (Array.isArray(data.rawColors) && data.rawColors.length === 5 && typeof data.rawColors[0] === 'object' && ('bgr' in data.rawColors[0] || 'hsv' in data.rawColors[0] || 'lab' in data.rawColors[0])) {
+             // Use enriched colors from backend as-is
+             rawColorsFromPalette.value = data.rawColors
+           } else if (Array.isArray(data.rawColorsForRecommendation) && data.rawColorsForRecommendation.length === 5) {
+             rawColorsFromPalette.value = data.rawColorsForRecommendation
+           } else if (data.rawColors) {
+             rawColorsFromPalette.value = normalizeToBackendRawColors(data.rawColors)
+           }
+           capturedFilename.value = filename || ''
           
           // Use detailedRecommendations from the backend which includes title, artist, year, url
           console.log('📊 Page data received:', data)
@@ -307,14 +462,21 @@ export default {
           console.log('🌐 Simple recommendations:', data.recommendations)
           
           if (data.detailedRecommendations && data.detailedRecommendations.length > 0) {
-            allPaintings.value = data.detailedRecommendations
-            recommendations.value = data.detailedRecommendations
-            console.log('✅ Loaded paintings:', allPaintings.value.length)
+            // Process paintings to use proxied URLs
+            const processedPaintings = data.detailedRecommendations.map(painting => ({
+              ...painting,
+              url: getProxiedImageUrl(painting.url),
+              originalUrl: painting.url // Keep original for reference
+            }))
+            allPaintings.value = processedPaintings
+            recommendations.value = processedPaintings
+            console.log('✅ Loaded paintings with proxy URLs:', allPaintings.value.length)
           } else if (data.recommendations && data.recommendations.length > 0) {
             // Fallback: convert simple URL list to detailed format
             console.log('⚠️ Using fallback: converting URLs to painting objects')
             const paintingObjects = data.recommendations.map((url, index) => ({
-              url: url,
+              url: getProxiedImageUrl(url),
+              originalUrl: url,
               title: `Painting ${index + 1}`,
               artist: 'Unknown Artist', 
               year: 'Unknown Year'
@@ -334,13 +496,73 @@ export default {
       }
     }
 
-    const recaptureGallery = () => {
-      router.push('/gradient')
+    const recaptureGallery = () => {}
+
+    const reloadRecommendations = async () => {
+      if (remainingReloads.value <= 0) return
+      try {
+        loading.value = true
+        loadingMessage.value = 'Refreshing your recommendations...'
+        spinnerType.value = 'keyboard'
+
+        // Re-run recommendations using the same raw color statistics
+        let rawColorsPayload = []
+        if (rawColorsFromPalette.value && rawColorsFromPalette.value.length === 5) {
+          rawColorsPayload = rawColorsFromPalette.value
+        } else if (pageData.value) {
+          if (Array.isArray(pageData.value.rawColorsForRecommendation) && pageData.value.rawColorsForRecommendation.length === 5) {
+            rawColorsPayload = pageData.value.rawColorsForRecommendation
+          } else if (pageData.value.rawColors) {
+            rawColorsPayload = normalizeToBackendRawColors(pageData.value.rawColors)
+          }
+        }
+
+        if (!rawColorsPayload || rawColorsPayload.length !== 5) {
+          console.error('❌ Unable to reload: missing 5 raw colors payload')
+          loading.value = false
+          spinnerType.value = 'magic-cube'
+          return
+        }
+
+        const res = await ApiService.getRecommendationsFromColors(rawColorsPayload)
+        if (res && res.success && res.detailedRecommendations && res.detailedRecommendations.length > 0) {
+          const processedPaintings = res.detailedRecommendations.map(painting => ({
+            ...painting,
+            url: getProxiedImageUrl(painting.url),
+            originalUrl: painting.url
+          }))
+          // Do not clear selectedPaintings; only replace the pool
+          allPaintings.value = processedPaintings
+          recommendations.value = processedPaintings
+        } else if (res && res.recommendations && res.recommendations.length > 0) {
+          const paintingObjects = res.recommendations.map((url, index) => ({
+            url: getProxiedImageUrl(url),
+            originalUrl: url,
+            title: `Painting ${index + 1}`,
+            artist: 'Unknown Artist',
+            year: 'Unknown Year'
+          }))
+          allPaintings.value = paintingObjects
+          recommendations.value = paintingObjects
+        } else {
+          console.warn('⚠️ Reload returned no recommendations')
+        }
+
+        reloadCount.value += 1
+        remainingReloads.value = Math.max(0, 3 - reloadCount.value)
+      } catch (e) {
+        console.error('❌ Failed to reload recommendations:', e)
+      } finally {
+        loading.value = false
+        spinnerType.value = 'magic-cube'
+      }
     }
 
     const nextPaintings = () => {
       if (!paintingsGrid.value) return
-      const scrollAmount = paintingsGrid.value.clientWidth * 0.8 // Scroll 80% of visible width
+      // Move by exactly one painting width (assumes consistent card width + gap)
+      const card = paintingsGrid.value.querySelector('.painting-item')
+      const scrollAmount = card ? (card.clientWidth + 20) : paintingsGrid.value.clientWidth * 0.8
       const maxScroll = paintingsGrid.value.scrollWidth - paintingsGrid.value.clientWidth
       const newScrollPosition = Math.min(scrollPosition.value + scrollAmount, maxScroll)
       
@@ -352,7 +574,8 @@ export default {
 
     const prevPaintings = () => {
       if (!paintingsGrid.value) return
-      const scrollAmount = paintingsGrid.value.clientWidth * 0.8 // Scroll 80% of visible width
+      const card = paintingsGrid.value.querySelector('.painting-item')
+      const scrollAmount = card ? (card.clientWidth + 20) : paintingsGrid.value.clientWidth * 0.8
       const newScrollPosition = Math.max(scrollPosition.value - scrollAmount, 0)
       
       paintingsGrid.value.scrollTo({
@@ -375,20 +598,6 @@ export default {
       }
     }
     
-    const handleScrollBarClick = (event) => {
-      if (!paintingsGrid.value) return
-      const scrollBar = event.currentTarget
-      const rect = scrollBar.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const scrollBarWidth = rect.width
-      const maxScroll = paintingsGrid.value.scrollWidth - paintingsGrid.value.clientWidth
-      
-      const targetScrollPosition = (clickX / scrollBarWidth) * maxScroll
-      paintingsGrid.value.scrollTo({
-        left: targetScrollPosition,
-        behavior: 'smooth'
-      })
-    }
     
     const handleDragStart = (event, painting) => {
       draggedPainting.value = painting
@@ -413,12 +622,12 @@ export default {
     }
 
     const openPaintingModal = (painting) => {
-      if (painting && painting.url) {
+      if (painting && (painting.url || painting.originalUrl)) {
         selectedPaintingForModal.value = {
-          url: painting.url,
+          url: painting.url || painting.originalUrl,
           title: painting.title,
           artist: painting.artist,
-          year: painting.year
+          page: painting.page || painting.source || ''
         }
         showPaintingModal.value = true
       }
@@ -487,6 +696,14 @@ export default {
       }
     }
     
+    const handleImageError = (event, painting) => {
+      console.warn(`Failed to load image for painting: ${painting.title}`, painting.url)
+      // Set a placeholder image or hide the image
+      event.target.style.display = 'none'
+      // Optionally, you could set a placeholder image:
+      // event.target.src = '/assets/images/placeholder.png'
+    }
+    
     // Helper function for Unicode-safe base64 encoding
     const unicodeSafeBase64Encode = (str) => {
       try {
@@ -512,8 +729,13 @@ export default {
         console.log('- Nickname:', nickname.value)
         console.log('- Page data:', pageData.value)
       
-      // Validate required data before making API calls
-      const validPaintings = selectedPaintings.value.filter(p => p && p.url && p.title && p.artist && p.year)
+      // Validate required data before making API calls and prepare for backend
+      const validPaintings = selectedPaintings.value
+        .filter(p => p && (p.url || p.originalUrl) && p.title && p.artist)
+        .map(p => ({
+          ...p,
+          url: p.originalUrl || p.url // Use original URL for backend processing
+        }))
       console.log('- Valid paintings count:', validPaintings.length)
       console.log('- Valid paintings:', validPaintings)
       
@@ -623,8 +845,10 @@ export default {
       generatingStory,
       recommendations,
       allPaintings,
+      showPrevious,
+      previousCapturedUrl,
+      previousEmotion,
       paintingsGrid,
-      scrollThumb,
       scrollPosition,
       scrollThumbPosition,
       scrollThumbWidth,
@@ -640,12 +864,14 @@ export default {
       showAllPaintings,
       showPaintingModal,
       selectedPaintingForModal,
+      getProxiedImageUrl,
       recaptureGallery,
+      reloadRecommendations,
+      remainingReloads,
       nextPaintings,
       prevPaintings,
       initializeScrollHandler,
       updateScrollPosition,
-      handleScrollBarClick,
       handleDragStart,
       handleDrop,
       openPaintingModal,
@@ -657,6 +883,7 @@ export default {
       hideCharacterDescription,
       closeNameInput,
       confirmName,
+      handleImageError,
       generateStory
     }
   }
@@ -674,8 +901,6 @@ export default {
 .gallery-container {
   width: 100%;
   overflow: hidden;
-  /* max-width: 1400px; */
-
   margin: 0 auto;
   padding: 40px;
 }
@@ -725,6 +950,72 @@ export default {
   font-weight: 250;
   font-style: italic;
   text-align: center;
+}
+
+.top-row-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.previous-selection {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #ccc;
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-style: italic;
+  position: relative;
+}
+
+.previous-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.previous-icon-emoji {
+  font-size: 22px;
+}
+
+.previous-popup {
+  position: absolute;
+  right: 0;
+  top: 32px;
+  width: min(560px, 80vw);
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(8px);
+  border-radius: 10px;
+  padding: 16px;
+  z-index: 20;
+}
+
+.previous-title, .previous-emotion {
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.previous-image-wrapper {
+  margin: 10px 0 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+
+.previous-image {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  display: block;
+}
+
+.emotion-highlight {
+  font-style: italic;
 }
 
 .drop-zones {
@@ -835,65 +1126,35 @@ export default {
   font-weight: 300
 }
 
-.gallery-navigation {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.gallery-navigation-dock {
   position: relative;
-  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(20, 20, 20, 0.45);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  margin: 10px auto 0;
 }
 
-.nav-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  outline: none;
-  width: 60px;
-  height: 60px;
+.dock-nav-btn {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  font-size: 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 18px;
+  user-select: none;
 }
 
-.nav-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
-}
-
-.nav-btn:focus {
-  outline: none;
-}
-
-.nav-btn:active {
-  outline: none;
-  transform: scale(0.95);
-}
-
-.prev-btn {
-  position: absolute;
-  left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
-}
-
-.next-btn {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
-}
-
-.nav-btn-image {
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-}
+.dock-nav-btn:hover { background: rgba(255,255,255,0.25); }
 
 .gallery-recapture {
   text-align: center;
@@ -931,6 +1192,19 @@ export default {
   transform: translateY(-2px);
 }
 
+.reload-counter {
+  padding: 2px 8px;
+  margin-left: 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  color: inherit;
+  font-weight: 600;
+}
+.reload-counter.zero {
+  background: rgba(255, 80, 80, 0.2);
+  color: #ff5050;
+}
+
 .paintings-grid-container {
   width: 100%;
   overflow: hidden;
@@ -954,6 +1228,30 @@ export default {
   display: none;  /* Safari and Chrome */
 }
 
+/* Integrated grid navigation buttons */
+.grid-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(20,20,20,0.45);
+  color: #fff;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  z-index: 5;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.grid-nav-btn:hover { background: rgba(255,255,255,0.25); transform: translateY(-50%) scale(1.05); }
+.grid-nav-left { left: 6px; }
+.grid-nav-right { right: 6px; }
+
 .scroll-bar-container {
   width: 100%;
   max-width: 800px;
@@ -968,6 +1266,7 @@ export default {
   border-radius: 2px;
   position: relative;
   cursor: pointer;
+  user-select: none;
 }
 
 .scroll-thumb {
@@ -978,6 +1277,11 @@ export default {
   top: 0;
   transition: left 0.1s ease;
   cursor: pointer;
+  touch-action: none; /* ensure pointer events deliver movement */
+}
+
+.scroll-thumb.dragging {
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .painting-item {
@@ -1391,6 +1695,7 @@ export default {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  margin-bottom: 10px;
 }
 
 .painting-modal-image img {
@@ -1399,6 +1704,19 @@ export default {
   max-width: 90vw;
   object-fit: contain;
   border-radius: 10px;
+}
+
+.check-source-link {
+  font-family: 'Poppins', sans-serif;
+  color: #9dd1ff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+  cursor: pointer;
+}
+.check-source-link:hover {
+  color: #cfe7ff;
+  text-decoration-thickness: 2px;
 }
 
 .name-section {

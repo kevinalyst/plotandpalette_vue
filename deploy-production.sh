@@ -71,7 +71,7 @@ check_dns() {
     log_info "Checking DNS configuration..."
     
     DOMAIN_IP=$(dig +short $DOMAIN)
-    EXPECTED_IP="34.39.28.3"
+    EXPECTED_IP="34.39.82.238"
     
     if [ "$DOMAIN_IP" != "$EXPECTED_IP" ]; then
         log_warning "DNS may not be configured correctly."
@@ -258,7 +258,7 @@ trap handle_error ERR
 main() {
     log_info "Starting production deployment for Plot & Palette..."
     log_info "Domain: $DOMAIN"
-    log_info "VM IP: 34.39.28.3"
+    log_info "VM IP: 34.39.82.238"
     
     check_prerequisites
     check_dns

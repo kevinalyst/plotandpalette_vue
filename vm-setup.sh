@@ -3,7 +3,7 @@
 # Plot & Palette - Google Cloud VM Setup Script
 # ============================================
 # This script sets up the production environment on Google Cloud VM
-# VM IP: 34.39.28.3
+# VM IP: 34.39.82.238
 # Domain: plotandpalette.uk
 
 set -e  # Exit on any error
@@ -233,7 +233,7 @@ setup_swap() {
 # Main installation function
 main() {
     log_info "Starting Plot & Palette VM setup on Google Cloud..."
-    log_info "VM IP: 34.39.28.3"
+    log_info "VM IP: 34.39.82.238"
     log_info "Domain: plotandpalette.uk"
     
     check_root
@@ -254,7 +254,7 @@ main() {
     log_warning "1. Log out and log back in to apply Docker group membership"
     log_warning "2. Clone your Git repository to ~/plotandpalette/"
     log_warning "3. Update docker.env.prod with your API keys"
-    log_warning "4. Configure DNS: Point plotandpalette.uk to 34.39.28.3"
+    log_warning "4. Configure DNS: Point plotandpalette.uk to 34.39.82.238"
     log_warning "5. Run the deployment script: ./deploy-production.sh"
 }
 

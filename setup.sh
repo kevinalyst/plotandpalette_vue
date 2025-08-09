@@ -104,14 +104,36 @@ if [ ! -f "docker.env" ]; then
     else
         print_error "docker.env.example not found. Creating minimal docker.env..."
         cat > docker.env << EOF
+# Database Configuration - Google Cloud SQL (UPDATE THESE VALUES!)
+DB_HOST=your_database_host_here
+DB_PORT=3306
+DB_NAME=your_database_name_here
+DB_USER=your_database_user_here
+DB_PASSWORD=your_database_password_here
+
+# MySQL Root Configuration (Legacy - keeping for reference)
 MYSQL_ROOT_PASSWORD=plot_palette_root_2024
 MYSQL_DATABASE=plot_palette
 MYSQL_USER=app_user
 MYSQL_PASSWORD=secure_app_password_2024
+
+# Flask Configuration
 FLASK_ENV=production
+FLASK_APP=server.py
 DEBUG=False
+
+# Claude AI Configuration (SET YOUR ACTUAL API KEY!)
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Application Configuration
+PYTHONUNBUFFERED=1
+PYTHONPATH=/app
+LOG_LEVEL=INFO
 EOF
         print_success "Created basic docker.env file"
+        print_warning "⚠️  IMPORTANT: You MUST update docker.env with your actual database credentials and API keys!"
+        print_warning "   - Set DB_HOST, DB_NAME, DB_USER, DB_PASSWORD for your Google Cloud SQL instance"
+        print_warning "   - Set OPENAI_API_KEY for OpenAI story generation"
     fi
 else
     print_success "docker.env already exists"
@@ -141,13 +163,13 @@ fi
 print_status "Waiting for services to initialize..."
 sleep 30
 
-# Initialize database
-print_status "Initializing database..."
-if docker-compose exec -T backend python database.py; then
-    print_success "Database initialized successfully!"
+# Initialize database (skip for Google Cloud SQL)
+print_status "Checking database connection..."
+if docker-compose exec -T backend python -c "from database import db; print('Database connection:', 'OK' if db.health_check() else 'Failed')"; then
+    print_success "Database connection verified!"
 else
-    print_warning "Database initialization failed. You may need to run this manually later:"
-    print_warning "docker-compose exec backend python database.py"
+    print_warning "Database connection failed. Check your Google Cloud SQL configuration in docker.env"
+    print_warning "Make sure your database credentials and network access are correct"
 fi
 
 # Setup frontend (if Node.js is available)
@@ -205,9 +227,9 @@ check_service() {
 
 # Check each service
 check_service "Main Application" "http://localhost"
-check_service "Backend API" "http://localhost/api/health"
-check_service "Emotion API" "http://localhost:8001/health"
-check_service "Story API" "http://localhost:8002/health"
+check_service "Backend API" "http://localhost:5003/health"
+check_service "Story API" "http://localhost:5002/health"
+# Note: Emotion and Recommendation services are embedded in the backend
 
 echo ""
 print_success "🎉 Setup completed!"

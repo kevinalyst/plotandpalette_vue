@@ -1,5 +1,5 @@
 # Story Generation API Microservice
-# Plot & Palette - Claude AI Story Generation Service
+# Plot & Palette - OpenAI Story Generation Service
 FROM python:3.11-slim
 
 # Set working directory

@@ -3,7 +3,7 @@ import json
 import sys
 import base64
 from typing import List, Dict
-import anthropic
+from openai import OpenAI
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -11,9 +11,10 @@ load_dotenv()
 
 class ImageStoryGenerator:
     def __init__(self):
-        self.api_key = os.getenv('CLAUDE_API_KEY')
+        # Read OpenAI API key from environment (do not hardcode secrets)
+        self.api_key = os.getenv('OPENAI_API_KEY')
         if not self.api_key:
-            raise ValueError("CLAUDE_API_KEY not found in environment variables")
+            raise ValueError("OPENAI_API_KEY not found in environment variables")
         
         self.client = None
         self._api_call_count = 0
@@ -129,13 +130,14 @@ CRITICAL: You must use the exact section markers **PAINTING_1_SECTION**, **PAINT
         }
     
     def _initialize_client_if_needed(self):
-        """Initialize the Claude client only when needed for API calls"""
+        """Initialize the OpenAI client only when needed for API calls"""
         if self.client is None:
-            self.client = anthropic.Anthropic(api_key=self.api_key)
-            print(f"[API] Claude client initialized for image story generation", file=sys.stderr)
+            # OpenAI client reads key from env or explicit param
+            self.client = OpenAI(api_key=self.api_key)
+            print(f"[API] OpenAI client initialized for image story generation", file=sys.stderr)
     
     def _encode_image(self, image_path: str) -> tuple:
-        """Encode image to base64 for Claude API and determine media type"""
+        """Encode image to base64 for OpenAI API and determine media type"""
         try:
             # Determine media type based on file extension
             file_ext = os.path.splitext(image_path)[1].lower()
@@ -321,40 +323,34 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
                 dynamic_guidance=dynamic_guidance,
                 painting1_title=paintings[0]['title'],
                 painting1_artist=paintings[0]['artist'],
-                painting1_year=paintings[0]['year'],
+                painting1_year=paintings[0].get('year', ''),
                 painting2_title=paintings[1]['title'],
                 painting2_artist=paintings[1]['artist'],
-                painting2_year=paintings[1]['year'],
+                painting2_year=paintings[1].get('year', ''),
                 painting3_title=paintings[2]['title'],
                 painting3_artist=paintings[2]['artist'],
-                painting3_year=paintings[2]['year'],
+                painting3_year=paintings[2].get('year', ''),
                 nickname_instruction=nickname_instruction
             )
             
-            # Prepare the message with formatted text prompt and images
-            message_content = [
-                {
-                    "type": "text",
-                    "text": complete_prompt
-                }
+            # Prepare the chat message with text and images (Chat Completions multimodal)
+            # Use data URLs to embed base64 images
+            user_content = [
+                {"type": "text", "text": complete_prompt}
             ]
-            
-            # Add images to the message - ALL images required
+
             for i, painting in enumerate(paintings):
                 try:
                     image_data, media_type = self._encode_image(painting['imagePath'])
-                    message_content.append({
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": media_type,
-                            "data": image_data
-                        }
+                    data_url = f"data:{media_type};base64,{image_data}"
+                    user_content.append({
+                        "type": "image_url",
+                        "image_url": {"url": data_url}
                     })
                 except Exception as e:
                     print(f"[ERROR] Failed to process image {i+1}: {e}", file=sys.stderr)
                     raise
-            
+
             # Log API call
             api_call_info = {
                 'timestamp': os.popen('date').read().strip(),
@@ -372,21 +368,24 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
             print(f"[API] Emotion: {emotion} ({emotion_probability}% -> {intensity} intensity)", file=sys.stderr)
             print(f"[API] Images: {[p.get('title', 'Unknown') for p in paintings]}", file=sys.stderr)
             
-            # Call Claude API with images
-            message = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",  # Using Claude 3.5 for better vision capabilities
-                max_tokens=1000,
+            # Call OpenAI Chat Completions with images (GPT-5)
+            completion = self.client.chat.completions.create(
+                model="gpt-5",
                 temperature=0.8,
-                system="You are a creative writer specializing in art narratives. Use both the provided artwork information and your visual analysis of the images to create rich, detailed stories. Follow the modular prompt structure exactly and always write exactly 300 words.",
+                max_tokens=1000,
                 messages=[
                     {
+                        "role": "system",
+                        "content": "You are a creative writer specializing in art narratives. Use both the provided artwork information and your visual analysis of the images to create rich, detailed stories. Follow the modular prompt structure exactly and always write exactly 300 words."
+                    },
+                    {
                         "role": "user",
-                        "content": message_content
+                        "content": user_content
                     }
                 ]
             )
-            
-            story_text = message.content[0].text
+
+            story_text = completion.choices[0].message.content
             
             # Parse the structured story into three parts
             story_parts = self._parse_structured_story(story_text)
@@ -399,21 +398,24 @@ Story:
 
 Generate only the title, nothing else."""
 
-            # Generate the story title using a separate API call
-            title_message = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=50,
+            # Generate the story title using a separate OpenAI call
+            title_completion = self.client.chat.completions.create(
+                model="gpt-5",
                 temperature=0.7,
-                system="You are a skilled title writer. Create evocative, poetic titles that capture the essence of stories. Keep titles under 8 words.",
+                max_tokens=50,
                 messages=[
                     {
-                        "role": "user", 
+                        "role": "system",
+                        "content": "You are a skilled title writer. Create evocative, poetic titles that capture the essence of stories. Keep titles under 8 words."
+                    },
+                    {
+                        "role": "user",
                         "content": title_prompt
                     }
                 ]
             )
-            
-            generated_title = title_message.content[0].text.strip()
+
+            generated_title = title_completion.choices[0].message.content.strip()
             # Remove quotes if the AI added them
             if generated_title.startswith('"') and generated_title.endswith('"'):
                 generated_title = generated_title[1:-1]

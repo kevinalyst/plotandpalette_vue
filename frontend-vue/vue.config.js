@@ -10,7 +10,18 @@ module.exports = defineConfig({
   devServer: {
     port: 8080,
     hot: true,
-    open: false
+    open: false,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5003',
+        changeOrigin: true,
+        secure: false,
+        ws: false,
+        logLevel: 'debug',
+        // Strip the /api prefix so that /api/health -> /health on the backend
+        pathRewrite: { '^/api': '' }
+      }
+    }
   },
   
   configureWebpack: {

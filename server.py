@@ -14,6 +14,8 @@ import tempfile
 import signal
 import sys
 import time
+from PIL import Image
+import colorsys
 
 from flask import Flask, request, jsonify, send_from_directory, send_file, Response
 from flask_cors import CORS
@@ -201,6 +203,8 @@ def run_recommendation_service(raw_colors_json: str) -> Dict[str, Any]:
         
         if result.returncode != 0:
             logger.error(f"Recommendation service error: {result.stderr}")
+            if result.stdout:
+                logger.error(f"Recommendation service stdout: {result.stdout}")
             raise Exception(f"Recommendation service failed with code {result.returncode}: {result.stderr}")
         
         logger.info("Recommendation service completed successfully")
@@ -212,6 +216,77 @@ def run_recommendation_service(raw_colors_json: str) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Error running recommendation service: {e}")
         raise
+
+def _rgb_tuple_from_color_obj(color_obj: Dict[str, Any]) -> Optional[tuple]:
+    try:
+        if isinstance(color_obj, dict):
+            if all(k in color_obj for k in ('r','g','b')):
+                return (int(color_obj['r']), int(color_obj['g']), int(color_obj['b']))
+            if 'hex' in color_obj:
+                h = str(color_obj['hex']).lstrip('#')
+                if len(h) == 3:
+                    h = ''.join([c*2 for c in h])
+                r = int(h[0:2], 16)
+                g = int(h[2:4], 16)
+                b = int(h[4:6], 16)
+                return (r,g,b)
+            if 'color' in color_obj:
+                h = str(color_obj['color']).lstrip('#')
+                if len(h) == 3:
+                    h = ''.join([c*2 for c in h])
+                r = int(h[0:2], 16)
+                g = int(h[2:4], 16)
+                b = int(h[4:6], 16)
+                return (r,g,b)
+    except Exception:
+        return None
+    return None
+
+def _enrich_raw_color(color_obj: Dict[str, Any]) -> Dict[str, Any]:
+    # If already enriched, return as-is
+    if isinstance(color_obj, dict) and ('bgr' in color_obj and 'hsv' in color_obj and 'lab' in color_obj):
+        return color_obj
+    # Determine RGB
+    rgb = _rgb_tuple_from_color_obj(color_obj)
+    if not rgb:
+        # Fallback to black
+        rgb = (0,0,0)
+    r,g,b = rgb
+    # Build BGR
+    bgr = [b, g, r]
+    # HSV using colorsys scaled to OpenCV-like ranges (H:0-180, S:0-255, V:0-255)
+    h, s, v = colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)
+    hsv = [int(round(h*180)), int(round(s*255)), int(round(v*255))]
+    # LAB using Pillow conversion
+    try:
+        img = Image.new('RGB', (1,1), (r,g,b)).convert('LAB')
+        L, A, B = img.getpixel((0,0))
+        lab = [int(L), int(A), int(B)]
+    except Exception:
+        lab = [0, 128, 128]
+    percentage = color_obj.get('percentage', 0.2) if isinstance(color_obj, dict) else 0.2
+    return {
+        'bgr': bgr,
+        'hsv': hsv,
+        'lab': lab,
+        'percentage': float(percentage)
+    }
+
+def ensure_enriched_raw_colors(raw_colors: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if not isinstance(raw_colors, list):
+        return []
+    if len(raw_colors) == 5 and all(isinstance(c, dict) and ('bgr' in c and 'hsv' in c and 'lab' in c) for c in raw_colors):
+        return raw_colors
+    enriched = [_enrich_raw_color(c) for c in raw_colors[:5]]
+    # Normalize percentages if missing or not summing to 1.0
+    total = sum(c.get('percentage', 0) for c in enriched)
+    if total <= 0:
+        for c in enriched:
+            c['percentage'] = 1.0/len(enriched)
+    else:
+        for c in enriched:
+            c['percentage'] = float(c.get('percentage', 0))/total
+    return enriched
 
 def run_python_script(script_path: str, image_path: str = None) -> Dict[str, Any]:
     """Legacy function - now runs both services sequentially"""
@@ -1346,6 +1421,8 @@ def get_recommendations_from_colors():
             return jsonify({'error': 'Raw colors data is required'}), 400
         
         raw_colors = data['rawColors']
+        # Ensure the colors are enriched to the format expected by the recommendation script
+        raw_colors = ensure_enriched_raw_colors(raw_colors)
         logger.info(f"Getting recommendations from {len(raw_colors)} raw colors")
         
         # Validate raw colors format
@@ -1617,7 +1694,7 @@ def generate_story():
         logger.info(f"   Emotion: {emotion} ({probability}%)")
         logger.info(f"   Paintings: {[p.get('title', 'Unknown') for p in paintings]}")
         
-        # Download images for each painting
+        # Download images for each painting (supports Google Arts & Culture and proxied URLs)
         paintings_with_images = []
         for i, painting in enumerate(paintings):
             image_filename = f"story_image_{int(datetime.now().timestamp() * 1000)}_{i}.jpg"
@@ -1631,7 +1708,7 @@ def generate_story():
                     raise Exception(f"Downloaded file not found: {image_path}")
                 
                 paintings_with_images.append({
-                    **painting,
+                    **{k: v for k, v in painting.items() if k != 'year'},
                     'imagePath': image_path,
                     'imageFilename': image_filename
                 })
@@ -1793,6 +1870,116 @@ def submit_feedback():
             'error': 'Failed to submit feedback',
             'message': str(e)
         }), 500
+
+@app.route('/proxy-image')
+def proxy_image():
+    """Proxy external painting images to avoid CORS/ORB issues"""
+    try:
+        image_url = request.args.get('url')
+        if not image_url:
+            return jsonify({'error': 'URL parameter required'}), 400
+        
+        # Validate URL
+        if not (image_url.startswith('http://') or image_url.startswith('https://')):
+            return jsonify({'error': 'Invalid URL'}), 400
+        
+        logger.info(f"Proxying image: {image_url}")
+        
+        # Enhanced headers for better compatibility
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'image',
+            'Sec-Fetch-Mode': 'no-cors',
+            'Sec-Fetch-Site': 'cross-site'
+        }
+        
+        # Special handling for Google Arts & Culture URLs
+        if 'googleusercontent.com' in image_url or 'artsandculture.google.com' in image_url:
+            # Add specific parameters for Google images
+            if '=' not in image_url and 'googleusercontent.com' in image_url:
+                image_url += '=s800'  # Request reasonable resolution
+            headers['Referer'] = 'https://artsandculture.google.com/'
+            # Remove some headers that might cause issues with Google
+            headers.pop('DNT', None)
+            headers.pop('Sec-Fetch-Dest', None)
+            headers.pop('Sec-Fetch-Mode', None)
+            headers.pop('Sec-Fetch-Site', None)
+        
+        response = requests.get(image_url, headers=headers, timeout=15, stream=True, allow_redirects=True)
+        
+        # Check if we got a valid response
+        if response.status_code != 200:
+            logger.warning(f"Non-200 response for {image_url}: {response.status_code}")
+            # Try a fallback approach with minimal headers
+            simple_headers = {
+                'User-Agent': 'Mozilla/5.0 (compatible; ImageProxy/1.0)'
+            }
+            response = requests.get(image_url, headers=simple_headers, timeout=15, stream=True, allow_redirects=True)
+        
+        response.raise_for_status()
+        
+        # Get content type and validate it's an image
+        content_type = response.headers.get('content-type', 'image/jpeg')
+        if not content_type.startswith('image/'):
+            logger.warning(f"Non-image content type for {image_url}: {content_type}")
+            content_type = 'image/jpeg'  # Default fallback
+        
+        logger.info(f"Successfully proxied image: {image_url} ({content_type})")
+        
+        # Return the image with proper headers
+        return Response(
+            response.content,
+            content_type=content_type,
+            headers={
+                'Cache-Control': 'public, max-age=3600',  # Cache for 1 hour
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET',
+                'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept'
+            }
+        )
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error proxying image {image_url}: {e}")
+        # Return a simple placeholder image instead of error
+        return generate_placeholder_image()
+    except Exception as e:
+        logger.error(f"Unexpected error proxying image: {e}")
+        return generate_placeholder_image()
+
+def generate_placeholder_image():
+    """Generate a simple placeholder image for failed image loads"""
+    try:
+        # Create a simple SVG placeholder
+        svg_content = '''<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+            <rect width="400" height="300" fill="#2a2a2a"/>
+            <rect x="10" y="10" width="380" height="280" fill="none" stroke="#666" stroke-width="2" stroke-dasharray="5,5"/>
+            <text x="200" y="140" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="16">
+                Painting Image
+            </text>
+            <text x="200" y="160" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="12">
+                Loading...
+            </text>
+        </svg>'''
+        
+        return Response(
+            svg_content,
+            content_type='image/svg+xml',
+            headers={
+                'Cache-Control': 'public, max-age=300',  # Cache for 5 minutes
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET',
+                'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept'
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to generate placeholder image: {e}")
+        return jsonify({'error': 'Failed to generate placeholder'}), 500
 
 @app.route('/health')
 def health_check():

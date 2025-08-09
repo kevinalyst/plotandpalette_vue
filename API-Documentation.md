@@ -1,5 +1,120 @@
 # Plot & Palette API Documentation
 
+## Backend and Story API Data Flow
+
+This section documents the current backend pipelines and the Story API integration, including exactly where data is persisted to the database.
+
+### Backend (Flask)
+
+#### Key Endpoints
+- POST `/capture-palette`: capture frame or receive palette image, run Emotion Prediction + Painting Recommendation, persist metadata, return results
+- POST `/get-recommendations`: run combined pipeline from a saved filename (image must exist on server filesystem)
+- POST `/get-recommendations-from-colors`: run recommendation only using raw color stats
+- POST `/save-emotion`: persist the emotion the user picked
+- POST `/save-selection`: persist selected paintings and narrative style
+- GET `/session-palette/<session_id>`: fetch recent palette metadata (used for resume flows)
+
+#### Emotion Prediction Pipeline
+1. Save uploaded image to `uploads/`.
+2. Execute `emotions_generation/emotion_prediction.py` with the image path.
+3. Parse stdout to extract:
+   - `colourData` (basic color percentages)
+   - `rawColors` (list of 5 weighted colors for recommender)
+   - `rawColorsForFrontend` (hex→percentage map)
+   - `emotionPrediction` (dominant emotion, confidence, per-emotion probabilities)
+4. Persist and return:
+   - Write metadata JSON next to the image in `uploads/<filename>.json` with color stats, raw colors, emotion, and initial recommendations.
+   - If DB enabled: store probabilities via `db.save_palette_analyse(session_id, gifname, emotion_scores)`.
+
+Code references:
+
+```730:980:server.py
+# /capture-palette: save frame/image → run run_python_script → emotion → recommendation
+```
+
+```243:327:server.py
+def parse_emotion_prediction_output(output): ...
+```
+
+#### Painting Recommendation Pipeline
+1. Input: five raw colors with percentages.
+2. Execute `painting_recommendation/recommendation_service.py`:
+   - compute color stats, cluster mapping and candidate pool `N_CAND=600`
+   - penalties, cooldown, softmax sampling `N_SAMPLE=60`
+   - MMR re-ranking `K_FINAL=12`
+   - cluster quotas `QUOTA_MAX=0.6`
+   - produce `final_recommendations` (urls, page, artist, title, cluster_id, filename, similarity)
+3. Backend parses script stdout into `urls` and `detailedRecommendations` and returns them.
+4. If called from `/capture-palette`, DB persist first 10 URLS via `db.save_painting_recommendations(session_id, urls)`.
+
+Code references:
+
+```1340:1377:server.py
+/get-recommendations-from-colors: accepts rawColors (5), runs run_recommendation_service
+```
+
+```600:741:painting_recommendation/recommendation_service.py
+apply quotas, slice to NUM_RECOMMENDATIONS, print detailed JSON
+```
+
+```329:397:server.py
+def parse_recommendation_service_output(output): extracts urls + detailedRecommendations
+```
+
+#### Database Persistence Points (Backend)
+- Palette upload (legacy upload route):
+  - `db.create_or_get_user(session_id, user_agent, ip_address)`
+  - `db.save_palette(filename, original_name, colors, file_size, session_id, metadata)`
+  - Ref: `server.py` 1000–1065
+- Emotion prediction save (from `/capture-palette`):
+  - `db.save_palette_analyse(session_id, gifname, emotion_scores)`
+  - Ref: `server.py` ~912
+- Painting recommendations (from `/capture-palette`):
+  - `db.save_painting_recommendations(session_id, urls)`
+  - Ref: `server.py` ~933
+- Emotion selection (Step 2):
+  - `db.save_emotion_selection(session_id, selected_emotion, probability)`
+  - Ref: `server.py` 1474–1484
+- Selection (Step 3):
+  - `db.save_paintings_style(session_id, painting_urls, story_character, nickname)`
+  - Ref: `server.py` 1416–1428
+- Feedback form:
+  - `db.save_feedback_form(...)` (Ref near ~1775)
+
+### Story API (Flask)
+
+#### Endpoints
+- GET `/health`: health check
+- POST `/test-files`: verify `imagePath` files exist inside the container
+- POST `/generate`: generate story content (strict validation + logging)
+
+#### Flow
+1. Backend/Frontend posts to `/generate` with:
+   - `paintings` (3 objects: title, artist, year, imagePath)
+   - `character` (historian|poet|detective|critic|time_traveller)
+   - optional `nickname`, `emotion`, `emotion_probability`
+2. Story API spawns `secure_story_generator.py` with JSON payload.
+3. Secure generator validates payload, logs API usage to `story_generation/api_usage_log.json`, and delegates to `ImageStoryGenerator` (Claude-backed) to produce the story.
+4. Returns JSON with the generated story.
+
+Code references:
+
+```45:93:story_generation/story_api.py
+/generate → run secure_story_generator.py; return its JSON stdout
+```
+
+```21:61, 93:129, 130:168:story_generation/secure_story_generator.py
+Validate request, log usage, generate story, return JSON
+```
+
+#### Persistence (Story API)
+- Usage/activity logging to `story_generation/api_usage_log.json` (file-based; not DB)
+- Backend persists selection/emotion/metadata via its own endpoints as listed above
+
+### Dev vs Prod Notes
+- In dev (localhost:8080), use `/api/get-recommendations-from-colors` for Reload to re-sample recommendations with the same color stats; filename-based `/get-recommendations` expects built static paths.
+- Diversity quota is `QUOTA_MAX=0.6`. If the quota reduces below 10, results can be <10. Backfilling is not implemented yet.
+
 This document provides comprehensive documentation for all API endpoints in the Plot & Palette application.
 
 ## Architecture Overview

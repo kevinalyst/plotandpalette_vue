@@ -15,6 +15,8 @@ import sys
 import random
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
+from urllib.parse import unquote_plus
+import re
 
 # Configuration
 CLUSTER_PALETTES_PATH = os.path.join(os.path.dirname(__file__), "cluster_color_palettes.csv")
@@ -31,7 +33,7 @@ DIVERSITY_CONFIG = {
     'ALPHA_USER': 0.03,      # Per-user exposure penalty weight
     'BETA_STABILITY': 0.05,  # Stability penalty weight
     'GAMMA_POP': 0.02,       # Global popularity penalty weight
-    'QUOTA_MAX': 0.4,        # Max 40% from any cluster
+    'QUOTA_MAX': 0.6,        # Max 60% from any cluster
     'COOLDOWN_DAYS': 14,     # Recently seen cooldown period
     'ARTIST_PENALTY': 0.05,  # Same artist penalty
     'ASPECT_PENALTY': 0.03   # Aspect ratio diversity penalty
@@ -316,55 +318,71 @@ def extract_artist_title_from_url(page_url):
     try:
         if not page_url or 'artsandculture.google.com' not in page_url:
             return "Unknown Artist", "Unknown Title"
-        
+
+        # Helper to decode and sanitize strings (remove symbols like %, #, &)
+        def _sanitize_text(raw_text: str) -> str:
+            # Decode URL-encoded characters and normalize separators
+            decoded = unquote_plus(raw_text or "")
+            decoded = decoded.replace('_', ' ')
+            # Temporarily keep hyphens for tokenization; final output uses spaces
+            # Remove disallowed symbols explicitly mentioned and collapse whitespace
+            decoded = re.sub(r'[\%#&]', '', decoded)
+            # Normalize whitespace
+            decoded = ' '.join(decoded.split())
+            return decoded.strip()
+
         # Extract the path part after '/asset/'
         if '/asset/' in page_url:
             path_part = page_url.split('/asset/')[-1]
-            # Remove the ID part (everything after the last '/')
-            if '/' in path_part:
-                title_artist_part = path_part.split('/')[0]
-            else:
-                title_artist_part = path_part
-            
-            # Split by hyphens and try to identify title and artist
-            parts = title_artist_part.split('-')
-            
+            # Remove the ID part (everything after the next '/')
+            title_artist_part = path_part.split('/')[0] if '/' in path_part else path_part
+
+            # Decode any percent-encodings first
+            decoded_part = unquote_plus(title_artist_part)
+
+            # Tokenize on '-' as GA&C uses hyphen-separated slugs
+            parts = [p for p in decoded_part.split('-') if p]
+
             if len(parts) >= 2:
-                # Common patterns:
-                # "the-lovers-marc-chagall" -> title: "The Lovers", artist: "Marc Chagall"
-                # Look for capitalized words that might be names
-                
-                # Simple heuristic: assume last 2-3 parts might be artist name
+                # Heuristic: last two tokens are most often the artist's name
                 if len(parts) >= 4:
-                    # Likely format: title-words-artist-surname
                     title_parts = parts[:-2]
                     artist_parts = parts[-2:]
                 elif len(parts) == 3:
-                    # Could be: title-artist-surname or title-word-artist
                     title_parts = parts[:-2]
                     artist_parts = parts[-2:]
-                else:
-                    # title-artist or just title
+                else:  # len == 2
                     title_parts = parts[:-1]
                     artist_parts = parts[-1:]
-                
-                title = ' '.join(word.capitalize() for word in title_parts)
-                artist = ' '.join(word.capitalize() for word in artist_parts)
-                
-                # Clean up
-                if not title:
-                    title = "Unknown Title"
-                if not artist:
-                    artist = "Unknown Artist"
-                
+
+                title = _sanitize_text(' '.join(title_parts))
+                artist = _sanitize_text(' '.join(artist_parts))
+
+                # Final formatting: capitalize words (keeps diacritics intact)
+                def _title_case(text: str) -> str:
+                    words = text.split()
+                    if not words:
+                        return text
+                    small_words = {"and", "of", "the", "a", "an", "in", "on", "for", "to"}
+                    result_words = []
+                    for idx, w in enumerate(words):
+                        if idx > 0 and w.lower() in small_words:
+                            result_words.append(w.lower())
+                        else:
+                            result_words.append(w.capitalize())
+                    return ' '.join(result_words)
+
+                title = _title_case(title) or "Unknown Title"
+                artist = _title_case(artist) or "Unknown Artist"
                 return artist, title
             else:
                 # Single part, treat as title
-                title = ' '.join(word.capitalize() for word in parts)
-                return "Unknown Artist", title if title else "Unknown Title"
-        
+                single = _sanitize_text(' '.join(parts))
+                single = single.capitalize() if single else "Unknown Title"
+                return "Unknown Artist", single
+
         return "Unknown Artist", "Unknown Title"
-        
+
     except Exception as e:
         print(f"Error extracting artist/title from URL {page_url}: {e}")
         return "Unknown Artist", "Unknown Title"

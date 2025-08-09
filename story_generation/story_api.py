@@ -58,7 +58,7 @@ def generate_story():
                 logger.info(f"📖 Painting {i+1}: {painting.get('title', 'Unknown')} - Path: {image_path} - Exists: {exists}")
         
         # Call the secure story generator directly
-        logger.info(f"📖 Calling secure_story_generator.py...")
+        logger.info(f"📖 Calling secure_story_generator.py (OpenAI backend)...")
         result = subprocess.run(
             [sys.executable, "secure_story_generator.py", json.dumps(data)],
             capture_output=True,

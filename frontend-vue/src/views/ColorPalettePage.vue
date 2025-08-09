@@ -53,51 +53,8 @@
         </div>
         <!-- Spacing -->
         <div style="height: 40px;"></div>
-        
-        <!-- Mapped Colors Section -->
-        <div class="mapped-colors-section">
-          <h3 class="mapped-colors-title">Mapped to <span class="basic-colours-hover">basic colours*
-            <div class="tooltip">
-              <img src="@/assets/images/basiccolours.png" alt="12 basic colours reference" class="tooltip-image" />
-            </div>
-          </span></h3>
-          <div class="chart-container">
-            <div class="color-bar" id="color-palette-bar">
-              <div 
-                v-for="(colorInfo, index) in (colourData || [])" 
-                :key="index"
-                class="color-segment"
-                :style="{ 
-                  backgroundColor: colorInfo.hex || colorInfo.color || '#000000',
-                  width: `${(colorInfo.percentage || 0) * 100}%`
-                }"
-                :title="`${colorInfo.name}: ${Math.round((colorInfo.percentage || 0) * 100)}%`"
-              ></div>
-            </div>
-          </div>
-          <div class="colour-legend" id="color-palette-legend">
-            <div 
-              v-for="(colorInfo, index) in (colourData && Array.isArray(colourData) ? colourData.slice(0, 5) : [])" 
-              :key="index"
-              class="legend-item"
-            >
-              <div 
-                class="legend-color-dot" 
-                :style="{ backgroundColor: colorInfo.hex || colorInfo.color || '#000000' }"
-              ></div>
-              <span class="legend-text">
-                {{ colorInfo.name }} ({{ Math.round((colorInfo.percentage || 0) * 100) }}%)
-              </span>
-            </div>
-          </div>
         </div>
         
-        <!-- Explanation -->
-        <div class="color-explanation">
-          <h4>Why and how to map to basic colours?</h4>
-          <p>Your extracted colours are automatically mapped into 12 basic colour categories using CIEΔE2000, a mathematical formula that measures how similar colours appear to the human eye. This mapping helps our system find paintings with matching colour themes from the art database more accurately.</p>
-        </div>
-      </div>
       
       <!-- Emotion Selection Section -->
       <div v-if="emotionPrediction && showEmotionSelection" class="emotion-container">
@@ -143,7 +100,8 @@
           :disabled="emotionResetCount >= 3"
           :class="{ 'disabled': emotionResetCount >= 3 }"
         >
-          More Emotions
+          <span>More Emotions</span>
+          <span :class="['reload-counter', { zero: remainingReloads === 0 }]">{{ remainingReloads }}/3</span>
         </button>
         
         <!-- Emotion Explanation -->
@@ -209,6 +167,7 @@ export default {
     const selectedEmotion = ref('')
     const selectedProbability = ref(0)
     const emotionResetCount = ref(0)
+    const remainingReloads = ref(3)
     const showEmotionSelection = ref(false)
     
     // Helper function for Unicode-safe base64 decoding
@@ -233,6 +192,7 @@ export default {
     const topEmotions = ref([])
     const displayedEmotions = ref([])
     const capturedImageUrl = ref('')
+    const imageFallbackUrls = ref([])
     
     // Methods
     const loadPageData = async () => {
@@ -332,23 +292,27 @@ export default {
         
         // Set up captured image URL with better error handling
         if (data.filename) {
-          // Try multiple URL formats
+          // Try multiple URL formats (prefer dev path /uploads in non-docker dev)
           const cacheBuster = Date.now()
           const possibleUrls = [
+            // Dev server proxy to backend
+            `/api/uploads/${data.filename}?v=${cacheBuster}`,
+            // Direct paths served by frontend (if proxy not used)
+            `/uploads/${data.filename}?v=${cacheBuster}`,
+            `./uploads/${data.filename}?v=${cacheBuster}`,
+            `${window.location.origin}/uploads/${data.filename}?v=${cacheBuster}`,
+            // Production/static fallbacks
             `/static/uploads/${data.filename}?v=${cacheBuster}`,
             `./static/uploads/${data.filename}?v=${cacheBuster}`,
             `${window.location.origin}/static/uploads/${data.filename}?v=${cacheBuster}`,
-            data.capturedImageUrl // fallback if provided in data
-          ].filter(Boolean) // Remove undefined values
+            data.capturedImageUrl // any direct URL provided by backend
+          ].filter(Boolean)
           
-          // Try the first URL and set up error handling
+          // Try the first URL and keep fallbacks for retry on error
           capturedImageUrl.value = possibleUrls[0]
+          imageFallbackUrls.value = possibleUrls.slice(1)
           console.log('🖼️ Setting captured image URL:', capturedImageUrl.value)
-          console.log('🔄 Available alternative URLs:', possibleUrls.slice(1))
-          
-          // Set the first URL (will work with proper backend setup)
-          capturedImageUrl.value = possibleUrls[0]
-          console.log('🖼️ Setting captured image URL:', capturedImageUrl.value)
+          console.log('🔄 Available alternative URLs:', imageFallbackUrls.value)
         } else {
           console.warn('⚠️ No filename provided in data')
         }
@@ -518,6 +482,7 @@ export default {
     const shuffleEmotions = () => {
       if (emotionResetCount.value < 3) {
         emotionResetCount.value++
+        remainingReloads.value = Math.max(0, 3 - emotionResetCount.value)
         displayedEmotions.value = selectRandomEmotions(topEmotions.value)
         
         // Reset selection when shuffling
@@ -738,6 +703,12 @@ export default {
     
     const handleImageError = () => {
       console.error('❌ Captured palette image failed to load:', capturedImageUrl.value)
+      // Attempt next fallback URL if available
+      if (imageFallbackUrls.value && imageFallbackUrls.value.length > 0) {
+        const nextUrl = imageFallbackUrls.value.shift()
+        console.log('🔁 Retrying with fallback URL:', nextUrl)
+        capturedImageUrl.value = nextUrl
+      }
     }
     
     const handleImageLoad = () => {
@@ -768,6 +739,7 @@ export default {
       capturedImageUrl,
       showEmotionSelection,
       emotionResetCount,
+      remainingReloads,
       selectEmotion,
       proceedToGallery,
       recapture,
@@ -1130,6 +1102,9 @@ export default {
   cursor: pointer;
   transition: all 0.3s ease;
   margin: 20px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .more-feelings-btn:hover:not(.disabled) {
@@ -1157,6 +1132,18 @@ export default {
   box-shadow: 0 5px 15px rgba(100, 101, 101, 0.4);
   color: white;
   border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.reload-counter {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.2);
+  color: inherit;
+  font-weight: 600;
+}
+.reload-counter.zero {
+  background: rgba(255, 80, 80, 0.2);
+  color: #ff5050;
 }
 
 .emotion-explanation {

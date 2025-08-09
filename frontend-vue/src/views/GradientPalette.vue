@@ -4,10 +4,41 @@
       ref="animatedGif"
       :src="currentGifSrc" 
       class="animated-gif-element" 
+      :key="currentGifSrc"
       :style="{ display: gifVisible ? 'block' : 'none' }"
+      crossorigin="anonymous"
       alt="Animated Palette"
     />
     
+    <!-- Thumbnail Gallery (Dock-like) -->
+    <div class="palette-gallery">
+      <button class="gallery-nav left" @click="scrollGallery('left')">‹</button>
+      <div class="thumbnails" ref="thumbnailScroller">
+        <img
+          v-for="(thumb, idx) in allThumbnails"
+          :key="idx"
+          :src="thumb"
+          class="thumbnail"
+          :class="{ active: idx === selectedIndex }"
+          @click="selectGif(idx)"
+          loading="lazy"
+          decoding="async"
+          alt="palette thumbnail"
+        />
+        <!-- Upload tile as the last item in the scroller -->
+        <label class="thumbnail upload-tile">
+          <input
+            type="file"
+            accept="image/png,image/jpeg"
+            @change="handleFileUpload"
+          />
+          <img v-if="!isUploading" :src="dropIcon" alt="Upload palette" class="upload-icon" />
+          <span class="upload-label" v-else>Uploading...</span>
+        </label>
+      </div>
+      <button class="gallery-nav right" @click="scrollGallery('right')">›</button>
+    </div>
+
     <div 
       :class="['capture-prompt', { 'animate-fade': animatePrompt, 'hidden': !showCapturePrompt }]"
     >
@@ -42,13 +73,36 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Modal from '@/components/Modal.vue'
 import ApiService from '@/services/api.js'
 import html2canvas from 'html2canvas'
-import GifPreloader from '@/services/gifPreloader.js'
+import dropIcon from '@/assets/images/drop.png'
+// Removed random cycling; we provide a simple clickable gallery instead
+
+// Statically import preview JPGs so they are always available and fast
+import preview1 from '@/assets/images/palette GIF/palette_preview/1.jpg'
+import preview2 from '@/assets/images/palette GIF/palette_preview/2.jpg'
+import preview3 from '@/assets/images/palette GIF/palette_preview/3.jpg'
+import preview4 from '@/assets/images/palette GIF/palette_preview/4.jpg'
+import preview5 from '@/assets/images/palette GIF/palette_preview/5.jpg'
+import preview6 from '@/assets/images/palette GIF/palette_preview/6.jpg'
+import preview7 from '@/assets/images/palette GIF/palette_preview/7.jpg'
+import preview8 from '@/assets/images/palette GIF/palette_preview/8.jpg'
+import preview9 from '@/assets/images/palette GIF/palette_preview/9.jpg'
+import preview10 from '@/assets/images/palette GIF/palette_preview/10.jpg'
+import preview11 from '@/assets/images/palette GIF/palette_preview/11.jpg'
+import preview12 from '@/assets/images/palette GIF/palette_preview/12.jpg'
+import preview13 from '@/assets/images/palette GIF/palette_preview/13.jpg'
+import preview14 from '@/assets/images/palette GIF/palette_preview/14.jpg'
+import preview15 from '@/assets/images/palette GIF/palette_preview/15.jpg'
+import preview16 from '@/assets/images/palette GIF/palette_preview/16.jpg'
+import preview17 from '@/assets/images/palette GIF/palette_preview/17.jpg'
+import preview18 from '@/assets/images/palette GIF/palette_preview/18.jpg'
+import preview19 from '@/assets/images/palette GIF/palette_preview/19.jpg'
+import preview20 from '@/assets/images/palette GIF/palette_preview/20.jpg'
 
 export default {
   name: 'GradientPalette',
@@ -74,11 +128,26 @@ export default {
     const modalMessage = ref('')
     const modalButtons = ref([])
     
-    // GIF cycling properties - use preloaded GIFs
-    const allGifs = ref([])
-    const currentGifOrder = ref([])
-    const currentGifIndex = ref(0)
-    const gifCyclingInterval = ref(null)
+    // Gallery GIFs
+    const galleryGifs = ref(Array(20).fill(null))
+    const thumbnailSrcs = ref([
+      preview1, preview2, preview3, preview4, preview5,
+      preview6, preview7, preview8, preview9, preview10,
+      preview11, preview12, preview13, preview14, preview15,
+      preview16, preview17, preview18, preview19, preview20
+    ])
+    const selectedIndex = ref(0)
+    const thumbnailScroller = ref(null)
+    const uploadedItems = ref([]) // { thumbUrl, displayUrl, filename }
+    const isUploading = ref(false)
+    
+    // Static icon for upload tile
+    
+
+    const allThumbnails = computed(() => [
+      ...thumbnailSrcs.value,
+      ...uploadedItems.value.map(u => u.thumbUrl)
+    ])
     
     // Animation properties
     const animationTimeout = ref(null)
@@ -86,147 +155,130 @@ export default {
     // GIF element reference for frame capture
     const animatedGif = ref(null)
     
-    // Load GIFs from preloader or fallback to manual loading
+    // Load 20 GIFs and default to 1.gif
+    // Lazy GIF loaders: resolved only when requested
+    const gifLoaders = Array.from({ length: 20 }, (_, i) => async () => {
+      if (!galleryGifs.value[i]) {
+        const mod = await import(`@/assets/images/palette GIF/${i + 1}.gif`)
+        galleryGifs.value[i] = mod.default || mod
+      }
+      return galleryGifs.value[i]
+    })
+
     const loadGifs = async () => {
       try {
-        console.log('📁 Loading GIFs from preloader...')
-        
-        // First, try to get preloaded GIFs
-        if (GifPreloader.isReady()) {
-          allGifs.value = GifPreloader.getPreloadedGifs()
-          console.log(`✅ Using ${allGifs.value.length} preloaded GIFs`)
-        } else {
-          console.log('⚠️ No preloaded GIFs available, loading fresh batch...')
-          // If no preloaded GIFs, load a fresh batch
-          const newGifs = await GifPreloader.preloadInitialGifs(3)
-          allGifs.value = newGifs
-          console.log(`✅ Loaded ${allGifs.value.length} fresh GIFs`)
-        }
-        
-        // If still no GIFs, fallback to manual loading
-        if (allGifs.value.length === 0) {
-          console.log('⚠️ Fallback to manual GIF loading...')
-          await importGifsManually()
-        }
-        
-      } catch (error) {
-        console.error('❌ Error loading GIFs:', error)
-        // Final fallback
-        await importGifsManually()
-      }
-    }
-    
-    // Fallback manual GIF import (keep original logic as backup)
-    const importGifsManually = async () => {
-      try {
-        console.log('📁 Manual GIF loading fallback...')
-        const manualGifs = []
-        
-        // Try to load a few GIFs manually
-        for (let i = 1; i <= 10; i++) {
-          try {
-            const gifModule = await import(`@/assets/images/palette GIF/${i}.gif`)
-            manualGifs.push(gifModule.default || gifModule)
-          } catch (error) {
-            // Skip missing GIFs
-          }
-        }
-        
-        allGifs.value = manualGifs
-        console.log(`✅ Manually loaded ${allGifs.value.length} GIFs as fallback`)
-      } catch (error) {
-        console.error('❌ Manual GIF loading also failed:', error)
-        // Use static paths as last resort
-        for (let i = 1; i <= 5; i++) {
-          allGifs.value.push(`/src/assets/images/palette GIF/${i}.gif`)
-        }
+        // Load only the first GIF initially
+        const firstUrl = await gifLoaders[0]()
+        selectedIndex.value = 0
+        currentGifSrc.value = firstUrl
+        gifVisible.value = true
+      } catch (e) {
+        console.error('Failed to load initial GIF:', e)
       }
     }
     
     // Methods
-    
-    const generateRandomGifOrder = () => {
-      const shuffled = [...allGifs.value].sort(() => Math.random() - 0.5)
-      currentGifOrder.value = shuffled
-      currentGifIndex.value = 0
-    }
-    
-    const switchToNextGif = async () => {
-      if (currentGifOrder.value.length === 0) {
-        generateRandomGifOrder()
-      }
-      
-      const previousGif = currentGifSrc.value
-      
-      // Try to get next GIF from preloader first
-      const nextGif = GifPreloader.getNextGif()
-      if (nextGif) {
-        currentGifSrc.value = nextGif
-        console.log('🔄 GIF switched to preloaded:', {
-          from: previousGif,
-          to: currentGifSrc.value
-        })
-      } else {
-        // Fallback to local array if preloader doesn't have next GIF
-        currentGifSrc.value = currentGifOrder.value[currentGifIndex.value]
-        currentGifIndex.value = (currentGifIndex.value + 1) % currentGifOrder.value.length
-        
-        console.log('🔄 GIF switched (fallback):', {
-          from: previousGif,
-          to: currentGifSrc.value,
-          index: currentGifIndex.value
-        })
-        
-        // If we've cycled through all current GIFs, regenerate order
-        if (currentGifIndex.value === 0) {
-          console.log('🔄 Regenerating GIF order for fallback')
-          generateRandomGifOrder()
-        }
-      }
-    }
-    
-    // Load more GIFs for continuous cycling
-    const loadMoreGifs = async () => {
-      try {
-        console.log('📦 Loading more GIFs for continuous cycling...')
-        const newBatch = await GifPreloader.getNextBatch(3)
-        
-        if (newBatch.length > 0) {
-          // Add new GIFs to current collection
-          allGifs.value = [...allGifs.value, ...newBatch]
-          console.log(`✅ Added ${newBatch.length} new GIFs. Total: ${allGifs.value.length}`)
+    const selectGif = async (index) => {
+      const baseCount = thumbnailSrcs.value.length
+      const total = baseCount + uploadedItems.value.length
+      if (index < 0 || index >= total) return
+      selectedIndex.value = index
+
+      if (index < baseCount) {
+        // Built-in GIFs
+        const next = await gifLoaders[index]()
+        if (currentGifSrc.value !== next) {
+          currentGifSrc.value = next
         } else {
-          console.log('⚠️ No new GIFs loaded, continuing with current batch')
+          currentGifSrc.value = `${next}?t=${Date.now()}`
         }
-      } catch (error) {
-        console.error('❌ Error loading more GIFs:', error)
-        // Continue with existing GIFs
+      } else {
+        // User-uploaded static image
+        const uIndex = index - baseCount
+        const item = uploadedItems.value[uIndex]
+        if (item) {
+          currentGifSrc.value = item.displayUrl
+        }
       }
     }
-    
-    const startGifCycling = () => {
-      generateRandomGifOrder()
-      switchToNextGif() // Initial switch (async, but we don't need to wait)
-      gifVisible.value = true
-      
-      // Start cycling
-      gifCyclingInterval.value = setInterval(async () => {
-        await switchToNextGif()
-      }, 5000) // Change every 5 seconds
-      
-      // Show capture prompt after delay
-      setTimeout(() => {
-        showCapturePrompt.value = true
-        startCapturePromptAnimation()
-      }, 1000)
+
+    const scrollGallery = (direction) => {
+      const scroller = thumbnailScroller.value
+      if (!scroller) return
+      const amount = Math.round(scroller.clientWidth * 0.8)
+      scroller.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' })
     }
-    
-    const stopGifCycling = () => {
-      if (gifCyclingInterval.value) {
-        clearInterval(gifCyclingInterval.value)
-        gifCyclingInterval.value = null
+
+    const handleFileUpload = async (event) => {
+      try {
+        const file = event.target.files && event.target.files[0]
+        if (!file) return
+        // Validate type
+        const valid = ['image/png', 'image/jpeg']
+        if (!valid.includes(file.type)) {
+          showModal.value = true
+          modalTitle.value = 'Invalid file type'
+          modalMessage.value = 'Please upload a PNG or JPEG image.'
+          modalButtons.value = [{ text: 'OK', action: () => { showModal.value = false } }]
+          return
+        }
+        // Optional: size guard (<=10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          showModal.value = true
+          modalTitle.value = 'File too large'
+          modalMessage.value = 'Please upload an image up to 10 MB.'
+          modalButtons.value = [{ text: 'OK', action: () => { showModal.value = false } }]
+          return
+        }
+
+        isUploading.value = true
+
+        const form = new FormData()
+        form.append('image', file)
+
+        const resp = await ApiService.savePalette(form)
+        // Prefer proxied URL for same-origin loading in dev/prod
+        const filename = resp && (resp.filename || (resp.metadata && resp.metadata.filename))
+        let displayUrl = resp && resp.url
+        if (filename) {
+          displayUrl = `/api/uploads/${filename}`
+        }
+
+        // Use returned URL for thumbnail; fallback to object URL
+        const objectUrl = URL.createObjectURL(file)
+        const thumbUrl = objectUrl || displayUrl
+
+        uploadedItems.value.push({ thumbUrl, displayUrl, filename })
+
+        // Select the newly uploaded item
+        const baseCount = thumbnailSrcs.value.length
+        selectedIndex.value = baseCount + uploadedItems.value.length - 1
+        currentGifSrc.value = displayUrl
+        gifVisible.value = true
+
+        // Clear the file input so the same file can be re-selected if desired
+        if (event.target) event.target.value = ''
+      } catch (e) {
+        console.error('Upload failed', e)
+        showModal.value = true
+        modalTitle.value = 'Upload failed'
+        modalMessage.value = e && e.message ? e.message : 'Unable to upload image.'
+        modalButtons.value = [{ text: 'OK', action: () => { showModal.value = false } }]
+      } finally {
+        isUploading.value = false
       }
-      stopCapturePromptAnimation()
+    }
+
+    // Generate tiny SVG data URI placeholders so thumbnails are instant and light
+    const generateGradientPlaceholder = (index) => {
+      const hueA = (index * 37) % 360
+      const hueB = (hueA + 140) % 360
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='160' height='90'>` +
+                  `<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>` +
+                  `<stop offset='0%' stop-color='hsl(${hueA},70%,55%)'/>` +
+                  `<stop offset='100%' stop-color='hsl(${hueB},70%,40%)'/></linearGradient></defs>` +
+                  `<rect width='100%' height='100%' fill='url(#g)'/></svg>`
+      return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
     }
     
     const startCapturePromptAnimation = () => {
@@ -267,7 +319,8 @@ export default {
               return element.classList.contains('loading-spinner') ||
                      element.classList.contains('modal') ||
                      element.classList.contains('capture-prompt') ||
-                     element.classList.contains('controls')
+                     element.classList.contains('controls') ||
+                     element.classList.contains('palette-gallery')
             }
           }).then(canvas => {
             try {
@@ -311,18 +364,17 @@ export default {
       isCapturing.value = true
       showCapturePrompt.value = false
       
-      // Stop GIF cycling and freeze at current frame
-      stopGifCycling()
-      
       try {
         // STEP 1: Hide UI elements for clean capture
         console.log('🎭 Hiding UI elements for clean capture...')
         const controlsElement = document.querySelector('.controls')
         const capturePrompt = document.querySelector('.capture-prompt')
+        const galleryElement = document.querySelector('.palette-gallery')
         
         // Temporarily hide UI elements
         if (controlsElement) controlsElement.style.display = 'none'
         if (capturePrompt) capturePrompt.style.display = 'none'
+        if (galleryElement) galleryElement.style.display = 'none'
         
         // Wait a moment for DOM to update
         await new Promise(resolve => setTimeout(resolve, 100))
@@ -338,6 +390,7 @@ export default {
         // STEP 3: Restore UI elements and show loading
         if (controlsElement) controlsElement.style.display = 'block'
         if (capturePrompt) capturePrompt.style.display = 'block'
+        if (galleryElement) galleryElement.style.display = 'flex'
         
         // NOW show loading spinner for backend processing
         showLoading.value = true
@@ -419,13 +472,15 @@ export default {
     onMounted(async () => {
       console.log('🎬 GradientPalette mounted')
       await loadGifs()
-      
-      // Wait a bit for GIFs to load before starting cycling
-      setTimeout(startGifCycling, 100)
+      // Show capture prompt after a short delay
+      setTimeout(() => {
+        showCapturePrompt.value = true
+        startCapturePromptAnimation()
+      }, 500)
     })
     
     onBeforeUnmount(() => {
-      stopGifCycling()
+      // Nothing to cleanup currently
     })
     
     return {
@@ -434,6 +489,7 @@ export default {
       showCapturePrompt,
       animatePrompt,
       isCapturing,
+      isUploading,
       showModal,
       showLoading,
       loadingMessage,
@@ -441,7 +497,18 @@ export default {
       modalMessage,
       modalButtons,
       animatedGif,
-      capturePalette
+      capturePalette,
+      // gallery
+      galleryGifs,
+      thumbnailSrcs,
+      allThumbnails,
+      selectedIndex,
+      thumbnailScroller,
+      selectGif,
+      scrollGallery,
+      uploadedItems,
+      handleFileUpload,
+      dropIcon
     }
   }
 }
@@ -469,6 +536,96 @@ export default {
   object-fit: cover;
   z-index: 1;
 }
+
+/* Bottom gallery */
+.palette-gallery {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(20, 20, 20, 0.45);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  z-index: 12;
+}
+
+.thumbnails {
+  display: flex;
+  overflow-x: auto;
+  max-width: 70vw;
+  gap: 10px;
+  scrollbar-width: none; /* Firefox */
+}
+.thumbnails::-webkit-scrollbar { display: none; }
+
+.thumbnail {
+  width: 75px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.25);
+  cursor: pointer;
+  opacity: 0.9;
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+  flex: 0 0 auto; /* Prevent shrinking in flex scroller */
+}
+.thumbnail:hover { transform: scale(1.06); opacity: 1; }
+.thumbnail.active { box-shadow: 0 0 0 2px #ffffff; opacity: 1; }
+
+/* Upload tile */
+.upload-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 75px; /* Ensure same as .thumbnail explicitly */
+  height: 45px;
+  background: rgba(255,255,255,0.08);
+  border-style: dashed;
+  border-width: 2px;
+  border-color: rgba(255,255,255,0.35);
+  flex: 0 0 auto; /* Do not let flexbox collapse it */
+}
+.upload-icon {
+  width: 60%;
+  height: 60%;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25));
+}
+.upload-tile input[type="file"] {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0; /* Explicit to avoid shorthand issues */
+  opacity: 0;
+  cursor: pointer;
+}
+.upload-label {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gallery-nav {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  user-select: none;
+}
+.gallery-nav:hover { background: rgba(255,255,255,0.25); }
 
 .capture-prompt {
   position: absolute;
@@ -507,7 +664,7 @@ export default {
 
 .controls {
   position: absolute;
-  bottom: 50px;
+  bottom: 120px; /* moved up to make room for gallery */
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -599,6 +756,9 @@ button:focus {
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .palette-gallery { bottom: 12px; padding: 8px 10px; }
+  .thumbnail { width: 64px; height: 36px; }
+  .gallery-nav { width: 26px; height: 26px; }
   .capture-prompt {
     max-width: 300px;
     padding: 15px 20px;
@@ -614,7 +774,7 @@ button:focus {
   }
   
   .controls {
-    bottom: 30px;
+    bottom: 100px;
   }
 }
 </style> 

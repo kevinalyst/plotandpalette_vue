@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Secure wrapper for story generation with API usage restrictions
-This ensures the Claude API is ONLY used for story generation
+This ensures the OpenAI API is ONLY used for story generation
 """
 
 import json
@@ -14,9 +14,15 @@ class SecureStoryGenerator:
     """Wrapper class with additional security and usage restrictions"""
     
     def __init__(self):
-        self.generator = ImageStoryGenerator()  # Use image-based generator
+        self.generator = ImageStoryGenerator()  # Use image-based generator (OpenAI-backed)
         self.allowed_operations = ['generate_story']
         self.usage_log_file = 'api_usage_log.json'
+        # Safety: surface a clear warning if the OpenAI key is missing in this process
+        try:
+            if not os.getenv('OPENAI_API_KEY'):
+                print("[SECURE] WARNING: OPENAI_API_KEY is not set in environment", file=sys.stderr)
+        except Exception:
+            pass
         
     def generate_story(self, paintings, narrative_style, nickname=None, emotion=None, emotion_probability=None):
         """
@@ -67,7 +73,7 @@ class SecureStoryGenerator:
             
         for i, painting in enumerate(paintings):
             # Check required fields
-            required_fields = ['title', 'artist', 'year']
+            required_fields = ['title', 'artist']
             missing_fields = [field for field in required_fields if field not in painting]
             if missing_fields:
                 print(f"[SECURE] Validation failed: Missing painting {i+1} information. Missing fields: {missing_fields}", file=sys.stderr)

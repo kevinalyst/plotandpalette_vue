@@ -6,7 +6,7 @@ This guide will walk you through migrating your Plot & Palette application from 
 ### 📋 Migration Details
 - **Source**: Localhost development environment
 - **Target**: Google Cloud VM (Linux)
-- **VM IP**: `34.39.28.3`
+- **VM IP**: `34.39.82.238`
 - **Domain**: `plotandpalette.uk`
 - **SSL**: Let's Encrypt certificates
 - **Database**: Google Cloud SQL (already configured)
@@ -30,7 +30,7 @@ TTL: 300
 ```
 
 ### 2. API Keys Required
-- **Anthropic API Key**: For story generation
+- **OpenAI API Key**: For story generation
 - **Email Address**: For SSL certificate registration
 
 ### 3. VM Access
@@ -64,7 +64,7 @@ TTL: 300
 
 1. **Connect to Your VM**
    ```bash
-   ssh username@34.39.28.3
+   ssh username@34.39.82.238
    ```
 
 2. **Run VM Setup Script**
@@ -78,7 +78,7 @@ TTL: 300
 3. **Log Out and Back In**
    ```bash
    exit
-   ssh username@34.39.28.3
+   ssh username@34.39.82.238
    ```
    This applies Docker group membership.
 
@@ -365,7 +365,7 @@ docker-compose -f docker-compose.prod.yml logs -f --tail=50
 
 ## ✅ Post-Migration Checklist
 
-- [ ] DNS points to VM IP (34.39.28.3)
+- [ ] DNS points to VM IP (34.39.82.238)
 - [ ] HTTPS certificate obtained and valid
 - [ ] All services running and healthy
 - [ ] Database connection working

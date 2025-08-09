@@ -1,11 +1,11 @@
 # API Security Measures
 
-This document outlines the security measures implemented to ensure your Claude API key is **ONLY** used for story generation.
+This document outlines the security measures implemented to ensure your OpenAI API key is **ONLY** used for story generation.
 
 ## 🔒 Security Features Implemented
 
 ### 1. **Lazy Initialization**
-- The Claude API client is **NOT** initialized when the StoryGenerator class is created
+- The OpenAI API client is **NOT** initialized when the StoryGenerator class is created
 - It's only initialized when an actual story generation request is made
 - This prevents any accidental API usage during setup or testing
 
@@ -49,7 +49,7 @@ The `api_usage_log.json` file tracks all API requests with full details.
 ### Console Logging
 All API calls are logged to console with `[API]` prefix:
 ```
-[API] Claude client initialized for story generation
+[API] OpenAI client initialized for story generation
 [API] Making story generation call #1
 [API] Style: historian
 [API] Paintings: The Starry Night by Vincent Van Gogh, ...
