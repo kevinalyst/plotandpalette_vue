@@ -20,12 +20,12 @@ Configure your domain DNS records:
 ```
 Type: A
 Name: @
-Value: 34.39.28.3
+Value: 34.39.82.238
 TTL: 300
 
 Type: A
 Name: www
-Value: 34.39.28.3
+Value: 34.39.82.238
 TTL: 300
 ```
 
@@ -49,7 +49,7 @@ TTL: 300
    
    Update these critical values:
    ```env
-   ANTHROPIC_API_KEY=your_actual_anthropic_api_key
+   OPENAI_API_KEY=your_actual_openai_api_key
    SSL_EMAIL=your-email@domain.com
    ```
 
@@ -97,7 +97,7 @@ TTL: 300
    nano docker.env.prod
    
    # Update these values:
-   # ANTHROPIC_API_KEY=your_actual_api_key
+   # OPENAI_API_KEY=your_actual_openai_api_key
    # SSL_EMAIL=your_email@example.com
    ```
 

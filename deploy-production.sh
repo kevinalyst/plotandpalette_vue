@@ -58,8 +58,8 @@ check_prerequisites() {
     fi
     
     # Check if API key is set
-    if grep -q "your_anthropic_api_key_here" docker.env.prod; then
-        log_error "Please update ANTHROPIC_API_KEY in docker.env.prod with your actual API key."
+    if grep -q "your_openai_api_key_here" docker.env.prod; then
+        log_error "Please update OPENAI_API_KEY in docker.env.prod with your actual API key."
         exit 1
     fi
     
