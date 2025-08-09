@@ -12,7 +12,6 @@ services:
       - DB_NAME=plot-palette-mydb
       - DB_USER=root
       - DB_PASSWORD=Lihanwen1997
-      - EMOTION_API_URL=http://emotion-api:5001
       - STORY_API_URL=http://story-api:5002
       - FLASK_ENV=production
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -20,7 +19,6 @@ services:
       - ./uploads:/app/uploads
       - ./logs:/app/logs
     depends_on:
-      - emotion-api
       - story-api
     networks:
       - plot-palette-network
@@ -51,24 +49,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # Emotion Prediction API Service
-  emotion-api:
-    build: ./emotions_generation
-    container_name: plot-palette-emotions
-    restart: unless-stopped
-    ports:
-      - "5001:5001"
-    environment:
-      - PYTHONUNBUFFERED=1
-    volumes:
-      - ./logs:/app/logs
-    networks:
-      - plot-palette-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+  
 
   # Story Generation API Service
   story-api:
