@@ -151,16 +151,23 @@ CRITICAL: You must use the exact section markers **PAINTING_1_SECTION**, **PAINT
             if hasattr(response, "output") and isinstance(response.output, list):
                 collected = []
                 for item in response.output:
-                    contents = getattr(item, "content", None)
-                    if not contents:
-                        continue
-                    for part in contents:
-                        # part may be an object with .type/.text or a dict
-                        ptype = getattr(part, "type", None) or (isinstance(part, dict) and part.get("type"))
-                        if ptype in ("output_text", "text"):
-                            text_val = getattr(part, "text", None) or (isinstance(part, dict) and part.get("text"))
-                            if text_val:
-                                collected.append(text_val)
+                    # Handle message-type outputs
+                    if getattr(item, "type", None) == "message":
+                        contents = getattr(item, "content", None) or []
+                        for part in contents:
+                            ptype = getattr(part, "type", None) or (isinstance(part, dict) and part.get("type"))
+                            if ptype in ("output_text", "text"):
+                                text_val = getattr(part, "text", None) or (isinstance(part, dict) and part.get("text"))
+                                if text_val:
+                                    collected.append(text_val)
+                    else:
+                        contents = getattr(item, "content", None) or []
+                        for part in contents:
+                            ptype = getattr(part, "type", None) or (isinstance(part, dict) and part.get("type"))
+                            if ptype in ("output_text", "text"):
+                                text_val = getattr(part, "text", None) or (isinstance(part, dict) and part.get("text"))
+                                if text_val:
+                                    collected.append(text_val)
                 if collected:
                     return "\n".join(collected)
         except Exception:
@@ -168,6 +175,41 @@ CRITICAL: You must use the exact section markers **PAINTING_1_SECTION**, **PAINT
 
         # Final fallback: try generic stringification
         return str(response)
+
+    def _call_responses_and_get_text(self, content_parts, max_tokens: int) -> tuple:
+        """Call Responses API and return (text, response). Retries with higher token limit if truncated."""
+        resp = self.client.responses.create(
+            model="gpt-5",
+            max_output_tokens=max_tokens,
+            input=[
+                {
+                    "role": "user",
+                    "content": content_parts
+                }
+            ]
+        )
+        text = self._extract_text_from_response(resp).strip()
+        # If response indicates truncation and text seems short, try once with a higher cap
+        try:
+            status = getattr(resp, "status", None)
+            incomplete = getattr(resp, "incomplete_details", None)
+            reason = getattr(incomplete, "reason", None)
+        except Exception:
+            status = None
+            reason = None
+        if (not text or len(text.split()) < 240) and (status == "incomplete" or reason == "max_output_tokens") and max_tokens < 1400:
+            resp = self.client.responses.create(
+                model="gpt-5",
+                max_output_tokens=min(1400, max_tokens + 400),
+                input=[
+                    {
+                        "role": "user",
+                        "content": content_parts
+                    }
+                ]
+            )
+            text = self._extract_text_from_response(resp).strip()
+        return text, resp
     
     def _encode_image(self, image_path: str) -> tuple:
         """Encode image to base64 for OpenAI API and determine media type"""
@@ -356,13 +398,10 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
                 dynamic_guidance=dynamic_guidance,
                 painting1_title=paintings[0]['title'],
                 painting1_artist=paintings[0]['artist'],
-                painting1_year=paintings[0].get('year', ''),
                 painting2_title=paintings[1]['title'],
                 painting2_artist=paintings[1]['artist'],
-                painting2_year=paintings[1].get('year', ''),
                 painting3_title=paintings[2]['title'],
                 painting3_artist=paintings[2]['artist'],
-                painting3_year=paintings[2].get('year', ''),
                 nickname_instruction=nickname_instruction
             )
             
@@ -402,18 +441,7 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
             print(f"[API] Images: {[p.get('title', 'Unknown') for p in paintings]}", file=sys.stderr)
             
             # Call OpenAI Responses API (GPT-5)
-            completion = self.client.responses.create(
-                model="gpt-5",
-                max_output_tokens=1000,
-                input=[
-                    {
-                        "role": "user",
-                        "content": content_parts
-                    }
-                ]
-            )
-
-            story_text = self._extract_text_from_response(completion)
+            story_text, completion = self._call_responses_and_get_text(content_parts, max_tokens=1000)
             
             # Parse the structured story into three parts
             story_parts = self._parse_structured_story(story_text)
@@ -427,20 +455,10 @@ Story:
 Generate only the title, nothing else."""
 
             # Generate the story title using a separate Responses API call
-            title_completion = self.client.responses.create(
-                model="gpt-5",
-                max_output_tokens=50,
-                input=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "input_text", "text": title_prompt}
-                        ]
-                    }
-                ]
+            generated_title, title_completion = self._call_responses_and_get_text(
+                content_parts=[{"type": "input_text", "text": title_prompt}],
+                max_tokens=32
             )
-
-            generated_title = self._extract_text_from_response(title_completion).strip()
             # Remove quotes if the AI added them
             if generated_title.startswith('"') and generated_title.endswith('"'):
                 generated_title = generated_title[1:-1]
