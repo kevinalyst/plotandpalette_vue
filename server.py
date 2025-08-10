@@ -1251,17 +1251,16 @@ def get_session_palette(session_id):
             if os.path.exists(image_path):
                 logger.info(f"🔄 Re-running analysis for {filename}")
                 result = run_python_script(None, image_path)
-                
-        # Return the fresh analysis result
-        base_url = f"{request.scheme}://{request.host}"
-        return jsonify({
+                # Return the fresh analysis result
+                base_url = f"{request.scheme}://{request.host}"
+                return jsonify({
                     'success': True,
                     'filename': filename,
                     'colourData': result.get('colourData', {}),
                     'rawColors': result.get('rawColors', []),
                     'emotionPrediction': result.get('emotionPrediction', {}),
                     'detailedRecommendations': result.get('detailedRecommendations', []),
-            'capturedImageUrl': f"{base_url}/uploads/{filename}",
+                    'capturedImageUrl': f"{base_url}/uploads/{filename}",
                     'sessionId': session_id,
                     'timestamp': captured_palette.get('timestamp'),
                     'gifName': captured_palette.get('gifName')
