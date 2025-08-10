@@ -404,7 +404,6 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
             # Call OpenAI Responses API (GPT-5)
             completion = self.client.responses.create(
                 model="gpt-5",
-                temperature=0.8,
                 max_output_tokens=1000,
                 input=[
                     {
@@ -430,7 +429,6 @@ Generate only the title, nothing else."""
             # Generate the story title using a separate Responses API call
             title_completion = self.client.responses.create(
                 model="gpt-5",
-                temperature=0.7,
                 max_output_tokens=50,
                 input=[
                     {
