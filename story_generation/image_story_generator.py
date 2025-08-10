@@ -135,6 +135,39 @@ CRITICAL: You must use the exact section markers **PAINTING_1_SECTION**, **PAINT
             # OpenAI client reads key from env or explicit param
             self.client = OpenAI(api_key=self.api_key)
             print(f"[API] OpenAI client initialized for image story generation", file=sys.stderr)
+
+    def _extract_text_from_response(self, response) -> str:
+        """Safely extract text from Responses API result across SDK versions"""
+        try:
+            # Newer SDKs expose a convenience property
+            text = getattr(response, "output_text", None)
+            if text:
+                return text
+        except Exception:
+            pass
+
+        # Fallback: walk the output parts
+        try:
+            if hasattr(response, "output") and isinstance(response.output, list):
+                collected = []
+                for item in response.output:
+                    contents = getattr(item, "content", None)
+                    if not contents:
+                        continue
+                    for part in contents:
+                        # part may be an object with .type/.text or a dict
+                        ptype = getattr(part, "type", None) or (isinstance(part, dict) and part.get("type"))
+                        if ptype in ("output_text", "text"):
+                            text_val = getattr(part, "text", None) or (isinstance(part, dict) and part.get("text"))
+                            if text_val:
+                                collected.append(text_val)
+                if collected:
+                    return "\n".join(collected)
+        except Exception:
+            pass
+
+        # Final fallback: try generic stringification
+        return str(response)
     
     def _encode_image(self, image_path: str) -> tuple:
         """Encode image to base64 for OpenAI API and determine media type"""
@@ -333,19 +366,19 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
                 nickname_instruction=nickname_instruction
             )
             
-            # Prepare the chat message with text and images (Chat Completions multimodal)
+            # Prepare the prompt for the Responses API with multimodal inputs
             # Use data URLs to embed base64 images
-            user_content = [
-                {"type": "text", "text": complete_prompt}
+            content_parts = [
+                {"type": "input_text", "text": complete_prompt}
             ]
 
             for i, painting in enumerate(paintings):
                 try:
                     image_data, media_type = self._encode_image(painting['imagePath'])
                     data_url = f"data:{media_type};base64,{image_data}"
-                    user_content.append({
-                        "type": "image_url",
-                        "image_url": {"url": data_url}
+                    content_parts.append({
+                        "type": "input_image",
+                        "image_url": data_url
                     })
                 except Exception as e:
                     print(f"[ERROR] Failed to process image {i+1}: {e}", file=sys.stderr)
@@ -368,24 +401,20 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
             print(f"[API] Emotion: {emotion} ({emotion_probability}% -> {intensity} intensity)", file=sys.stderr)
             print(f"[API] Images: {[p.get('title', 'Unknown') for p in paintings]}", file=sys.stderr)
             
-            # Call OpenAI Chat Completions with images (GPT-5)
-            completion = self.client.chat.completions.create(
+            # Call OpenAI Responses API (GPT-5)
+            completion = self.client.responses.create(
                 model="gpt-5",
                 temperature=0.8,
-                max_tokens=1000,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a creative writer specializing in art narratives. Use both the provided artwork information and your visual analysis of the images to create rich, detailed stories. Follow the modular prompt structure exactly and always write exactly 300 words."
-                    },
+                max_completion_tokens=1000,
+                input=[
                     {
                         "role": "user",
-                        "content": user_content
+                        "content": content_parts
                     }
                 ]
             )
 
-            story_text = completion.choices[0].message.content
+            story_text = self._extract_text_from_response(completion)
             
             # Parse the structured story into three parts
             story_parts = self._parse_structured_story(story_text)
@@ -398,24 +427,22 @@ Story:
 
 Generate only the title, nothing else."""
 
-            # Generate the story title using a separate OpenAI call
-            title_completion = self.client.chat.completions.create(
+            # Generate the story title using a separate Responses API call
+            title_completion = self.client.responses.create(
                 model="gpt-5",
                 temperature=0.7,
-                max_tokens=50,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a skilled title writer. Create evocative, poetic titles that capture the essence of stories. Keep titles under 8 words."
-                    },
+                max_completion_tokens=50,
+                input=[
                     {
                         "role": "user",
-                        "content": title_prompt
+                        "content": [
+                            {"type": "input_text", "text": title_prompt}
+                        ]
                     }
                 ]
             )
 
-            generated_title = title_completion.choices[0].message.content.strip()
+            generated_title = self._extract_text_from_response(title_completion).strip()
             # Remove quotes if the AI added them
             if generated_title.startswith('"') and generated_title.endswith('"'):
                 generated_title = generated_title[1:-1]
