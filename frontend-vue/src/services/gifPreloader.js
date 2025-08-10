@@ -8,10 +8,11 @@ class GifPreloader {
     this.currentPlayIndex = 0
   }
 
-  // Import all available GIFs (1-50)
+  // Import available GIFs (1-20)
   async getAllGifPaths() {
     const gifPaths = []
-    for (let i = 1; i <= 50; i++) {
+    const MAX_GIFS = 20
+    for (let i = 1; i <= MAX_GIFS; i++) {
       try {
         // Use dynamic import for proper asset handling
         const gifModule = await import(`@/assets/images/palette GIF/${i}.gif`)
