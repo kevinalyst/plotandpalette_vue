@@ -174,7 +174,7 @@ CRITICAL: You must use the exact section markers **PAINTING_1_SECTION**, **PAINT
         return str(response)
 
     def _call_responses_and_get_text(self, content_parts, max_tokens: int) -> tuple:
-        """Call Responses API and return (text, response). Retries with higher token limit if truncated."""
+        """Call Responses API and return (text, response). Retries with a very high token cap if truncated."""
         resp = self.client.responses.create(
             model="gpt-5",
             max_output_tokens=max_tokens,
@@ -194,10 +194,11 @@ CRITICAL: You must use the exact section markers **PAINTING_1_SECTION**, **PAINT
         except Exception:
             status = None
             reason = None
-        if (not text or len(text.split()) < 240) and (status == "incomplete" or reason == "max_output_tokens") and max_tokens < 1400:
+        if (not text or len(text.split()) < 240) and (status == "incomplete" or reason == "max_output_tokens"):
+            # Retry once with a much larger cap as requested
             resp = self.client.responses.create(
                 model="gpt-5",
-                max_output_tokens=min(1400, max_tokens + 400),
+                max_output_tokens=50000,
                 input=[
                     {
                         "role": "user",
@@ -438,7 +439,7 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
             print(f"[API] Images: {[p.get('title', 'Unknown') for p in paintings]}", file=sys.stderr)
             
             # Call OpenAI Responses API (GPT-5)
-            story_text, completion = self._call_responses_and_get_text(content_parts, max_tokens=1000)
+            story_text, completion = self._call_responses_and_get_text(content_parts, max_tokens=50000)
             
             # Parse the structured story into three parts
             story_parts = self._parse_structured_story(story_text)
@@ -454,7 +455,7 @@ Generate only the title, nothing else."""
             # Generate the story title using a separate Responses API call
             generated_title, title_completion = self._call_responses_and_get_text(
                 content_parts=[{"type": "input_text", "text": title_prompt}],
-                max_tokens=32
+                max_tokens=50000
             )
             # Remove quotes if the AI added them
             if generated_title.startswith('"') and generated_title.endswith('"'):
