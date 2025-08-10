@@ -6,13 +6,33 @@
     </div>
     
     <div class="story-container">
+      <!-- Previous selection (same interaction/style as GalleryPage) -->
+      <div class="top-row-info">
+        <div 
+          class="previous-selection"
+          @mouseenter="showPrevious = true"
+          @mouseleave="showPrevious = false"
+        >
+          <span>Hover to see your previous selection:</span>
+          <img src="@/assets/images/hoverpalette.png" alt="Previous selection" class="previous-icon" />
+          <div v-if="showPrevious" class="previous-popup">
+            <div class="previous-title">Your captured palette:</div>
+            <div class="previous-image-wrapper">
+              <img :src="previousCapturedUrl" alt="captured palette" class="previous-image" />
+            </div>
+            <div class="previous-emotion">Your selected emotion: <span class="emotion-highlight">{{ previousEmotion || '—' }}</span></div>
+          </div>
+        </div>
+      </div>
       <!-- Story Sequence with Paintings and Corresponding Story Parts -->
       <div class="story-sequence">
         
         <!-- Painting 1 and Story Part 1 -->
         <div class="painting-story-section" v-if="storyData.selectedPaintings && storyData.selectedPaintings[0]">
           <div class="painting-display">
-            <img :src="storyData.selectedPaintings[0]?.url" :alt="storyData.selectedPaintings[0]?.title" @click="openPaintingModal(storyData.selectedPaintings[0])" />
+            <img :src="getProxiedImageUrl(storyData.selectedPaintings[0]?.url || storyData.selectedPaintings[0]?.originalUrl)"
+                 :alt="storyData.selectedPaintings[0]?.title"
+                 @click="openPaintingModal(storyData.selectedPaintings[0])" />
             <div class="painting-info">
               <h3>{{ storyData.selectedPaintings[0]?.title }}</h3>
               <p>{{ storyData.selectedPaintings[0]?.artist }}, {{ storyData.selectedPaintings[0]?.year }}</p>
@@ -28,7 +48,9 @@
         <!-- Painting 2 and Story Part 2 -->
         <div class="painting-story-section" v-if="storyData.selectedPaintings && storyData.selectedPaintings[1]">
           <div class="painting-display">
-            <img :src="storyData.selectedPaintings[1]?.url" :alt="storyData.selectedPaintings[1]?.title" @click="openPaintingModal(storyData.selectedPaintings[1])" />
+            <img :src="getProxiedImageUrl(storyData.selectedPaintings[1]?.url || storyData.selectedPaintings[1]?.originalUrl)"
+                 :alt="storyData.selectedPaintings[1]?.title"
+                 @click="openPaintingModal(storyData.selectedPaintings[1])" />
             <div class="painting-info">
               <h3>{{ storyData.selectedPaintings[1]?.title }}</h3>
               <p>{{ storyData.selectedPaintings[1]?.artist }}, {{ storyData.selectedPaintings[1]?.year }}</p>
@@ -44,7 +66,9 @@
         <!-- Painting 3 and Story Part 3 -->
         <div class="painting-story-section" v-if="storyData.selectedPaintings && storyData.selectedPaintings[2]">
           <div class="painting-display">
-            <img :src="storyData.selectedPaintings[2]?.url" :alt="storyData.selectedPaintings[2]?.title" @click="openPaintingModal(storyData.selectedPaintings[2])" />
+            <img :src="getProxiedImageUrl(storyData.selectedPaintings[2]?.url || storyData.selectedPaintings[2]?.originalUrl)"
+                 :alt="storyData.selectedPaintings[2]?.title"
+                 @click="openPaintingModal(storyData.selectedPaintings[2])" />
             <div class="painting-info">
               <h3>{{ storyData.selectedPaintings[2]?.title }}</h3>
               <p>{{ storyData.selectedPaintings[2]?.artist }}, {{ storyData.selectedPaintings[2]?.year }}</p>
@@ -85,8 +109,17 @@
         </button>
         <div class="painting-modal-content">
           <div class="painting-modal-image">
-            <img :src="selectedPaintingForModal.url" :alt="selectedPaintingForModal.title" />
+              <img :src="selectedPaintingForModal.url" :alt="selectedPaintingForModal.title" />
           </div>
+            <div class="painting-modal-meta">
+              <a 
+                v-if="selectedPaintingForModal.page"
+                :href="selectedPaintingForModal.page"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="check-source-link"
+              >See the original source</a>
+            </div>
         </div>
       </div>
     </div>
@@ -114,6 +147,18 @@ export default {
     // Story data
     const storyData = ref({})
     
+    // Previous selection hover state (aligned with GalleryPage)
+    const showPrevious = ref(false)
+    const previousCapturedUrl = ref('')
+    const previousEmotion = ref('')
+    
+    // Helper to proxy external images (aligned with GalleryPage)
+    const getProxiedImageUrl = (originalUrl) => {
+      if (!originalUrl) return ''
+      if (originalUrl.startsWith('/api/proxy-image')) return originalUrl
+      return `/api/proxy-image?url=${encodeURIComponent(originalUrl)}`
+    }
+    
     // Painting modal state
     const showPaintingModal = ref(false)
     const selectedPaintingForModal = ref({})
@@ -138,6 +183,22 @@ export default {
         if (route.query.data) {
           const data = JSON.parse(unicodeSafeBase64Decode(route.query.data))
           storyData.value = data
+          // Prepare previous selection display (align with GalleryPage)
+          const filename = data.filename || (data?.pageData?.filename)
+          const cacheBuster = Date.now()
+          const possibleUrls = [
+            `/api/uploads/${filename}?v=${cacheBuster}`,
+            `/uploads/${filename}?v=${cacheBuster}`,
+            `./uploads/${filename}?v=${cacheBuster}`,
+            `${window.location.origin}/uploads/${filename}?v=${cacheBuster}`,
+            data.capturedImageUrl
+          ].filter(Boolean)
+          if (filename) {
+            previousCapturedUrl.value = possibleUrls[0]
+          } else if (data.capturedImageUrl) {
+            previousCapturedUrl.value = data.capturedImageUrl
+          }
+          previousEmotion.value = (data.selectedEmotion || data?.emotionPrediction?.emotion || '').toString()
           
         } else {
           router.push('/')
@@ -339,6 +400,10 @@ export default {
       loading,
       loadingMessage,
       storyData,
+      showPrevious,
+      previousCapturedUrl,
+      previousEmotion,
+      getProxiedImageUrl,
       downloadStory,
       regenerateStory,
       recapturepalette,
