@@ -62,17 +62,14 @@ Your narrative must be anchored to the following three artworks in the specified
 * **Painting 1 (The Beginning):**
    * **Title:** `{painting1_title}`
    * **Artist:** `{painting1_artist}`
-   * **Year:** `{painting1_year}`
 
 * **Painting 2 (The Middle):**
    * **Title:** `{painting2_title}`
    * **Artist:** `{painting2_artist}`
-   * **Year:** `{painting2_year}`
 
 * **Painting 3 (The End):**
    * **Title:** `{painting3_title}`
    * **Artist:** `{painting3_artist}`
-   * **Year:** `{painting3_year}`
 
 IMPORTANT: I am also providing you with images of these three paintings. Use both the artwork information above AND your visual analysis of the actual images to create a richer, more detailed story. Incorporate what you can observe in the paintings: colors, composition, brushwork, style, mood, and visual elements to enhance your narrative.
 
