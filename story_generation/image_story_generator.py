@@ -176,7 +176,7 @@ CRITICAL: You must use the exact section markers **PAINTING_1_SECTION**, **PAINT
     def _call_responses_and_get_text(self, content_parts, max_tokens: int) -> tuple:
         """Call Responses API and return (text, response). Retries with a very high token cap if truncated."""
         resp = self.client.responses.create(
-            model="gpt-5",
+            model="gpt-5-mini",
             max_output_tokens=max_tokens,
             input=[
                 {
@@ -197,7 +197,7 @@ CRITICAL: You must use the exact section markers **PAINTING_1_SECTION**, **PAINT
         if (not text or len(text.split()) < 240) and (status == "incomplete" or reason == "max_output_tokens"):
             # Retry once with a much larger cap as requested
             resp = self.client.responses.create(
-                model="gpt-5",
+                model="gpt-5-mini",
                 max_output_tokens=50000,
                 input=[
                     {

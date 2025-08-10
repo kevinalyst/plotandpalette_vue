@@ -63,7 +63,7 @@ def generate_story():
             [sys.executable, "secure_story_generator.py", json.dumps(data)],
             capture_output=True,
             text=True,
-            timeout=60
+            timeout=180
         )
         
         logger.info(f"📖 Script return code: {result.returncode}")
