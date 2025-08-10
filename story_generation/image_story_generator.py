@@ -405,7 +405,7 @@ The emotional tone must be powerful and dramatic. The narrative should be driven
             completion = self.client.responses.create(
                 model="gpt-5",
                 temperature=0.8,
-                max_completion_tokens=1000,
+                max_output_tokens=1000,
                 input=[
                     {
                         "role": "user",
@@ -431,7 +431,7 @@ Generate only the title, nothing else."""
             title_completion = self.client.responses.create(
                 model="gpt-5",
                 temperature=0.7,
-                max_completion_tokens=50,
+                max_output_tokens=50,
                 input=[
                     {
                         "role": "user",
