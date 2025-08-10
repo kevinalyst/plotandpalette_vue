@@ -49,7 +49,8 @@ except ImportError as e:
 
 # Configuration
 PORT = int(os.environ.get('PORT', 3000))
-UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'uploads')
+# Use absolute path to avoid any ambiguity with working directory
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', '/app/uploads')
 PUBLIC_FOLDER = 'public'
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
@@ -1251,16 +1252,16 @@ def get_session_palette(session_id):
                 logger.info(f"🔄 Re-running analysis for {filename}")
                 result = run_python_script(None, image_path)
                 
-                # Return the fresh analysis result
-                base_url = f"{request.scheme}://{request.host}"
-                return jsonify({
+        # Return the fresh analysis result
+        base_url = f"{request.scheme}://{request.host}"
+        return jsonify({
                     'success': True,
                     'filename': filename,
                     'colourData': result.get('colourData', {}),
                     'rawColors': result.get('rawColors', []),
                     'emotionPrediction': result.get('emotionPrediction', {}),
                     'detailedRecommendations': result.get('detailedRecommendations', []),
-                    'capturedImageUrl': f"{base_url}/static/uploads/{filename}",
+            'capturedImageUrl': f"{base_url}/uploads/{filename}",
                     'sessionId': session_id,
                     'timestamp': captured_palette.get('timestamp'),
                     'gifName': captured_palette.get('gifName')
@@ -1282,7 +1283,7 @@ def get_session_palette(session_id):
             'rawColors': metadata.get('rawColors', []),
             'emotionPrediction': metadata.get('emotionPrediction', {}),
             'detailedRecommendations': metadata.get('detailedRecommendations', []),
-            'capturedImageUrl': f"{base_url}/static/uploads/{filename}",
+            'capturedImageUrl': f"{base_url}/uploads/{filename}",
             'sessionId': session_id,
             'timestamp': captured_palette.get('timestamp'),
             'gifName': captured_palette.get('gifName')
@@ -1309,9 +1310,8 @@ def get_recommendations():
         filename = data['filename']
         logger.info(f"Getting recommendations for: {filename}")
         
-        # Construct the full image path
-        image_path = f"frontend-vue/dist/static/uploads/{filename}"
-        full_image_path = os.path.join(os.getcwd(), image_path)
+        # Construct the full image path from uploads directory
+        full_image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
         # Check if the image file exists
         if not os.path.exists(full_image_path):
@@ -1382,9 +1382,8 @@ def predict_emotion():
         filename = data['filename']
         logger.info(f"Predicting emotion for: {filename}")
         
-        # Construct the full image path
-        image_path = f"frontend-vue/dist/static/uploads/{filename}"
-        full_image_path = os.path.join(os.getcwd(), image_path)
+        # Construct the full image path from uploads directory
+        full_image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
         # Check if the image file exists
         if not os.path.exists(full_image_path):
