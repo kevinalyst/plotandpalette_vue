@@ -475,7 +475,7 @@ export default {
           body: JSON.stringify(payload)
         })
 
-        console.log('✅ Feedback submitted successfully')
+        console.log('✅ Feedback submitted successfully', submitResult)
         
         // Move to thank you page
         this.step = 9

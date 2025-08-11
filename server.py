@@ -1819,12 +1819,33 @@ def submit_feedback():
         
         # Extract answers data (q1-q13 as integers 1-5, q14-q15 as text)
         answers = data.get('answers', {})
+
+        # Optionally capture Prolific identifiers
+        prolific_pid = data.get('PROLIFIC_PID') or data.get('prolific_pid')
+        prolific_study_id = data.get('STUDY_ID') or data.get('study_id')
+        prolific_session_id = data.get('SESSION_ID') or data.get('prolific_session_id')
+        prolific_data = None
+        if any([prolific_pid, prolific_study_id, prolific_session_id]):
+            prolific_data = {
+                'PROLIFIC_PID': prolific_pid,
+                'STUDY_ID': prolific_study_id,
+                'SESSION_ID': prolific_session_id,
+                'captured_at': datetime.now().isoformat()
+            }
+            # Store on session for observability only; no schema change required
+            try:
+                if session_id in session_storage:
+                    session_storage[session_id]['prolific'] = prolific_data
+            except Exception:
+                pass
         
         logger.info(f"📝 FEEDBACK SUBMISSION:")
         logger.info(f"   Session: {session_id}")
         logger.info(f"   Q1-Q13 ratings: {[answers.get(f'q{i}') for i in range(1, 14)]}")
         logger.info(f"   Q14 (liked most): {answers.get('q14', '')[:50]}...")
         logger.info(f"   Q15 (improvements): {answers.get('q15', '')[:50]}...")
+        if prolific_data:
+            logger.info(f"   Prolific: PID={prolific_pid}, STUDY={prolific_study_id}, SESSION={prolific_session_id}")
         
         # Save to database if available
         if DB_ENABLED:
@@ -1856,11 +1877,18 @@ def submit_feedback():
             except Exception as e:
                 logger.error(f"❌ Failed to save feedback to database: {e}")
         
-        return jsonify({
+        response_payload = {
             'success': True,
             'sessionId': session_id,
             'message': 'Feedback submitted successfully'
-        })
+        }
+        # Echo a simple flag for frontend logic without impacting regular visitors
+        if prolific_data:
+            response_payload.update({
+                'prolific': True,
+                'prolificData': prolific_data
+            })
+        return jsonify(response_payload)
         
     except Exception as e:
         logger.error(f"Error submitting feedback: {e}")

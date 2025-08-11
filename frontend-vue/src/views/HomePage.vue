@@ -354,12 +354,17 @@ export default {
     // Capture Prolific identifiers from query params on first load and persist locally
     try {
       const params = new URLSearchParams(window.location.search)
+      const captured = {}
       ;['PROLIFIC_PID', 'STUDY_ID', 'SESSION_ID'].forEach((key) => {
         const value = params.get(key)
         if (value) {
           localStorage.setItem(key, value)
+          captured[key] = value
         }
       })
+      if (Object.keys(captured).length > 0) {
+        console.log('🧩 Prolific IDs captured on entry:', captured)
+      }
     } catch (e) {
       // Non-fatal: proceed silently for regular visitors
       console.warn('Prolific params parsing skipped', e)
