@@ -1,5 +1,24 @@
 <template>
     <div class="feedback-page">
+        <!-- Prolific completion modal (shown only for Prolific participants after successful submit) -->
+        <div v-if="showProlificModal" class="prolific-modal-overlay">
+          <div class="prolific-modal">
+            <h2>Thanks for your participation!</h2>
+            <p>
+              Here is your Prolific redirect link:
+              <a :href="prolificRedirectUrl" target="_blank" rel="noopener">Open redirect</a>
+            </p>
+            <p>
+              Or copy this completion code:
+              <strong>{{ prolificCompletionCode }}</strong>
+            </p>
+            <div class="prolific-modal-actions">
+              <button @click="openProlific" class="start-button">Open Redirect</button>
+              <button @click="copyCompletionCode" class="maybe-later-button">Copy Code</button>
+              <button @click="closeProlificModal" class="maybe-later-button">Close</button>
+            </div>
+          </div>
+        </div>
         
         <div class="feedback-page-container">
             <div class="feedback-page-content-container">
@@ -391,6 +410,11 @@ export default {
   data() {
     return {
       step: 1,
+      // Prolific integration state
+      prolificParticipant: false,
+      showProlificModal: false,
+      prolificRedirectUrl: 'https://app.prolific.com/submissions/complete?cc=C4TQU6TF',
+      prolificCompletionCode: 'C4TQU6TF',
       answers: {
         q1: null,
         q2: null,
@@ -408,6 +432,21 @@ export default {
         q14: '',
         q15: ''
       }
+    }
+  },
+  mounted() {
+    // Capture Prolific params from URL on load and stash them
+    try {
+      const params = new URLSearchParams(window.location.search)
+      ;['PROLIFIC_PID', 'STUDY_ID', 'SESSION_ID'].forEach((key) => {
+        const value = params.get(key)
+        if (value) {
+          localStorage.setItem(key, value)
+        }
+      })
+      this.prolificParticipant = !!localStorage.getItem('PROLIFIC_PID')
+    } catch (e) {
+      // no-op
     }
   },
   methods: {
@@ -438,13 +477,20 @@ export default {
     async submitAnswers() {
       try {
         const sessionId = localStorage.getItem('sessionId')
+        const prolificPid = localStorage.getItem('PROLIFIC_PID')
+        const prolificStudyId = localStorage.getItem('STUDY_ID')
+        const prolificSessionId = localStorage.getItem('SESSION_ID')
         
         // Submit the answers directly (q1-q13 as integers, q14-q15 as text)
-        await ApiService.request('/submit-feedback', {
+        const result = await ApiService.request('/submit-feedback', {
           method: 'POST',
           body: JSON.stringify({
             answers: this.answers,
-            sessionId: sessionId
+            sessionId: sessionId,
+            // Include Prolific identifiers when available (backend may ignore if unused)
+            PROLIFIC_PID: prolificPid || undefined,
+            STUDY_ID: prolificStudyId || undefined,
+            SESSION_ID: prolificSessionId || undefined
           })
         })
 
@@ -453,6 +499,11 @@ export default {
         // Move to thank you page
         this.step = 9
         
+        // If this is a Prolific participant and backend returned success, show redirect modal
+        if (this.prolificParticipant && result && result.success === true) {
+          this.showProlificModal = true
+        }
+        
       } catch (error) {
         console.error('❌ Error submitting feedback:', error)
         alert('Failed to submit feedback. Please try again.')
@@ -460,6 +511,21 @@ export default {
     },
     goBackToStory() {
       this.$router.push('/story')
+    },
+    closeProlificModal() {
+      this.showProlificModal = false
+    },
+    openProlific() {
+      window.open(this.prolificRedirectUrl, '_blank', 'noopener')
+    },
+    async copyCompletionCode() {
+      try {
+        await navigator.clipboard.writeText(this.prolificCompletionCode)
+        alert('Completion code copied')
+      } catch (e) {
+        // Fallback if clipboard not available
+        prompt('Copy this code:', this.prolificCompletionCode)
+      }
     }
   },
   // components: {
@@ -916,6 +982,34 @@ h1, h2, h3, p {
 /* Global button focus disable */
 button:focus {
   outline: none !important;
+}
+
+/* Prolific modal styles */
+.prolific-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.prolific-modal {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+  padding: 24px 28px;
+  max-width: 520px;
+  width: calc(100% - 40px);
+  text-align: center;
+}
+
+.prolific-modal-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
 }
 
 /* Responsive design */
