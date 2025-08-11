@@ -1,24 +1,5 @@
 <template>
     <div class="feedback-page">
-        <!-- Prolific completion modal (shown only for Prolific participants after successful submit) -->
-        <div v-if="showProlificModal" class="prolific-modal-overlay">
-          <div class="prolific-modal">
-            <h2>Thanks for your participation!</h2>
-            <p>
-              Here is your Prolific redirect link:
-              <a :href="prolificRedirectUrl" target="_blank" rel="noopener">Open redirect</a>
-            </p>
-            <p>
-              Or copy this completion code:
-              <strong>{{ prolificCompletionCode }}</strong>
-            </p>
-            <div class="prolific-modal-actions">
-              <button @click="openProlific" class="start-button">Open Redirect</button>
-              <button @click="copyCompletionCode" class="maybe-later-button">Copy Code</button>
-              <button @click="closeProlificModal" class="maybe-later-button">Close</button>
-            </div>
-          </div>
-        </div>
         
         <div class="feedback-page-container">
             <div class="feedback-page-content-container">
@@ -398,6 +379,21 @@
                 
             </div>
         </div>
+
+        <!-- Prolific completion popup (shown only for Prolific participants) -->
+        <div v-if="showProlificPopup" class="prolific-popup-overlay">
+            <div class="prolific-popup">
+                <h2>Thanks for participating!</h2>
+                <p>Here is your Prolific completion link:</p>
+                <a :href="prolificRedirectUrl" target="_blank" rel="noopener" class="prolific-link">{{ prolificRedirectUrl }}</a>
+                <p>Or use the completion code: <strong>{{ prolificCompletionCode }}</strong></p>
+                <div class="prolific-actions">
+                    <button class="action" @click="openProlificRedirect">Open link</button>
+                    <button class="action" @click="copyCompletionCode">Copy code</button>
+                    <button class="action" @click="showProlificPopup = false">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -410,11 +406,6 @@ export default {
   data() {
     return {
       step: 1,
-      // Prolific integration state
-      prolificParticipant: false,
-      showProlificModal: false,
-      prolificRedirectUrl: 'https://app.prolific.com/submissions/complete?cc=C4TQU6TF',
-      prolificCompletionCode: 'C4TQU6TF',
       answers: {
         q1: null,
         q2: null,
@@ -431,22 +422,11 @@ export default {
         q13: null,
         q14: '',
         q15: ''
-      }
-    }
-  },
-  mounted() {
-    // Capture Prolific params from URL on load and stash them
-    try {
-      const params = new URLSearchParams(window.location.search)
-      ;['PROLIFIC_PID', 'STUDY_ID', 'SESSION_ID'].forEach((key) => {
-        const value = params.get(key)
-        if (value) {
-          localStorage.setItem(key, value)
-        }
-      })
-      this.prolificParticipant = !!localStorage.getItem('PROLIFIC_PID')
-    } catch (e) {
-      // no-op
+      },
+      // Prolific completion popup state
+      showProlificPopup: false,
+      prolificRedirectUrl: 'https://app.prolific.com/submissions/complete?cc=C4TQU6TF',
+      prolificCompletionCode: 'C4TQU6TF'
     }
   },
   methods: {
@@ -477,55 +457,65 @@ export default {
     async submitAnswers() {
       try {
         const sessionId = localStorage.getItem('sessionId')
-        const prolificPid = localStorage.getItem('PROLIFIC_PID')
-        const prolificStudyId = localStorage.getItem('STUDY_ID')
-        const prolificSessionId = localStorage.getItem('SESSION_ID')
-        
+        // Build payload and include Prolific identifiers if present
+        const payload = {
+          answers: this.answers,
+          sessionId: sessionId
+        }
+        ;['PROLIFIC_PID', 'STUDY_ID', 'SESSION_ID'].forEach((key) => {
+          const value = localStorage.getItem(key)
+          if (value) {
+            payload[key] = value
+          }
+        })
+
         // Submit the answers directly (q1-q13 as integers, q14-q15 as text)
-        const result = await ApiService.request('/submit-feedback', {
+        const submitResult = await ApiService.request('/submit-feedback', {
           method: 'POST',
-          body: JSON.stringify({
-            answers: this.answers,
-            sessionId: sessionId,
-            // Include Prolific identifiers when available (backend may ignore if unused)
-            PROLIFIC_PID: prolificPid || undefined,
-            STUDY_ID: prolificStudyId || undefined,
-            SESSION_ID: prolificSessionId || undefined
-          })
+          body: JSON.stringify(payload)
         })
 
         console.log('✅ Feedback submitted successfully')
         
         // Move to thank you page
         this.step = 9
-        
-        // If this is a Prolific participant and backend returned success, show redirect modal
-        if (this.prolificParticipant && result && result.success === true) {
-          this.showProlificModal = true
-        }
+        this.maybeShowProlificPopup(submitResult)
         
       } catch (error) {
         console.error('❌ Error submitting feedback:', error)
         alert('Failed to submit feedback. Please try again.')
       }
     },
-    goBackToStory() {
-      this.$router.push('/story')
+    maybeShowProlificPopup(apiResult) {
+      // Prefer explicit signal from backend; fall back to localStorage presence
+      const backendSaysProlific = !!(
+        apiResult && (
+          apiResult.prolific === true ||
+          apiResult.prolificStatus === true ||
+          apiResult.isProlific === true ||
+          apiResult.prolific_user === true ||
+          apiResult.prolificParticipant === true
+        )
+      )
+      const hasProlificId = !!localStorage.getItem('PROLIFIC_PID')
+      if (backendSaysProlific || hasProlificId) {
+        this.showProlificPopup = true
+      }
     },
-    closeProlificModal() {
-      this.showProlificModal = false
-    },
-    openProlific() {
-      window.open(this.prolificRedirectUrl, '_blank', 'noopener')
+    openProlificRedirect() {
+      window.open(this.prolificRedirectUrl, '_blank')
     },
     async copyCompletionCode() {
       try {
         await navigator.clipboard.writeText(this.prolificCompletionCode)
-        alert('Completion code copied')
+        alert('Completion code copied to clipboard')
       } catch (e) {
-        // Fallback if clipboard not available
-        prompt('Copy this code:', this.prolificCompletionCode)
+        // Fallback prompt if clipboard API not available
+        window.prompt('Copy this completion code:', this.prolificCompletionCode)
       }
+    },
+    goBackToStory() {
+      this.$router.push('/story')
     }
   },
   // components: {
@@ -535,6 +525,50 @@ export default {
 </script>
 
 <style scoped>
+.prolific-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.prolific-popup {
+  background: white;
+  border: 1px solid black;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 520px;
+  width: 90vw;
+  text-align: left;
+}
+
+.prolific-link {
+  word-break: break-all;
+  color: #0645ad;
+  text-decoration: underline;
+}
+
+.prolific-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.prolific-actions .action {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.9);
+  border-radius: 50px;
+  padding: 10px 16px;
+  color: white;
+  cursor: pointer;
+}
+
 .feedback-page {
   width: 100vw;
   height: 100vh;
@@ -982,34 +1016,6 @@ h1, h2, h3, p {
 /* Global button focus disable */
 button:focus {
   outline: none !important;
-}
-
-/* Prolific modal styles */
-.prolific-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.prolific-modal {
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  border-radius: 16px;
-  padding: 24px 28px;
-  max-width: 520px;
-  width: calc(100% - 40px);
-  text-align: center;
-}
-
-.prolific-modal-actions {
-  margin-top: 16px;
-  display: flex;
-  gap: 12px;
-  justify-content: center;
 }
 
 /* Responsive design */

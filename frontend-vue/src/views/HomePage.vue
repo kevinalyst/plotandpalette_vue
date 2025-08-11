@@ -350,6 +350,20 @@ export default {
     
     // Test backend connection on page load
     await this.testConnection()
+
+    // Capture Prolific identifiers from query params on first load and persist locally
+    try {
+      const params = new URLSearchParams(window.location.search)
+      ;['PROLIFIC_PID', 'STUDY_ID', 'SESSION_ID'].forEach((key) => {
+        const value = params.get(key)
+        if (value) {
+          localStorage.setItem(key, value)
+        }
+      })
+    } catch (e) {
+      // Non-fatal: proceed silently for regular visitors
+      console.warn('Prolific params parsing skipped', e)
+    }
   },
   beforeUnmount() {
     // Remove no-scroll class when leaving
