@@ -79,7 +79,7 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Modal from '@/components/Modal.vue'
 import ApiService from '@/services/api.js'
 import html2canvas from 'html2canvas'
-import dropIcon from '@/assets/images/drop.png'
+import dropIcon from '@/assets/images/upload.png'
 // Removed random cycling; we provide a simple clickable gallery instead
 
 // Statically import preview JPGs so they are always available and fast
