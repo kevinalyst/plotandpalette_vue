@@ -21,31 +21,27 @@ COPY server.py .
 COPY database.py .
 COPY gunicorn.conf.py .
 
-# Copy static assets and service directories
-COPY . ./temp_assets/
-RUN mkdir -p "./15 emotion illustrations" "./palette GIF" ./image ./emotions_generation ./painting_recommendation ./story_generation && \
-    cp -r "./temp_assets/15 emotion illustrations/"* "./15 emotion illustrations/" 2>/dev/null || true && \
-    cp -r "./temp_assets/palette GIF/"* "./palette GIF/" 2>/dev/null || true && \
-    cp -r ./temp_assets/image/* ./image/ 2>/dev/null || true && \
-    cp -r "./temp_assets/emotions_generation/"* ./emotions_generation/ 2>/dev/null || true && \
-    cp -r "./temp_assets/painting_recommendation/"* ./painting_recommendation/ 2>/dev/null || true && \
-    cp -r "./temp_assets/story_generation/"* ./story_generation/ 2>/dev/null || true && \
-    rm -rf ./temp_assets
+# Copy only required service directories (avoid sending entire build context)
+COPY emotions_generation/ ./emotions_generation/
+COPY painting_recommendation/ ./painting_recommendation/
+# Story generation runs in a separate sidecar; not copied into backend image
+# Static assets (SPA, images, gifs) are served by Nginx; not copied here
 
 # Create uploads, logs, and runtime directories
-RUN mkdir -p uploads frontend-vue/dist/static/uploads /var/log/plot-palette /var/run/plot-palette
+RUN mkdir -p uploads /var/log/plot-palette /var/run/plot-palette
 
 # Set environment variables
 ENV FLASK_APP=server.py
 ENV FLASK_ENV=production
 ENV PYTHONPATH=/app
 
-# Expose port
+# Expose port (Cloud Run sidecar will access via localhost)
 EXPOSE 5000
 
 # Health check
+# Healthcheck (note: Cloud Run uses its own health checks)
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/api/health || exit 1
+    CMD curl -f http://localhost:5000/health || exit 1
 
 # Run the application with Gunicorn
 CMD ["gunicorn", "-c", "gunicorn.conf.py", "server:app"] 

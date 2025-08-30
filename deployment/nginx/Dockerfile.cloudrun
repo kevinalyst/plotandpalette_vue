@@ -1,0 +1,21 @@
+# Cloud Run Nginx image building and serving the Vue SPA and proxying to sidecars
+
+FROM node:18-alpine AS build-stage
+WORKDIR /app
+COPY frontend-vue/package*.json ./
+RUN npm ci
+COPY frontend-vue/ ./
+RUN npm run build
+
+FROM nginx:1.25-alpine
+RUN apk add --no-cache curl
+RUN rm /etc/nginx/conf.d/default.conf
+COPY deployment/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY deployment/nginx/site.cloudrun.conf /etc/nginx/conf.d/site.conf
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+CMD ["nginx", "-g", "daemon off;"]
+
+

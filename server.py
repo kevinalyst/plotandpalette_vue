@@ -23,6 +23,10 @@ from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 import logging
 from dotenv import load_dotenv
+from google.cloud import storage
+from google.cloud.exceptions import NotFound
+from datetime import timedelta
+import mimetypes
 
 # Load environment variables
 load_dotenv()
@@ -54,6 +58,11 @@ UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', '/app/uploads')
 PUBLIC_FOLDER = 'public'
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
+# GCS configuration (for persistent user-visible outputs)
+USE_GCS_UPLOADS = str(os.environ.get('USE_GCS_UPLOADS', 'true')).lower() == 'true'
+GCS_BUCKET_NAME = os.environ.get('GCS_BUCKET_NAME')
+GCS_SIGNED_URL_TTL_SECONDS = int(os.environ.get('GCS_SIGNED_URL_TTL_SECONDS', '86400'))  # 24h by default
+
 # Session storage (in production, use Redis or database)
 session_storage = {}
 
@@ -67,6 +76,74 @@ ensure_directory_exists(PUBLIC_FOLDER)
 # Configure Flask upload settings
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
+
+# Lazy GCS client
+_gcs_client = None
+
+def get_gcs_client() -> Optional[storage.Client]:
+    global _gcs_client
+    if not USE_GCS_UPLOADS or not GCS_BUCKET_NAME:
+        return None
+    if _gcs_client is None:
+        _gcs_client = storage.Client()
+    return _gcs_client
+
+def gcs_upload_file(local_path: str, destination_blob_name: str, content_type: Optional[str] = None) -> Optional[str]:
+    client = get_gcs_client()
+    if client is None:
+        return None
+    bucket = client.bucket(GCS_BUCKET_NAME)
+    blob = bucket.blob(destination_blob_name)
+    guessed_type = content_type or (mimetypes.guess_type(local_path)[0] or 'application/octet-stream')
+    blob.upload_from_filename(local_path, content_type=guessed_type)
+    return f"gs://{GCS_BUCKET_NAME}/{destination_blob_name}"
+
+def gcs_upload_json(data_obj: Dict[str, Any], destination_blob_name: str) -> Optional[str]:
+    client = get_gcs_client()
+    if client is None:
+        return None
+    bucket = client.bucket(GCS_BUCKET_NAME)
+    blob = bucket.blob(destination_blob_name)
+    blob.upload_from_string(json.dumps(data_obj, indent=2), content_type='application/json')
+    return f"gs://{GCS_BUCKET_NAME}/{destination_blob_name}"
+
+def gcs_generate_signed_url(destination_blob_name: str, content_type: Optional[str] = None, ttl_seconds: int = None) -> Optional[str]:
+    client = get_gcs_client()
+    if client is None:
+        return None
+    bucket = client.bucket(GCS_BUCKET_NAME)
+    blob = bucket.blob(destination_blob_name)
+    expires = timedelta(seconds=ttl_seconds or GCS_SIGNED_URL_TTL_SECONDS)
+    return blob.generate_signed_url(expiration=expires, method='GET', version='v4', response_type=content_type)
+
+def gcs_read_json(destination_blob_name: str) -> Optional[Dict[str, Any]]:
+    client = get_gcs_client()
+    if client is None:
+        return None
+    bucket = client.bucket(GCS_BUCKET_NAME)
+    blob = bucket.blob(destination_blob_name)
+    try:
+        content = blob.download_as_text()
+        return json.loads(content)
+    except NotFound:
+        return None
+    except Exception as e:
+        logger.error(f"Failed to read JSON from GCS {destination_blob_name}: {e}")
+        return None
+
+def gcs_list_json(prefix: str, limit: int = 100) -> List[str]:
+    client = get_gcs_client()
+    if client is None:
+        return []
+    bucket = client.bucket(GCS_BUCKET_NAME)
+    blobs = bucket.list_blobs(prefix=prefix)
+    # Return blob names ending with .json, newest first
+    items = []
+    for b in blobs:
+        if b.name.endswith('.json'):
+            items.append((b.time_created, b.name))
+    items.sort(key=lambda t: t[0], reverse=True)
+    return [name for _, name in items[:limit]]
 
 # Helper functions
 def generate_session_id() -> str:
@@ -1087,11 +1164,10 @@ def save_palette():
         filename = generate_unique_filename()
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
-        # Save the file
+        # Save the file locally (ephemeral)
         file.save(file_path)
         
-        # Create metadata file
-        metadata_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{Path(filename).stem}.json")
+        # Create metadata
         metadata = {
             'filename': filename,
             'colours': colours,
@@ -1099,9 +1175,27 @@ def save_palette():
             'size': os.path.getsize(file_path),
             'originalName': file.filename
         }
-        
-        with open(metadata_path, 'w') as f:
-            json.dump(metadata, f, indent=2)
+
+        # Persist locally
+        metadata_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{Path(filename).stem}.json")
+        try:
+            with open(metadata_path, 'w') as f:
+                json.dump(metadata, f, indent=2)
+        except Exception as e:
+            logger.error(f"Failed to write local metadata file: {e}")
+
+        # Upload to GCS (persistent storage) if enabled
+        signed_image_url = None
+        if USE_GCS_UPLOADS and GCS_BUCKET_NAME:
+            try:
+                gcs_path_image = f"uploads/{filename}"
+                gcs_path_meta = f"uploads/{Path(filename).stem}.json"
+                gcs_upload_file(file_path, gcs_path_image)
+                gcs_upload_json(metadata, gcs_path_meta)
+                signed_image_url = gcs_generate_signed_url(gcs_path_image, content_type=mimetypes.guess_type(filename)[0])
+                logger.info(f"✅ Uploaded image and metadata to GCS: {gcs_path_image}, {gcs_path_meta}")
+            except Exception as e:
+                logger.error(f"❌ Failed to upload to GCS: {e}")
         
         # Save to database if available
         if DB_ENABLED:
@@ -1130,7 +1224,8 @@ def save_palette():
         
         # Generate public URL
         base_url = f"{request.scheme}://{request.host}"
-        image_url = f"{base_url}/uploads/{filename}"
+        # Prefer signed GCS URL if available; otherwise local
+        image_url = signed_image_url or f"{base_url}/uploads/{filename}"
         
         logger.info(f"Palette saved: {filename}")
         logger.info(f"Colours: {', '.join(colours)}")
@@ -1156,19 +1251,34 @@ def get_palette_info(filename):
     try:
         image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         metadata_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{Path(filename).stem}.json")
-        
-        # Check if files exist
-        if not os.path.exists(image_path) or not os.path.exists(metadata_path):
+        metadata = None
+
+        # Prefer GCS metadata
+        if USE_GCS_UPLOADS and GCS_BUCKET_NAME:
+            gcs_meta = gcs_read_json(f"uploads/{Path(filename).stem}.json")
+            if gcs_meta:
+                metadata = gcs_meta
+
+        # Fallback to local metadata
+        if metadata is None and os.path.exists(metadata_path):
+            with open(metadata_path, 'r') as f:
+                metadata = json.load(f)
+
+        if metadata is None:
             return jsonify({'error': 'Palette not found'}), 404
         
-        with open(metadata_path, 'r') as f:
-            metadata = json.load(f)
-        
-        base_url = f"{request.scheme}://{request.host}"
+        # Prefer signed GCS URL if available
+        url = None
+        if USE_GCS_UPLOADS and GCS_BUCKET_NAME:
+            url = gcs_generate_signed_url(f"uploads/{filename}", content_type=mimetypes.guess_type(filename)[0])
+
+        if not url:
+            base_url = f"{request.scheme}://{request.host}"
+            url = f"{base_url}/uploads/{filename}"
         
         return jsonify({
             **metadata,
-            'url': f"{base_url}/uploads/{filename}",
+            'url': url,
             'exists': True
         })
         
@@ -1185,21 +1295,36 @@ def get_recent_palettes():
     try:
         limit = int(request.args.get('limit', 20))
         
-        # Get all JSON files in uploads directory
-        json_files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if f.endswith('.json')]
-        
         palettes = []
-        for file in json_files:
-            try:
-                with open(os.path.join(app.config['UPLOAD_FOLDER'], file), 'r') as f:
-                    metadata = json.load(f)
-                    base_url = f"{request.scheme}://{request.host}"
+
+        if USE_GCS_UPLOADS and GCS_BUCKET_NAME:
+            # List from GCS
+            for blob_name in gcs_list_json('uploads/', limit=limit):
+                try:
+                    meta = gcs_read_json(blob_name)
+                    if not meta:
+                        continue
+                    signed = gcs_generate_signed_url(f"uploads/{meta['filename']}", content_type=mimetypes.guess_type(meta['filename'])[0])
                     palettes.append({
-                        **metadata,
-                        'url': f"{base_url}/uploads/{metadata['filename']}"
+                        **meta,
+                        'url': signed
                     })
-            except:
-                continue
+                except Exception:
+                    continue
+        else:
+            # Fallback to local JSON files in uploads directory
+            json_files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if f.endswith('.json')]
+            for file in json_files:
+                try:
+                    with open(os.path.join(app.config['UPLOAD_FOLDER'], file), 'r') as f:
+                        metadata = json.load(f)
+                        base_url = f"{request.scheme}://{request.host}"
+                        palettes.append({
+                            **metadata,
+                            'url': f"{base_url}/uploads/{metadata['filename']}"
+                        })
+                except Exception:
+                    continue
         
         # Sort by timestamp (most recent first) and limit
         valid_palettes = sorted(

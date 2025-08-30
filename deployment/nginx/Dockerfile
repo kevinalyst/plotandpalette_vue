@@ -23,7 +23,7 @@ RUN mkdir -p /usr/share/nginx/html/assets/images \
 RUN chown -R nginx:nginx /usr/share/nginx/html
 
 # Expose ports
-EXPOSE 80 443
+EXPOSE 80 443 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

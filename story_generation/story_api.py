@@ -93,4 +93,5 @@ def generate_story():
 
 if __name__ == "__main__":
     logger.info(f"📖 Starting story API service...")
-    app.run(host="0.0.0.0", port=5002) 
+    # Cloud Run sidecar port remains 5002 (Nginx reverse proxies over localhost)
+    app.run(host="0.0.0.0", port=5002)

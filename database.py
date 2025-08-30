@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 
 # Database configuration
 DB_CONFIG = {
-    'host': os.environ.get('DB_HOST', 'db'),  # Use 'db' for Docker, localhost for local dev
-    'user': os.environ.get('DB_USER', 'plotapp'),  # Use plotapp from docker-compose
-    'password': os.environ.get('DB_PASSWORD', 'plotapp123'),  # Use plotapp123 from docker-compose
+    'host': os.environ.get('DB_HOST', 'db'),
+    'user': os.environ.get('DB_USER', 'plotapp'),
+    'password': os.environ.get('DB_PASSWORD', 'plotapp123'),
     'database': os.environ.get('DB_NAME', 'plotpalette-mydb'),
     'port': int(os.environ.get('DB_PORT', 3306)),
     'charset': 'utf8mb4',
@@ -25,6 +25,9 @@ DB_CONFIG = {
     'connection_timeout': 10,
     'sql_mode': 'STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO'
 }
+
+# Optional Cloud SQL Unix socket support
+DB_UNIX_SOCKET = os.environ.get('DB_UNIX_SOCKET')  # e.g., /cloudsql/project:region:instance
 
 class DatabaseManager:
     def __init__(self):
@@ -36,7 +39,12 @@ class DatabaseManager:
         """Context manager for database connections"""
         connection = None
         try:
-            connection = mysql.connector.connect(**self.config)
+            connect_args = dict(self.config)
+            # Use Unix socket if provided (Cloud SQL Connector on Cloud Run)
+            if DB_UNIX_SOCKET:
+                connect_args['unix_socket'] = DB_UNIX_SOCKET
+                # When using socket, host may be omitted; keep user/password/db/port
+            connection = mysql.connector.connect(**connect_args)
             yield connection
         except Error as e:
             logger.error(f"Database connection error: {e}")

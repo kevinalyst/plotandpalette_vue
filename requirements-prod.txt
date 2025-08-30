@@ -34,3 +34,6 @@ python-json-logger==2.0.7
 
 # Process Management
 psutil==5.9.5 
+
+# Cloud integrations
+google-cloud-storage>=2.13.0
