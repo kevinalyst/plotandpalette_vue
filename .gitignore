@@ -74,6 +74,19 @@ Thumbs.db
 uploads/**/*
 !uploads/.gitkeep
 
+# 🖼️ Large static assets (kept out of portfolio repo)
+palette GIF/**
+image/**
+GIF/**
+illustrations/**
+frontend-backend interaction flowchart.jpg
+local_backup.sql
+api_usage_log.json
+story_generation/api_usage_log.json
+
+# 📝 Personal/internal notes (not for portfolio)
+docs/internal-portfolio-notes.md
+
 # 🤖 AI & ML Models (keep track but ignore large files)
 *.pkl.bak
 *.model.bak

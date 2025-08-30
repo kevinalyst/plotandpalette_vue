@@ -65,11 +65,11 @@ frontend-vue/
 
 ### Static Assets
 ```
-├── image/                       # Core application images
+├── image/                       # Core application images (excluded from repo by default)
 │   ├── logo.png, colourbar.png, paintings.png
 │   ├── style1-a.png through style5-a.png (character images)
 │   └── magiccube.gif, dance.gif, keyboard.gif
-└── palette GIF/                 # 50 animated color palette GIFs
+└── palette GIF/                 # 50 animated color palette GIFs (excluded from repo)
     └── 1.gif through 50.gif
 ```
 
@@ -104,6 +104,13 @@ frontend-vue/
    # Edit docker.env with your settings (optional - defaults work for development)
    nano docker.env
    ```
+
+3. **Optional: Pull large demo assets**
+   - Large assets (palette GIFs, some images, uploads) are excluded from the public repo to keep the portfolio clean.
+   - If you need them locally, place them under:
+     - `palette GIF/` for animated palettes
+     - `image/` for static images
+     - or configure GCS bucket `plot-and-palette-dumpster` for runtime storage
 
 3. **Build and Start All Services**
    ```bash
@@ -219,6 +226,14 @@ DEBUG=False
 - **API Base URL**: Configure in `frontend-vue/src/main.js`
 - **Router Mode**: Hash vs History mode in `frontend-vue/src/router/index.js`
 - **Build Settings**: Modify `frontend-vue/vue.config.js`
+
+## 📦 Repository Hygiene
+- To keep this portfolio repository lightweight, the following are ignored via `.gitignore`:
+  - `frontend-vue/node_modules/`, `frontend-vue/dist/`
+  - `uploads/` (runtime artifacts)
+  - Large asset folders: `palette GIF/`, `image/`, `GIF/`, `illustrations/`
+  - Logs and local backups.
+- Containers only copy what’s needed at runtime (backend code, ML resources, built SPA).
 
 ## 🚨 Troubleshooting
 
