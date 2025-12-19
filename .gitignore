@@ -13,10 +13,10 @@ docker-compose.override.yml
 logs/**/*.log
 
 # 📦 Node.js & Vue.js
-frontend-vue/node_modules/
-frontend-vue/dist/
-frontend-vue/.vite/
-frontend-vue/.cache/
+apps/frontend/node_modules/
+apps/frontend/dist/
+apps/frontend/.vite/
+apps/frontend/.cache/
 *.tsbuildinfo
 
 # NPM & Yarn
@@ -79,10 +79,9 @@ palette GIF/**
 image/**
 GIF/**
 illustrations/**
-frontend-backend interaction flowchart.jpg
 local_backup.sql
 api_usage_log.json
-story_generation/api_usage_log.json
+apps/api/story_generation/api_usage_log.json
 
 # 📝 Personal/internal notes (not for portfolio)
 docs/internal-portfolio-notes.md

@@ -1,49 +1,52 @@
 services:
-  # MySQL Database Service - DISABLED (Using Google Cloud SQL)
-  # db:
-  #   image: mysql:8.0
-  #   container_name: plot-palette-db
-  #   restart: unless-stopped
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: Lihanwen1997
-  #     MYSQL_DATABASE: plotpalette-mydb
-  #     MYSQL_USER: plotapp
-  #     MYSQL_PASSWORD: plotapp123
-  #   ports:
-  #     - "3306:3306"
-  #   volumes:
-  #     - mysql_data:/var/lib/mysql
-  #     - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-  #   networks:
-  #     - plot-palette-network
-  #   healthcheck:
-  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-  #     timeout: 20s
-  #     retries: 10
+  # MySQL Database Service - LOCAL DEVELOPMENT
+  db:
+    image: mysql:8.0
+    container_name: plot-palette-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: Lihanwen1997
+      MYSQL_DATABASE: plotpalette-mydb
+      MYSQL_USER: plotapp
+      MYSQL_PASSWORD: plotapp123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./data/schemas/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - plot-palette-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
   # Main Backend Service (Flask)
   backend:
-    build: .
+    build: ./apps/api
     container_name: plot-palette-backend
     restart: unless-stopped
     ports:
       - "5003:5000"
     environment:
-      - DB_HOST=34.142.53.204
+      - DB_HOST=db
       - DB_PORT=3306
-      - DB_NAME=plot-palette-mydb
+      - DB_NAME=plotpalette-mydb
       - DB_USER=root
       - DB_PASSWORD=Lihanwen1997
       - STORY_API_URL=http://story-api:5002
-      - FLASK_ENV=production
+      - FLASK_ENV=development
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
       - ./uploads:/app/uploads
       - ./logs:/app/logs
-      - ./emotions_generation:/app/emotions_generation
-      - ./painting_recommendation:/app/painting_recommendation
+      - ./apps/api/emotions_generation:/app/emotions_generation
+      - ./apps/api/painting_recommendation:/app/painting_recommendation
     depends_on:
-      - story-api
+      db:
+        condition: service_healthy
+      story-api:
+        condition: service_started
     networks:
       - plot-palette-network
     healthcheck:
@@ -54,7 +57,7 @@ services:
 
   # Frontend Vue Service
   frontend:
-    build: ./frontend-vue
+    build: ./apps/frontend
     container_name: plot-palette-frontend
     restart: unless-stopped
     ports:
@@ -71,58 +74,19 @@ services:
       timeout: 10s
       retries: 3
 
-  # Emotion Prediction Service (embedded in backend)
-  # emotion-service:
-  #   build: ./emotions_generation
-  #   container_name: plot-palette-emotions
-  #   restart: unless-stopped
-  #   ports:
-  #     - "5001:5001"
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #   volumes:
-  #     - ./logs:/app/logs
-  #   networks:
-  #     - plot-palette-network
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-
-  # Painting Recommendation Service (embedded in backend)
-  # recommendation-service:
-  #   build: ./painting_recommendation
-  #   container_name: plot-palette-recommendations
-  #   restart: unless-stopped
-  #   ports:
-  #     - "5003:5003"
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #   volumes:
-  #     - ./logs:/app/logs
-  #   networks:
-  #     - plot-palette-network
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-
   # Story Generation API Service
   story-api:
-    build: ./story_generation
+    build: ./apps/api/story_generation
     container_name: plot-palette-stories
     restart: unless-stopped
     ports:
       - "5002:5002"
     environment:
       - PYTHONUNBUFFERED=1
-      - OPENAI_API_KEY=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
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
       - ./uploads:/app/uploads
       - ./logs:/app/logs
-      - ./story_generation/.env:/app/.env:ro
     networks:
       - plot-palette-network
     healthcheck:
@@ -131,19 +95,18 @@ services:
       timeout: 10s
       retries: 3
 
-  # Nginx Reverse Proxy (will add in Phase 3)
+  # Nginx Reverse Proxy
   nginx:
-    build: ./deployment/nginx
+    build: ./infra/docker/nginx
     container_name: plot-palette-nginx
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./frontend-vue/dist:/usr/share/nginx/html
+      - ./apps/frontend/dist:/usr/share/nginx/html
       - ./uploads:/usr/share/nginx/html/uploads
       - ./logs/nginx:/var/log/nginx
-      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
     networks:
@@ -159,6 +122,6 @@ networks:
   plot-palette-network:
     driver: bridge
 
-# Volumes (empty - using Google Cloud SQL)
-# volumes:
-#   mysql_data:  # DISABLED - Using Google Cloud SQL 
+# Volumes
+volumes:
+  mysql_data:
