@@ -235,7 +235,7 @@ export default {
         try {
           // Verify username exists in database
           console.log('🔍 Checking username in database...')
-          const response = await ApiService.request('/username-check', {
+          const response = await ApiService.request('/users/check', {
             method: 'POST',
             body: JSON.stringify({
               username: existingUsername
@@ -244,8 +244,23 @@ export default {
           
           console.log('📊 Username check response:', response)
           
-          if (response.success && response.username_exist) {
+          // Handle both wrapped and unwrapped responses
+          const exists = response.data?.exists || response.exists
+          
+          if (exists) {
             console.log('✅ Returning user verified in database:', existingUsername)
+            
+            // Create a new session for the returning user
+            console.log('🆕 Creating new session for returning user...')
+            const sessionResponse = await ApiService.request('/store-username', {
+              method: 'POST',
+              body: JSON.stringify({ name: existingUsername })
+            })
+            
+            const sessionId = sessionResponse.data?.sessionId || sessionResponse.sessionId
+            console.log('✅ New session created:', sessionId)
+            localStorage.setItem('sessionId', sessionId)
+            
             // Start GIF preloading for verified returning users
             await this.preloadGifsAndNavigate()
           } else {
@@ -291,10 +306,16 @@ export default {
           })
         })
         
-        console.log('✅ Username stored:', response.username)
+        // Handle both direct and wrapped response
+        const username = response.data?.username || response.username
+        const sessionId = response.data?.sessionId || response.sessionId
         
-        // Store username for future use (persists across sessions)
-        localStorage.setItem('username', response.username)
+        console.log('✅ Username stored:', username)
+        console.log('✅ Session created:', sessionId)
+        
+        // Store username and sessionId for future use
+        localStorage.setItem('username', username)
+        localStorage.setItem('sessionId', sessionId)
         
         // Navigate to gradient palette page with GIF preloading
         await this.preloadGifsAndNavigate()
@@ -965,4 +986,4 @@ button:focus {
     height: 50px;
   }
 }
-</style> 
+</style>

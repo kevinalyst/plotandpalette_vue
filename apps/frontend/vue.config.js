@@ -40,4 +40,4 @@ module.exports = defineConfig({
     // Optimize build performance
     config.resolve.symlinks(false)
   }
-}) 
+})

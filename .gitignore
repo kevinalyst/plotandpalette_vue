@@ -104,6 +104,7 @@ logs/application/**
 *.key
 secrets/
 .secrets/
+.secrets.local
 
 # 🧪 Testing
 .pytest_cache/

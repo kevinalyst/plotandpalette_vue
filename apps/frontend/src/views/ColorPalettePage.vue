@@ -69,7 +69,7 @@
             v-for="emotion in displayedEmotions" 
             :key="emotion.name"
             :class="['emotion-card', { 'emotion-card-selected': selectedEmotion === emotion.name }]"
-            @click="selectEmotion(emotion.name, emotion.probability)"
+            @click="selectEmotion(emotion.name, emotion.intensity)"
           >
             <div class="emotion-card-name">{{ emotion.name }}</div>
             <div class="emotion-card-image-container">
@@ -89,8 +89,17 @@
                 {{ emotion.name }}
               </div>
             </div>
-            <div class="emotion-card-probability">{{ Math.round(emotion.probability * 100) }}%</div>
-            <div class="emotion-card-description">people have this feeling</div>
+            <div class="emotion-card-stars">
+              <span 
+                v-for="star in 3" 
+                :key="star"
+                class="star"
+                :class="{ 'star-filled': star <= getIntensityStars(emotion.intensity) }"
+              >
+                ★
+              </span>
+            </div>
+            <div class="emotion-card-intensity-label">{{ emotion.intensity }} intensity</div>
           </div>
         </div>
         
@@ -107,7 +116,7 @@
         <!-- Emotion Explanation -->
         <div class="emotion-explanation">
           <h4>Where these emotions came from?</h4>
-          <p>These predictions come from our emotion engine, a machine learning model trained on 4,779 real and synthetic paintings. The model learned to connect color combinations to 15 distinct emotions, showing you the probability of each feeling your palette might create.</p>
+          <p>These predictions come from our emotion engine, a machine learning model trained on 4,779 real and synthetic paintings. The model analyzes your palette's colors and determines the intensity level (low, medium, or high) of each emotion present in your color selection.</p>
         </div>
       </div>
       
@@ -165,7 +174,7 @@ export default {
     const loadingMessage = ref('')
     const spinnerType = ref('magic-cube')
     const selectedEmotion = ref('')
-    const selectedProbability = ref(0)
+    const selectedIntensity = ref('')
     const emotionResetCount = ref(0)
     const remainingReloads = ref(3)
     const showEmotionSelection = ref(false)
@@ -292,11 +301,11 @@ export default {
         
         // Set up captured image URL with better error handling
         if (data.filename) {
-          // Try multiple URL formats (prefer dev path /uploads in non-docker dev)
+          // Try multiple URL formats (prefer public assets path)
           const cacheBuster = Date.now()
           const possibleUrls = [
-            // Dev server proxy to backend
-            `/api/uploads/${data.filename}?v=${cacheBuster}`,
+            // Public assets endpoint (no auth required)
+            `/api/assets/${data.filename}?v=${cacheBuster}`,
             // Direct paths served by frontend (if proxy not used)
             `/uploads/${data.filename}?v=${cacheBuster}`,
             `./uploads/${data.filename}?v=${cacheBuster}`,
@@ -330,11 +339,12 @@ export default {
           console.log('✅ Raw colors data loaded successfully')
         }
         
-        if (emotionPrediction.value && emotionPrediction.value.all_probabilities) {
-          // Get all emotions sorted by probability
-          const sortedEmotions = Object.entries(emotionPrediction.value.all_probabilities)
-            .map(([name, probability]) => ({ name, probability }))
-            .sort((a, b) => b.probability - a.probability)
+        if (emotionPrediction.value && emotionPrediction.value.all_intensities) {
+          // Get all emotions sorted by intensity (high > medium > low)
+          const intensityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+          const sortedEmotions = Object.entries(emotionPrediction.value.all_intensities)
+            .map(([name, intensity]) => ({ name, intensity }))
+            .sort((a, b) => (intensityOrder[b.intensity] || 0) - (intensityOrder[a.intensity] || 0))
           
           topEmotions.value = sortedEmotions
           
@@ -361,9 +371,9 @@ export default {
       }
     }
     
-    const selectEmotion = (emotionName, probability) => {
+    const selectEmotion = (emotionName, intensity) => {
       selectedEmotion.value = emotionName
-      selectedProbability.value = probability
+      selectedIntensity.value = intensity
     }
     
     const proceedToGallery = async () => {
@@ -380,7 +390,7 @@ export default {
         const sessionId = localStorage.getItem('sessionId')
         await ApiService.saveEmotion({
           emotion: selectedEmotion.value,
-          probability: selectedProbability.value,
+          intensity: selectedIntensity.value,
           sessionId: sessionId
         })
         
@@ -396,16 +406,16 @@ export default {
         const galleryData = {
           ...pageData.value,
           selectedEmotion: selectedEmotion.value,
-          selectedProbability: selectedProbability.value,
+          selectedIntensity: selectedIntensity.value,
           sessionId: sessionId
         }
         
         console.log('📦 Gallery data prepared:', galleryData)
         console.log('📦 Emotion data debug:', {
           selectedEmotion: selectedEmotion.value,
-          selectedProbability: selectedProbability.value,
+          selectedIntensity: selectedIntensity.value,
           emotionType: typeof selectedEmotion.value,
-          probabilityType: typeof selectedProbability.value
+          intensityType: typeof selectedIntensity.value
         })
         
         // Helper function for Unicode-safe base64 encoding
@@ -487,8 +497,17 @@ export default {
         
         // Reset selection when shuffling
         selectedEmotion.value = ''
-        selectedProbability.value = 0
+        selectedIntensity.value = ''
       }
+    }
+    
+    const getIntensityStars = (intensity) => {
+      const starMap = {
+        'high': 3,
+        'medium': 2,
+        'low': 1
+      }
+      return starMap[intensity] || 0
     }
     
     const getEmotionColor = (emotionName) => {
@@ -731,6 +750,7 @@ export default {
       loadingMessage,
       spinnerType,
       selectedEmotion,
+      selectedIntensity,
       colourData,
       rawColors,
       emotionPrediction,
@@ -748,6 +768,7 @@ export default {
       getEmotionImageSrc,
       getColorFromRawColor,
       getRawColorPercentage,
+      getIntensityStars,
       pageData,
       handleImageError,
       handleImageLoad
@@ -1074,19 +1095,32 @@ export default {
   font-style: italic;
 }
 
-.emotion-card-probability {
-  font-size: 1.5rem;
-  font-weight: 700;
-  font-family: 'Poppins', sans-serif;
-  color: #ffffff;
-  margin: 10px 0 5px 0;
+.emotion-card-stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 15px 0;
+  font-size: 2rem;
 }
 
-.emotion-card-description {
-  font-size: 0.85rem;
+.star {
+  color: #444;
+  transition: all 0.3s ease;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.star-filled {
+  color: #ffa502;
+  text-shadow: 0 0 10px rgba(255, 165, 2, 0.5);
+}
+
+.emotion-card-intensity-label {
+  font-size: 0.9rem;
   color: #ccc;
-  font-weight: 300;
+  font-weight: 400;
   font-family: 'Poppins', sans-serif;
+  text-transform: capitalize;
+  margin-top: 5px;
 }
 
 .more-feelings-btn {
@@ -1251,4 +1285,4 @@ button:focus {
     align-items: center;
   }
 }
-</style> 
+</style>

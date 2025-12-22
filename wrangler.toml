@@ -1,0 +1,28 @@
+# Cloudflare Pages + Functions Configuration
+# Plot & Palette - Cloudflare Worker API
+
+name = "plotandpalette-vue"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "apps/frontend/dist"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "plotandplate-db"
+database_id = "7447da98-cd99-4dba-9b09-0f804e34c51b"
+
+# R2 Bucket binding
+[[r2_buckets]]
+binding = "ASSET_BUCKET"
+bucket_name = "plotpalette-assets-prod"
+
+# Environment variables (non-secret)
+[vars]
+ENVIRONMENT = "production"
+N8N_WEBHOOK_URL = "https://your-n8n-instance.com/webhook/plotpalette"
+CORS_ORIGIN = "https://plotpalette.pages.dev"
+
+# Secrets (set via: wrangler secret put SECRET_NAME)
+# - API_KEY: API key for frontend authentication
+# - N8N_SHARED_SECRET: Shared secret for n8n webhook auth
+# - N8N_CALLBACK_SECRET: Secret for verifying n8n callbacks (HMAC)

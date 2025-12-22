@@ -10,9 +10,11 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@cloudflare/workers-types": "^4.20251219.0",
     "@vue/cli-service": "^5.0.8",
     "axios": "^1.4.0",
     "html2canvas": "^1.4.1",
+    "node-vibrant": "^4.0.3",
     "pinia": "^2.1.6",
     "vue": "^3.3.4",
     "vue-router": "^4.5.1"

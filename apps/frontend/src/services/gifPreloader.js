@@ -8,18 +8,13 @@ class GifPreloader {
     this.currentPlayIndex = 0
   }
 
-  // Import available GIFs (1-20)
+  // Get available GIF paths from R2 (1-20)
   async getAllGifPaths() {
     const gifPaths = []
     const MAX_GIFS = 20
     for (let i = 1; i <= MAX_GIFS; i++) {
-      try {
-        // Use dynamic import for proper asset handling
-        const gifModule = await import(`@/assets/images/palette GIF/${i}.gif`)
-        gifPaths.push(gifModule.default || gifModule)
-      } catch (error) {
-        console.log(`⚠️ GIF ${i} not found, skipping...`)
-      }
+      // Use R2 bucket URLs via our API endpoint
+      gifPaths.push(`/api/assets/palettes/${i}.gif`)
     }
     return gifPaths
   }
@@ -39,9 +34,8 @@ class GifPreloader {
       const allGifPaths = await this.getAllGifPaths()
       console.log(`📁 Found ${allGifPaths.length} available GIFs`)
 
-      // Shuffle and pick initial GIFs
-      const shuffled = [...allGifPaths].sort(() => Math.random() - 0.5)
-      const selectedGifs = shuffled.slice(0, count)
+      // Load first 3 GIFs (1.gif, 2.gif, 3.gif)
+      const selectedGifs = allGifPaths.slice(0, count)
 
       // Preload the selected GIFs
       const preloadPromises = selectedGifs.map(gifPath => this.preloadSingleGif(gifPath))
@@ -53,7 +47,7 @@ class GifPreloader {
         .map(result => result.value)
 
       // Store remaining GIFs for future loading
-      this.remainingGifs = shuffled.slice(count)
+      this.remainingGifs = allGifPaths.slice(count)
 
       console.log(`✅ Successfully preloaded ${this.preloadedGifs.length}/${count} initial GIFs`)
       
@@ -164,4 +158,4 @@ class GifPreloader {
 }
 
 // Export singleton instance
-export default new GifPreloader() 
+export default new GifPreloader()

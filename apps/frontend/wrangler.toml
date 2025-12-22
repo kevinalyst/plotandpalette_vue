@@ -1,0 +1,26 @@
+# Local development configuration for Cloudflare Pages Functions
+name = "plotandpalette-vue-local"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
+
+# D1 Database binding (production database)
+[[d1_databases]]
+binding = "DB"
+database_name = "plotandplate-db"
+database_id = "7447da98-cd99-4dba-9b09-0f804e34c51b"
+migrations_dir = "migrations"
+
+# R2 Bucket binding (production bucket)
+[[r2_buckets]]
+binding = "ASSET_BUCKET"
+bucket_name = "plotpalette-assets-prod"
+
+# Environment variables (including secrets for LOCAL DEV ONLY)
+[vars]
+ENVIRONMENT = "development"
+N8N_WEBHOOK_URL = "https://kevinalyst.app.n8n.cloud/webhook-test/97dac6bc-5ecc-42f2-89f8-d0c4e883c38d"
+CORS_ORIGIN = "*"
+# LOCAL DEV SECRETS - DO NOT COMMIT TO PRODUCTION
+API_KEY = "2727ef63765ef750a57e643b7c6d3b7840c47139b568ded83bfa4af9170d8180"
+N8N_SHARED_SECRET = "f8232d3042e350b3ccd1227c091cf172200e27c0fbea402788c57b17920af91f"
+N8N_CALLBACK_SECRET = "eab6507115a6ba3867b88aa28707037d2f214fb4a60a04b912f75fdc50f95a66"

@@ -155,12 +155,11 @@ export default {
     // GIF element reference for frame capture
     const animatedGif = ref(null)
     
-    // Load 20 GIFs and default to 1.gif
-    // Lazy GIF loaders: resolved only when requested
-    const gifLoaders = Array.from({ length: 20 }, (_, i) => async () => {
+    // Load 20 GIFs from R2 via API endpoint
+    const gifLoaders = Array.from({ length: 20 }, (_, i) => () => {
       if (!galleryGifs.value[i]) {
-        const mod = await import(`@/assets/images/palette GIF/${i + 1}.gif`)
-        galleryGifs.value[i] = mod.default || mod
+        // Use R2 bucket URLs via our API endpoint
+        galleryGifs.value[i] = `/api/assets/palettes/${i + 1}.gif`
       }
       return galleryGifs.value[i]
     })
@@ -365,7 +364,17 @@ export default {
       showCapturePrompt.value = false
       
       try {
-        // STEP 1: Hide UI elements for clean capture
+        // STEP 1: Get session ID from localStorage
+        const sessionId = localStorage.getItem('sessionId')
+        if (!sessionId) {
+          throw new Error('No session ID found. Please start from home page.')
+        }
+        
+        // STEP 2: Get palette number (1-20 for built-in, or index for uploaded)
+        const paletteNo = selectedIndex.value + 1
+        console.log('📊 Palette number:', paletteNo)
+        
+        // STEP 3: Hide UI elements for clean capture
         console.log('🎭 Hiding UI elements for clean capture...')
         const controlsElement = document.querySelector('.controls')
         const capturePrompt = document.querySelector('.capture-prompt')
@@ -379,73 +388,106 @@ export default {
         // Wait a moment for DOM to update
         await new Promise(resolve => setTimeout(resolve, 100))
         
-        // STEP 2: Capture the page BEFORE showing loading spinner
-        console.log('📷 Capturing clean frame...')
-        const currentlyDisplayedGif = currentGifSrc.value
-        console.log('🎯 Current GIF being displayed:', currentlyDisplayedGif)
+        // STEP 4: Capture the screenshot
+        console.log('📷 Capturing screenshot...')
+        const screenshot = await captureCurrentFrame()
+        console.log('✅ Screenshot captured successfully')
         
-        const capturedFrame = await captureCurrentFrame()
-        console.log('✅ Clean frame captured successfully')
-        
-        // STEP 3: Restore UI elements and show loading
+        // STEP 5: Restore UI elements and show loading
         if (controlsElement) controlsElement.style.display = 'block'
         if (capturePrompt) capturePrompt.style.display = 'block'
         if (galleryElement) galleryElement.style.display = 'flex'
         
-        // NOW show loading spinner for backend processing
+        // Show loading spinner
         showLoading.value = true
+        loadingMessage.value = 'Uploading your palette screenshot...'
         
-        // STEP 4: Create session and process backend
-        console.log('🆕 Creating new session for capture...')
-        const username = localStorage.getItem('username')
-        
-        const sessionResponse = await ApiService.request('/create-session', {
-          method: 'POST',
-          body: JSON.stringify({ 
-            username: username
-          })
-        })
-        
-        const sessionId = sessionResponse.sessionId
-        console.log('✅ New session created:', sessionId)
-        
-        // Store the new session ID
-        localStorage.setItem('sessionId', sessionId)
-        
-        // Helper function for Unicode-safe base64 encoding
-        const unicodeSafeBase64Encode = (str) => {
-          try {
-            // First encode the string as UTF-8, then encode to base64
-            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
-              return String.fromCharCode('0x' + p1)
-            }))
-          } catch (error) {
-            console.error('Error encoding string:', error)
-            // Fallback: remove problematic characters and try again
-            // eslint-disable-next-line no-control-regex
-            const cleanStr = str.replace(/[^\u0000-\u007F]/g, "")
-            return btoa(cleanStr)
-          }
-        }
-
-        console.log('📡 Sending capture request to backend...')
-        
-        const response = await ApiService.request('/capture-palette', {
+        // STEP 6: Upload screenshot to R2 first
+        console.log('☁️ Uploading screenshot to R2...')
+        const uploadResponse = await ApiService.request('/uploads/screenshot', {
           method: 'POST',
           body: JSON.stringify({
-            gifName: currentlyDisplayedGif,
-            frameData: capturedFrame,
-            sessionId: sessionId
+            screenshot: screenshot,
+            session_id: sessionId,
+            palette_no: paletteNo
           })
         })
         
-        console.log('✅ Palette captured successfully:', response)
+        const screenshotKey = uploadResponse.data.key
+        console.log('✅ Screenshot uploaded to R2:', screenshotKey)
         
-        // Navigate to color palette page with the response data
-        router.push({
-          name: 'ColorPalettePage',
-          query: { data: unicodeSafeBase64Encode(JSON.stringify(response)) }
+        // Update loading message
+        loadingMessage.value = 'Analyzing your color palette...'
+        
+        // STEP 7: Send job to n8n via /api/jobs endpoint with R2 key
+        console.log('📡 Creating PALETTE_ANALYSIS job...')
+        const jobResponse = await ApiService.request('/jobs', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: 'PALETTE_ANALYSIS',
+            session_id: sessionId,
+            input_data: {
+              palette_no: paletteNo,
+              screenshot_key: screenshotKey
+            }
+          })
         })
+        
+        console.log('✅ Job created:', jobResponse)
+        const jobId = jobResponse.data.job_id
+        
+        // STEP 7: Poll for job completion
+        console.log('⏳ Polling for job completion...')
+        const pollInterval = 2000 // 2 seconds
+        const maxAttempts = 60 // 2 minutes max
+        let attempts = 0
+        
+        const checkJobStatus = async () => {
+          attempts++
+          
+          if (attempts > maxAttempts) {
+            throw new Error('Job timeout: Analysis took too long')
+          }
+          
+          const statusResponse = await ApiService.request(`/jobs/${jobId}`)
+          const status = statusResponse.data.status
+          
+          console.log(`🔍 Job status (attempt ${attempts}):`, status)
+          
+          if (status === 'COMPLETED') {
+            console.log('✅ Job completed successfully!')
+            const result = statusResponse.data.result_data
+            
+            // Helper function for Unicode-safe base64 encoding
+            const unicodeSafeBase64Encode = (str) => {
+              try {
+                return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+                  return String.fromCharCode('0x' + p1)
+                }))
+              } catch (error) {
+                console.error('Error encoding string:', error)
+                // eslint-disable-next-line no-control-regex
+                const cleanStr = str.replace(/[^\u0000-\u007F]/g, "")
+                return btoa(cleanStr)
+              }
+            }
+            
+            // Navigate to color palette page with the result
+            router.push({
+              name: 'ColorPalettePage',
+              query: { data: unicodeSafeBase64Encode(JSON.stringify(result)) }
+            })
+            
+          } else if (status === 'FAILED') {
+            throw new Error(statusResponse.data.error_message || 'Job failed')
+          } else {
+            // Still QUEUED or RUNNING, check again
+            setTimeout(checkJobStatus, pollInterval)
+          }
+        }
+        
+        // Start polling
+        await checkJobStatus()
         
       } catch (error) {
         console.error('❌ Error in palette capture:', error)
@@ -461,7 +503,6 @@ export default {
               showModal.value = false
               isCapturing.value = false
               showCapturePrompt.value = true
-              startGifCycling()
             }
           }
         ]
@@ -777,4 +818,4 @@ button:focus {
     bottom: 100px;
   }
 }
-</style> 
+</style>

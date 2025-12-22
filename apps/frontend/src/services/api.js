@@ -1,5 +1,8 @@
 // API Service for Plot & Palette Backend
 const API_BASE = '/api'
+// For now, hardcode the API key for development
+// TODO: In production, this should come from environment variables
+const API_KEY = '2727ef63765ef750a57e643b7c6d3b7840c47139b568ded83bfa4af9170d8180'
 
 class ApiService {
   
@@ -8,6 +11,7 @@ class ApiService {
     const config = {
       headers: {
         'Content-Type': 'application/json',
+        'X-API-Key': API_KEY,
         ...options.headers,
       },
       ...options,
@@ -153,4 +157,4 @@ class ApiService {
   }
 }
 
-export default new ApiService() 
+export default new ApiService()
