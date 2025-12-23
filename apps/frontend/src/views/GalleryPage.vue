@@ -552,7 +552,32 @@ export default {
           return
         }
 
-        const res = await ApiService.getRecommendationsFromColors(rawColorsPayload)
+        // Create RELOAD_RECOMMENDATIONS job with excludeIds
+        const sessionId = localStorage.getItem('sessionId')
+        const excludeIds = allPaintings.value.map(p => p.id).filter(Boolean)
+        
+        console.log('🔄 Creating reload job with', excludeIds.length, 'IDs to exclude')
+        
+        const job = await ApiService.createJob({
+          type: 'RELOAD_RECOMMENDATIONS',
+          session_id: sessionId,
+          input_data: {
+            rawColors: rawColorsPayload,
+            emotion: emotionFromPalette.value || pageData.value.selectedEmotion || 'neutral',
+            excludeIds: excludeIds
+          }
+        })
+        
+        console.log('✅ Reload job created:', job.data.job_id)
+        
+        // Poll for new recommendations (max 30 seconds, 1 second interval)
+        const result = await ApiService.pollJob(job.data.job_id, 30, 1000)
+        
+        // Transform result to expected format
+        const res = result && result.detailedRecommendations 
+          ? { success: true, detailedRecommendations: result.detailedRecommendations }
+          : { success: false }
+        
         if (res && res.success && res.detailedRecommendations && res.detailedRecommendations.length > 0) {
           const processedPaintings = res.detailedRecommendations.map(painting => ({
             ...painting,
@@ -749,13 +774,13 @@ export default {
     const generateStory = async () => {
       if (!step4Complete.value) return
       
-              console.log('🚀 Generating story with selections:')
-        console.log('- Paintings:', selectedPaintings.value.filter(p => p))
-        console.log('- Character:', selectedCharacter.value)
-        console.log('- Nickname:', nickname.value)
-        console.log('- Page data:', pageData.value)
+      console.log('🚀 Generating story with selections:')
+      console.log('- Paintings:', selectedPaintings.value.filter(p => p))
+      console.log('- Character:', selectedCharacter.value)
+      console.log('- Nickname:', nickname.value)
+      console.log('- Page data:', pageData.value)
       
-      // Validate required data before making API calls and prepare for backend
+      // Validate required data before making API calls
       const validPaintings = selectedPaintings.value
         .filter(p => p && (p.url || p.originalUrl) && p.title && p.artist)
         .map(p => ({
@@ -775,10 +800,10 @@ export default {
         return
       }
       
-              if (!nickname.value || !nickname.value.trim()) {
-          alert('Error: Please enter a nickname for your story')
-          return
-        }
+      if (!nickname.value || !nickname.value.trim()) {
+        alert('Error: Please enter a nickname for your story')
+        return
+      }
       
       generatingStory.value = true
       loading.value = true
@@ -804,39 +829,35 @@ export default {
         await ApiService.saveSelection(selectionData)
         console.log('✅ Selection saved successfully')
         
-        // Then generate the story
-        console.log('📚 Generating story...')
+        // Create story generation job (backend will query database for selection details)
+        console.log('📚 Creating story generation job...')
         
-        // Debug emotion data
-        console.log('📚 Debug - pageData.value:', pageData.value)
-        console.log('📚 Debug - selectedEmotion:', pageData.value.selectedEmotion)
-        console.log('📚 Debug - selectedProbability:', pageData.value.selectedProbability)
-        
-        const storyData = {
-          paintings: validPaintings,
-          character: selectedCharacter.value,
-          nickname: nickname.value,
-          emotion: pageData.value.selectedEmotion || '',
-          probability: pageData.value.selectedProbability || 0,
-          sessionId: sessionId
-        }
-        console.log('📚 Story request data:', storyData)
-        console.log('📚 Story request emotion debug:', {
-          emotion: storyData.emotion,
-          probability: storyData.probability,
-          emotionType: typeof storyData.emotion,
-          probabilityType: typeof storyData.probability
+        const job = await ApiService.createJob({
+          type: 'STORY_GENERATION',
+          session_id: sessionId,
+          input_data: {
+            // Backend will enrich this with database data
+            sessionId: sessionId
+          }
         })
         
-        const storyResponse = await ApiService.generateStory(storyData)
-        console.log('✅ Story generated successfully:', storyResponse)
+        const jobId = job.data.job_id
+        console.log('✅ Job created:', jobId)
         
+        // Poll for completion (max 2 minutes: 60 attempts x 2 seconds)
+        console.log('⏳ Polling for story generation completion...')
+        const result = await ApiService.pollJob(jobId, 60, 2000)
+        
+        console.log('✅ Story generation completed:', result)
+        
+        // Navigate to StoryPage with result
+        // result is { story: { title, paragraph_1, ... } }, so extract story
         const storyPageData = {
           ...pageData.value,
           selectedPaintings: validPaintings,
           selectedCharacter: selectedCharacter.value,
           userName: nickname.value,
-          story: storyResponse,
+          story: result.story || result, // Extract story from result_data
           sessionId: sessionId
         }
         
@@ -848,10 +869,11 @@ export default {
       } catch (error) {
         console.error('❌ Error generating story:', error)
         console.error('❌ Error details:', error.message, error.stack)
+        alert(`Failed to generate story: ${error.message}`)
+      } finally {
         loading.value = false
         generatingStory.value = false
         spinnerType.value = 'magic-cube'
-        alert(`Failed to generate story: ${error.message}`)
       }
     }
     

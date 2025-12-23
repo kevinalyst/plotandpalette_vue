@@ -2,7 +2,7 @@
   <div class="story-page">
     <!-- Story Title Section -->
     <div class="storytittle">
-      <h1>{{ storyData.story?.story_title || 'Your Story' }}</h1>
+      <h1>{{ storyData.story?.title || 'Your Story' }}</h1>
     </div>
     
     <div class="story-container">
@@ -30,7 +30,7 @@
         <!-- Painting 1 and Story Part 1 -->
         <div class="painting-story-section" v-if="storyData.selectedPaintings && storyData.selectedPaintings[0]">
           <div class="painting-display">
-            <img :src="getProxiedImageUrl(storyData.selectedPaintings[0]?.url || storyData.selectedPaintings[0]?.originalUrl)"
+            <img :src="storyData.selectedPaintings[0]?.url || storyData.selectedPaintings[0]?.originalUrl"
                  :alt="storyData.selectedPaintings[0]?.title"
                  @click="openPaintingModal(storyData.selectedPaintings[0])" />
             <div class="painting-info">
@@ -40,7 +40,7 @@
           </div>
           <div class="story-text-section">
             <div class="story-text">
-              {{ storyData.story?.story_part_1 || 'Story part 1 will appear here...' }}
+              {{ storyData.story?.paragraph_1 || 'Story part 1 will appear here...' }}
             </div>
           </div>
         </div>
@@ -48,7 +48,7 @@
         <!-- Painting 2 and Story Part 2 -->
         <div class="painting-story-section" v-if="storyData.selectedPaintings && storyData.selectedPaintings[1]">
           <div class="painting-display">
-            <img :src="getProxiedImageUrl(storyData.selectedPaintings[1]?.url || storyData.selectedPaintings[1]?.originalUrl)"
+            <img :src="storyData.selectedPaintings[1]?.url || storyData.selectedPaintings[1]?.originalUrl"
                  :alt="storyData.selectedPaintings[1]?.title"
                  @click="openPaintingModal(storyData.selectedPaintings[1])" />
             <div class="painting-info">
@@ -58,7 +58,7 @@
           </div>
           <div class="story-text-section">
             <div class="story-text">
-              {{ storyData.story?.story_part_2 || 'Story part 2 will appear here...' }}
+              {{ storyData.story?.paragraph_2 || 'Story part 2 will appear here...' }}
             </div>
           </div>
         </div>
@@ -66,7 +66,7 @@
         <!-- Painting 3 and Story Part 3 -->
         <div class="painting-story-section" v-if="storyData.selectedPaintings && storyData.selectedPaintings[2]">
           <div class="painting-display">
-            <img :src="getProxiedImageUrl(storyData.selectedPaintings[2]?.url || storyData.selectedPaintings[2]?.originalUrl)"
+            <img :src="storyData.selectedPaintings[2]?.url || storyData.selectedPaintings[2]?.originalUrl"
                  :alt="storyData.selectedPaintings[2]?.title"
                  @click="openPaintingModal(storyData.selectedPaintings[2])" />
             <div class="painting-info">
@@ -76,7 +76,7 @@
           </div>
           <div class="story-text-section">
             <div class="story-text">
-              {{ storyData.story?.story_part_3 || 'Story part 3 will appear here...' }}
+              {{ storyData.story?.paragraph_3 || 'Story part 3 will appear here...' }}
             </div>
           </div>
         </div>
@@ -828,4 +828,4 @@ button:focus {
     max-width: 95vw;
   }
 }
-</style> 
+</style>
