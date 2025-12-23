@@ -413,6 +413,112 @@ All ML/AI processing now handled by n8n workflows.
 
 ---
 
-**Last Updated:** December 22, 2025, 11:37 PM GMT  
-**Deployment URL:** https://7b9ad04c.plotandpalette-vue-local.pages.dev  
-**Status:** ✅ Painting recommendation system complete and deployed
+### 8. ✅ Screenshot 401 Error Fix (December 23, 2025)
+**Problem:** Screenshots not loading in GalleryPage "previous selection" hover (401 Unauthorized)
+
+**Root Cause:**
+- Browsers cannot send custom headers (like `X-API-Key`) in `<img>` tags
+- `/api/uploads/` was not in public paths list
+- No GET handler existed for serving uploaded screenshots
+
+**Solution:**
+- Added `/api/uploads` to middleware public paths
+- Created catch-all GET handler `/api/uploads/[[path]].ts` to serve R2 files
+- Screenshots now publicly accessible (protected by session ID obscurity)
+
+**Status:** ✅ Fixed - Screenshots load correctly in hover popups
+
+### 9. ✅ Reload Recommendations Feature (December 23, 2025)
+**Feature:** Users can reload recommendations up to 3 times if unhappy with current paintings
+
+**Implementation:**
+- Created `RELOAD_RECOMMENDATIONS` job type
+- Frontend extracts current 10 painting IDs as `excludeIds`
+- Sends to n8n with rawColors, emotion, and IDs to avoid
+- n8n AI agent selects 10 NEW paintings (different from previous)
+- Job polling retrieves and displays fresh recommendations
+
+**Frontend Changes:**
+- Updated `GalleryPage.vue` reloadRecommendations() to use job system
+- Added job creation with excludeIds array
+- Implemented job polling for async n8n processing
+
+**Backend Changes:**
+- n8n workflow handles RELOAD_RECOMMENDATIONS job type
+- Filter/randomization logic to ensure variety
+
+**Status:** ✅ Complete - Users get fresh, AI-curated recommendations
+
+### 10. ✅ Critical Polling Bugs Fixed (December 23, 2025)
+**Problem 1:** createJob() returned undefined job_id
+**Root Cause:** Accessing `job.job_id` instead of `job.data.job_id`
+**Fix:** Updated GalleryPage.vue to use correct nested data structure
+
+**Problem 2:** pollJob() timeout despite job completion in database
+**Root Cause:** Checking `response.status` instead of `response.data.status`
+**Fix:** Updated api.js pollJob() to correctly access nested response structure
+
+**Impact:** Job polling now works reliably for all async operations
+
+**Status:** ✅ Fixed - Reload recommendations complete successfully
+
+---
+
+### 11. ✅ Story Generation Job System Implementation (December 23, 2025)
+**Feature:** Complete job-based story generation with database enrichment and public URL conversion
+
+**Architecture Changes:**
+- **From:** Direct API call to non-existent `/api/generate-story` endpoint ❌
+- **To:** Job-based async processing through n8n (consistent with palette analysis & recommendations) ✅
+
+**Backend Implementation (jobs/index.ts):**
+1. **Database Enrichment:** Query `painting_selections` and `emotion_selections` tables
+2. **URL Conversion:** Transform relative URLs to fully qualified public URLs
+   - `/api/assets/paintings/1.jpg` → `https://your-app.pages.dev/api/assets/paintings/1.jpg`
+   - Critical for n8n AI agent to access painting images
+3. **Webhook Payload:** Send enriched data with paintings, character, nickname, emotion, intensity
+
+**Frontend Fixes:**
+- **GalleryPage.vue:** Fixed data flow - extract `story` from `result.story` (avoided double nesting)
+- **StoryPage.vue:** 
+  - Fixed property names: `story_title` → `title`, `story_part_1/2/3` → `paragraph_1/2/3`
+  - Removed broken `getProxiedImageUrl()` proxy wrapper
+  - Use direct URLs like GalleryPage
+
+**n8n Callback Format:**
+```json
+{
+  "result_data": {
+    "story": {
+      "title": "穿越时空的太行与西部荒原之旅",
+      "paragraph_1": "画作一：...",
+      "paragraph_2": "画作二：...",
+      "paragraph_3": "画作三：..."
+    }
+  }
+}
+```
+
+**Display Sequence:**
+1. Story title (fixed header)
+2. Painting 1 + Info → Paragraph 1
+3. Painting 2 + Info → Paragraph 2
+4. Painting 3 + Info → Paragraph 3
+
+**Key Benefits:**
+- ✅ Consistent with other job-based workflows
+- ✅ Database as single source of truth
+- ✅ Public URLs enable AI agent image access
+- ✅ Async processing with polling
+- ✅ Complete error handling
+
+**Status:** ✅ Complete and deployed - Story generation fully functional end-to-end
+
+**Documentation:** Created `STORY_GENERATION_JOB_FLOW.md` with complete implementation guide
+
+---
+
+**Last Updated:** December 23, 2025, 11:07 PM GMT  
+**Deployment URL:** https://128aae89.plotandpalette-vue-local.pages.dev  
+**Latest Commit:** 380d1f2 - "feat: Implement job-based story generation"  
+**Status:** ✅ Full story generation pipeline working (palette → emotion → recommendations → story)
