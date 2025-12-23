@@ -396,13 +396,39 @@ export default {
         
         console.log('✅ Emotion saved successfully')
         
-        // Update loading message and keep spinner active for 3 seconds
-        loadingMessage.value = 'Unlike Mondrian, we love curves...'
+        // Wait 1 second before polling for recommendations
+        loadingMessage.value = 'Curating your paintings...'
+        await new Promise(resolve => setTimeout(resolve, 1000))
         
-        // Wait for 3 seconds before navigation
-        await new Promise(resolve => setTimeout(resolve, 3000))
+        // Poll for painting recommendations (max 10 attempts, 1 second apart)
+        loadingMessage.value = 'Preparing your gallery...'
+        let recommendations = null
+        const maxAttempts = 10
         
-        // Prepare gallery data with selected emotion
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          console.log(`📡 Polling for recommendations (attempt ${attempt}/${maxAttempts})...`)
+          
+          try {
+            const response = await ApiService.request(`/recommendations/${sessionId}`)
+            
+            if (response.success && response.data && response.data.recommendations) {
+              recommendations = response.data.recommendations
+              console.log('✅ Recommendations received:', recommendations.length, 'paintings')
+              break
+            } else {
+              console.log('⏳ Recommendations not ready yet, retrying...')
+            }
+          } catch (error) {
+            console.warn(`⚠️  Attempt ${attempt} failed:`, error.message)
+          }
+          
+          // Wait 1 second before next attempt (unless it's the last attempt)
+          if (attempt < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 1000))
+          }
+        }
+        
+        // Prepare gallery data with selected emotion and recommendations
         const galleryData = {
           ...pageData.value,
           selectedEmotion: selectedEmotion.value,
@@ -410,12 +436,21 @@ export default {
           sessionId: sessionId
         }
         
+        // Add recommendations if available
+        if (recommendations && recommendations.length > 0) {
+          galleryData.detailedRecommendations = recommendations
+          console.log('✅ Added', recommendations.length, 'recommendations to gallery data')
+        } else {
+          console.warn('⚠️  No recommendations received after polling, GalleryPage will fallback to database fetch')
+        }
+        
         console.log('📦 Gallery data prepared:', galleryData)
         console.log('📦 Emotion data debug:', {
           selectedEmotion: selectedEmotion.value,
           selectedIntensity: selectedIntensity.value,
           emotionType: typeof selectedEmotion.value,
-          intensityType: typeof selectedIntensity.value
+          intensityType: typeof selectedIntensity.value,
+          hasRecommendations: !!galleryData.detailedRecommendations
         })
         
         // Helper function for Unicode-safe base64 encoding

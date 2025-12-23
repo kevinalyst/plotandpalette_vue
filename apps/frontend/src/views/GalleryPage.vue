@@ -414,15 +414,9 @@ export default {
       }
     }
 
-    // Helper function to get proxied image URL
-    const getProxiedImageUrl = (originalUrl) => {
-      if (!originalUrl) return ''
-      // Use the backend proxy to avoid CORS/ORB issues
-      return `/api/proxy-image?url=${encodeURIComponent(originalUrl)}`
-    }
 
     // Methods
-    const loadPageData = () => {
+    const loadPageData = async () => {
       try {
         if (route.query.data) {
           const data = JSON.parse(unicodeSafeBase64Decode(route.query.data))
@@ -462,21 +456,19 @@ export default {
           console.log('🌐 Simple recommendations:', data.recommendations)
           
           if (data.detailedRecommendations && data.detailedRecommendations.length > 0) {
-            // Process paintings to use proxied URLs
+            // Use URLs directly - they already point to /api/assets/paintings/
             const processedPaintings = data.detailedRecommendations.map(painting => ({
               ...painting,
-              url: getProxiedImageUrl(painting.url),
-              originalUrl: painting.url // Keep original for reference
+              url: painting.url // Use direct URL, no proxy needed
             }))
             allPaintings.value = processedPaintings
             recommendations.value = processedPaintings
-            console.log('✅ Loaded paintings with proxy URLs:', allPaintings.value.length)
+            console.log('✅ Loaded paintings with direct URLs:', allPaintings.value.length)
           } else if (data.recommendations && data.recommendations.length > 0) {
             // Fallback: convert simple URL list to detailed format
             console.log('⚠️ Using fallback: converting URLs to painting objects')
             const paintingObjects = data.recommendations.map((url, index) => ({
-              url: getProxiedImageUrl(url),
-              originalUrl: url,
+              url: url, // Use direct URL, no proxy needed
               title: `Painting ${index + 1}`,
               artist: 'Unknown Artist', 
               year: 'Unknown Year'
@@ -484,10 +476,46 @@ export default {
             allPaintings.value = paintingObjects
             recommendations.value = paintingObjects
           } else {
-            throw new Error('No painting recommendations received from backend')
+            console.log('⚠️  No recommendations in navigation data, will try database fetch');
+            // Don't throw error - continue to database fetch below
           }
         } else {
           router.push('/')
+        }
+        
+        // Fetch fresh recommendations from dedicated table
+        const sessionId = localStorage.getItem('sessionId');
+        if (sessionId) {
+          try {
+            console.log('📡 Fetching fresh recommendations for session:', sessionId);
+            
+            const response = await ApiService.request(`/recommendations/${sessionId}`);
+            
+            if (response.success && response.data && response.data.recommendations) {
+              // Use URLs directly - they already point to /api/assets/paintings/
+              const processedPaintings = response.data.recommendations.map(painting => ({
+                ...painting,
+                url: painting.url // Use direct URL, no proxy needed
+              }));
+              
+              allPaintings.value = processedPaintings;
+              recommendations.value = processedPaintings;
+              
+              console.log('✅ Loaded', processedPaintings.length, 'fresh recommendations from database');
+            } else {
+              console.log('📦 No recommendations in database yet');
+              // If no data from navigation and no data from database, show error
+              if (!allPaintings.value || allPaintings.value.length === 0) {
+                throw new Error('No painting recommendations available yet. Please wait for the analysis to complete.');
+              }
+            }
+          } catch (error) {
+            console.warn('⚠️  Could not fetch recommendations from database:', error);
+            // If no data from navigation and database fetch failed, show error
+            if (!allPaintings.value || allPaintings.value.length === 0) {
+              throw new Error('No painting recommendations available. Backend connection required.');
+            }
+          }
         }
       } catch (error) {
         console.error('Error loading page data:', error)
@@ -528,16 +556,14 @@ export default {
         if (res && res.success && res.detailedRecommendations && res.detailedRecommendations.length > 0) {
           const processedPaintings = res.detailedRecommendations.map(painting => ({
             ...painting,
-            url: getProxiedImageUrl(painting.url),
-            originalUrl: painting.url
+            url: painting.url // Use direct URL, no proxy needed
           }))
           // Do not clear selectedPaintings; only replace the pool
           allPaintings.value = processedPaintings
           recommendations.value = processedPaintings
         } else if (res && res.recommendations && res.recommendations.length > 0) {
           const paintingObjects = res.recommendations.map((url, index) => ({
-            url: getProxiedImageUrl(url),
-            originalUrl: url,
+            url: url, // Use direct URL, no proxy needed
             title: `Painting ${index + 1}`,
             artist: 'Unknown Artist',
             year: 'Unknown Year'
@@ -864,7 +890,6 @@ export default {
       showAllPaintings,
       showPaintingModal,
       selectedPaintingForModal,
-      getProxiedImageUrl,
       recaptureGallery,
       reloadRecommendations,
       remainingReloads,
@@ -1829,4 +1854,4 @@ button:focus {
     max-width: 95vw;
   }
 }
-</style> 
+</style>

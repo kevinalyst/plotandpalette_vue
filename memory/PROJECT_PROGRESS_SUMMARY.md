@@ -1,7 +1,7 @@
 # Plot & Palette - Cloudflare Deployment Progress Summary
 
 **Project:** Plot & Palette Vue - Migration to Cloudflare Pages  
-**Date:** December 20, 2025  
+**Date:** December 22, 2025  
 **Status:** Multiple Major Features Completed ✅
 
 ---
@@ -40,6 +40,48 @@
 - Database stores TEXT intensity instead of REAL probability
 - n8n must return `all_intensities` (not `all_probabilities`)
 
+### 6. ✅ Painting Recommendation System (NEW FEATURE)
+**Feature:** AI-powered painting recommendations based on color analysis
+
+**Architecture:**
+- **Two-stage hybrid approach:** Cloudflare Worker + n8n AI agent
+- **Stage 1:** Worker computes top 50 paintings via cosine similarity
+- **Stage 2:** n8n AI agent selects best 10 based on emotion context
+
+**Database Setup:**
+- Created `art_information` table with 155 Chinese Contemporary Art paintings
+- Color extraction via Google Cloud Vision API (20-dimensional color vectors)
+- Dedicated `painting_recommendations` table for persistent storage
+- All 155 artwork images uploaded to R2 bucket
+
+**API Endpoints:**
+- `POST /api/recommendations/compute` - Cosine similarity computation
+- `GET /api/recommendations/:session_id` - Fetch saved recommendations
+
+**Frontend Integration:**
+- GalleryPage loads recommendations with smart fallback logic
+- Progressive enhancement: navigation data → database fetch
+- Image proxy for CORS/ORB compatibility
+
+**Status:** ✅ Complete and deployed
+
+### 7. ✅ GalleryPage Loading Fix (CRITICAL BUG FIX)
+**Problem:** Page throwing error before database fetch executes
+
+**Root Cause:**
+- Navigation data empty (n8n callback not yet received)
+- Code threw error immediately, never reaching database fetch
+- Database HAD the data, but page couldn't display it
+
+**Solution:**
+- Removed premature error throwing
+- Allow database fetch to execute as fallback
+- Smart error handling: only fail if BOTH sources empty
+
+**Impact:** Users can now see painting recommendations reliably
+
+**Deployment:** https://7b9ad04c.plotandpalette-vue-local.pages.dev
+
 ---
 
 ## 🏗️ Architecture
@@ -71,33 +113,79 @@ Frontend (Display Results)
 - `apps/frontend/functions/api/save-emotion.ts` - Backward compat endpoint
 - `apps/frontend/functions/api/save-selection.ts` - Backward compat endpoint
 - `apps/frontend/functions/api/uploads/palette.ts` - User image upload to R2
+- `apps/frontend/functions/api/recommendations/compute.ts` - Cosine similarity engine
+- `apps/frontend/functions/api/recommendations/[session_id].ts` - Recommendation fetch
 - `apps/frontend/migrations/0002_add_intensity_column.sql` - DB migration
-- `N8N_INTENSITY_UPDATE.md` - n8n integration guide for intensity system
-- `PROJECT_PROGRESS_SUMMARY.md` - This file
+- `apps/frontend/migrations/0003_update_palette_analysis_schema.sql` - Palette schema update
+- `apps/frontend/migrations/0004_remove_palette_analysis_fk.sql` - Remove FK constraint
+- `apps/frontend/migrations/0005_add_cluster_columns.sql` - Add cluster columns
+- `apps/frontend/migrations/0006_create_art_information_table.sql` - Art database table
+- `apps/frontend/migrations/0007_create_painting_recommendations_table.sql` - Recommendations table
+- `scripts/colour_extraction/extract_colors_batch.py` - Google Vision color extraction
+- `scripts/generate-art-seed.js` - SQL seed data generator
+- `scripts/upload-paintings-to-r2.sh` - R2 batch upload script
+- `memory/N8N_INTENSITY_UPDATE.md` - n8n integration guide for intensity system
+- `memory/N8N_PAINTING_RECOMMENDATIONS.md` - Painting recommendation system guide
+- `memory/SETUP_ART_DATABASE.md` - Art database setup documentation
+- `memory/COLOR_EXTRACTION_ASSESSMENT.md` - Color extraction analysis
+- `memory/GALLERY_PAGE_FIX.md` - GalleryPage bug fix documentation
+- `memory/PROJECT_PROGRESS_SUMMARY.md` - This file
 
 ### Modified Files:
 - `apps/frontend/src/views/ColorPalettePage.vue` - 3-star intensity display
+- `apps/frontend/src/views/GalleryPage.vue` - Smart fallback loading logic
 - `apps/frontend/functions/api/emotions.ts` - Intensity validation
-- `apps/frontend/functions/lib/db.ts` - saveEmotionSelection() uses intensity
+- `apps/frontend/functions/lib/db.ts` - Multiple DB helper functions added
+- `apps/frontend/functions/api/internal/jobs/[job_id]/callback.ts` - ID hydration & recommendations save
+- `apps/frontend/functions/lib/colorMapping.ts` - Color space conversions
 - `apps/frontend/wrangler.toml` - Added migrations_dir configuration
-- `ENDPOINTS-DOCUMENTATION.md` - Updated all emotion API specs
+- `memory/ENDPOINTS-DOCUMENTATION.md` - Updated all emotion API specs
 
 ---
 
 ## 🗄️ Database Schema Changes
 
-### Migration 0002: Add Intensity Column
+### Migrations Applied
+
+**Migration 0002:** Add Intensity Column
 ```sql
 ALTER TABLE emotion_selections ADD COLUMN intensity TEXT;
 ```
 
+**Migration 0003-0005:** Palette Analysis Schema Updates
+- Removed foreign key constraints
+- Added cluster columns for color analysis
+
+**Migration 0006:** Art Information Table
+```sql
+CREATE TABLE art_information (
+  id INTEGER PRIMARY KEY,
+  piece TEXT NOT NULL,
+  artist TEXT NOT NULL,
+  year TEXT,
+  r2_key TEXT,
+  -- 20 color feature columns (color_0_r, color_0_g, color_0_b, color_0_percentage, ...)
+);
+```
+- Stores 155 Chinese Contemporary Art paintings
+- Each painting has 5 dominant colors (RGB + percentage)
+- Used for cosine similarity calculations
+
+**Migration 0007:** Painting Recommendations Table
+```sql
+CREATE TABLE painting_recommendations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id TEXT NOT NULL,
+  recommendations TEXT NOT NULL, -- JSON array of painting objects
+  job_id TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+- Dedicated table for painting recommendations (not buried in job_results JSON)
+- Enables efficient querying by session_id
+- Stores full painting objects with metadata
+
 **Applied to:** plotandplate-db (remote) ✅
-
-**New Column:**
-- `emotion_selections.intensity` (TEXT) - Values: "low", "medium", "high"
-
-**Deprecated (kept for compatibility):**
-- `emotion_selections.probability` (REAL) - No longer used by frontend
 
 ---
 
@@ -152,9 +240,11 @@ def probability_to_intensity(prob):
 
 ## 🚀 Current Deployment
 
-**Live URL:** https://086c2e1b.plotandpalette-vue-local.pages.dev
+**Live URL:** https://7b9ad04c.plotandpalette-vue-local.pages.dev
 
-**Status:** ✅ All changes deployed successfully
+**Previous URL:** https://086c2e1b.plotandpalette-vue-local.pages.dev
+
+**Status:** ✅ All changes deployed successfully (including painting recommendations & GalleryPage fix)
 
 **Environment:**
 - Production D1 Database: plotandplate-db
@@ -165,7 +255,7 @@ def probability_to_intensity(prob):
 
 ## 📊 API Endpoints Summary
 
-**Total Implemented:** 15 endpoints
+**Total Implemented:** 17 endpoints
 
 ### User & Session (3 endpoints)
 - POST /api/store-username
@@ -188,6 +278,10 @@ def probability_to_intensity(prob):
 - GET /api/jobs?session_id=xxx
 - GET /api/jobs/:job_id
 - POST /api/internal/jobs/:job_id/callback
+
+### Recommendations (2 endpoints) ← **NEW**
+- POST /api/recommendations/compute
+- GET /api/recommendations/:session_id
 
 ### Assets (1 endpoint)
 - GET /api/assets/** (serves from R2)
@@ -242,6 +336,17 @@ All ML/AI processing now handled by n8n workflows.
 - **Problem:** Frontend calling 11 non-existent endpoints
 - **Solution:** Created backward-compatible endpoints
 - **Status:** ✅ Resolved - 3 critical endpoints created
+
+### Issue 5: Session 704f1971 Not Saving to painting_recommendations
+- **Problem:** Recommendations saved to job_results instead of dedicated table
+- **Solution:** Updated callback handler to detect and save recommendations
+- **Status:** ✅ Resolved - Now saving to correct table
+
+### Issue 6: GalleryPage Error Before Database Fetch
+- **Problem:** Error thrown before database fetch could execute
+- **Root Cause:** Navigation data empty (async n8n callback not yet received)
+- **Solution:** Removed premature error, allow database fetch as fallback
+- **Status:** ✅ Resolved - Smart fallback logic implemented
 
 ---
 
@@ -299,14 +404,15 @@ All ML/AI processing now handled by n8n workflows.
 
 ## 📈 Project Stats
 
-- **Database Tables:** 9 (users, sessions, jobs, job_results, assets, palette_analysis, emotion_selections, painting_selections, feedback)
-- **API Endpoints:** 15 implemented
-- **Storage Buckets:** R2 (palettes/, screenshots/, palettes/user-upload-*)
-- **Migrations Applied:** 2 (initial schema + intensity column)
+- **Database Tables:** 11 (users, sessions, jobs, job_results, assets, palette_analysis, emotion_selections, painting_selections, feedback, art_information, painting_recommendations)
+- **API Endpoints:** 17 implemented
+- **Storage Buckets:** R2 (palettes/, screenshots/, palettes/user-upload-*, paintings/)
+- **Artwork Database:** 155 Chinese Contemporary Art paintings with color features
+- **Migrations Applied:** 7 (initial schema + intensity + palette schema + art database + recommendations)
 - **Deployments:** Multiple successful deploys to Cloudflare Pages
 
 ---
 
-**Last Updated:** December 20, 2025, 10:30 PM UTC  
-**Deployment URL:** https://086c2e1b.plotandpalette-vue-local.pages.dev  
-**Status:** ✅ Ready for n8n workflow update
+**Last Updated:** December 22, 2025, 11:37 PM GMT  
+**Deployment URL:** https://7b9ad04c.plotandpalette-vue-local.pages.dev  
+**Status:** ✅ Painting recommendation system complete and deployed

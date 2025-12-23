@@ -1,0 +1,11 @@
+# Google Cloud Vision API
+google-cloud-vision==3.7.2
+
+# Progress bars
+tqdm==4.66.1
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Database
+# Note: We'll use wrangler CLI for D1, but could add sqlite3 if needed
