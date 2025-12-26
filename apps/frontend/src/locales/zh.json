@@ -176,5 +176,16 @@
     "recapture": "重新捕获",
     "continue": "继续",
     "chooseEmotion": "选择一种情感"
+  },
+  "gradient": {
+    "step1": "第一步：",
+    "promptQuestion": "哪个调色板吸引了您的眼球？",
+    "promptInstruction": "慢慢观看和感受...",
+    "capture": "捕获",
+    "capturing": "正在捕获...",
+    "uploading": "正在上传...",
+    "loadingMessage": "比梵高的画笔还快！",
+    "uploadingPalette": "正在上传您的调色板截图...",
+    "analyzingPalette": "正在分析您的调色板..."
   }
 }

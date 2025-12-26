@@ -43,8 +43,8 @@
       :class="['capture-prompt', { 'animate-fade': animatePrompt, 'hidden': !showCapturePrompt }]"
     >
       <div class="prompt-text">
-        <div><span class="prompt-step">Step 1:</span> <p>Which palette catches your eye?</p></div>
-        <p>Take your time to view and feel...</p>
+        <div><span class="prompt-step">{{ $t('gradient.step1') }}</span> <p>{{ $t('gradient.promptQuestion') }}</p></div>
+        <p>{{ $t('gradient.promptInstruction') }}</p>
       </div>
     </div>
     
@@ -54,7 +54,7 @@
         @click="capturePalette"
         :disabled="isCapturing"
       >
-        {{ isCapturing ? 'Capturing...' : 'Capture' }}
+        {{ isCapturing ? $t('gradient.capturing') : $t('gradient.capture') }}
       </button>
     </div>
     
@@ -398,9 +398,10 @@ export default {
         if (capturePrompt) capturePrompt.style.display = 'block'
         if (galleryElement) galleryElement.style.display = 'flex'
         
-        // Show loading spinner
+        // Show loading spinner  
         showLoading.value = true
-        loadingMessage.value = 'Uploading your palette screenshot...'
+        // Note: loadingMessage uses i18n in setup() default, but we can't use $t in setup
+        // The LoadingSpinner component handles translation
         
         // STEP 6: Upload screenshot to R2 first
         console.log('☁️ Uploading screenshot to R2...')
@@ -416,8 +417,8 @@ export default {
         const screenshotKey = uploadResponse.data.key
         console.log('✅ Screenshot uploaded to R2:', screenshotKey)
         
-        // Update loading message
-        loadingMessage.value = 'Analyzing your color palette...'
+        // Update loading message (static for now, or we can emit events)
+        // loadingMessage will show the default from setup
         
         // STEP 7: Send job to n8n via /api/jobs endpoint with R2 key
         console.log('📡 Creating PALETTE_ANALYSIS job...')

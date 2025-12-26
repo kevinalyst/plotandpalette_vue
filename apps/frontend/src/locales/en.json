@@ -176,5 +176,16 @@
     "recapture": "Re-capture",
     "continue": "Continue",
     "chooseEmotion": "Choose an emotion"
+  },
+  "gradient": {
+    "step1": "Step 1:",
+    "promptQuestion": "Which palette catches your eye?",
+    "promptInstruction": "Take your time to view and feel...",
+    "capture": "Capture",
+    "capturing": "Capturing...",
+    "uploading": "Uploading...",
+    "loadingMessage": "Faster than Van Gogh's brush!",
+    "uploadingPalette": "Uploading your palette screenshot...",
+    "analyzingPalette": "Analyzing your color palette..."
   }
 }
