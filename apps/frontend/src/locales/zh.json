@@ -67,5 +67,13 @@
     "failed": "保存用户信息失败。请重试。",
     "connectionFailed": "后端连接失败。请查看控制台了解详情。",
     "tryAgain": "请重试"
+  },
+  "team": {
+    "title": "认识我们的团队！",
+    "homepage": "主页",
+    "uiUxDesigner": "UI/UX 设计师",
+    "frontendDeveloper": "前端开发工程师",
+    "backendDeveloper": "后端开发工程师",
+    "linkedinProfile": "领英主页"
   }
 }

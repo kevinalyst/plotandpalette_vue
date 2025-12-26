@@ -67,5 +67,13 @@
     "failed": "Failed to save user information. Please try again.",
     "connectionFailed": "Backend connection failed. Check console for details.",
     "tryAgain": "Please try again"
+  },
+  "team": {
+    "title": "Meet our team!",
+    "homepage": "Homepage",
+    "uiUxDesigner": "UI/UX Designer",
+    "frontendDeveloper": "Front-end Developer",
+    "backendDeveloper": "Back-end Developer",
+    "linkedinProfile": "Linkedin Profile"
   }
 }

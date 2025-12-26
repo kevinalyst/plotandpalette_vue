@@ -5,15 +5,20 @@
       <img src="@/assets/images/logo.png" alt="Logo" class="logo-image" />
     </button>
 
+    <!-- Language Switcher -->
+    <div class="language-switcher-container">
+      <LanguageSwitcher />
+    </div>
+
     <!-- Meet our team text -->
     <div class="meet-team-text">
-      <h1>Meet our team!</h1>
+      <h1>{{ $t('team.title') }}</h1>
       <div class="underline"></div>
     </div>
 
     <!-- Homepage container in top-right corner -->
     <div class="homepage-container" @click="goToHomepage">
-      <p>Homepage</p>
+      <p>{{ $t('team.homepage') }}</p>
     </div>
 
     <!-- Team image in center -->
@@ -26,14 +31,14 @@
       <!-- Marci Ma -->
       <div class="team-member">
         <div class="member-info">
-          <h3>UI/UX Designer</h3>
+          <h3>{{ $t('team.uiUxDesigner') }}</h3>
           <h2>Marci Ma</h2>
           <div class="email-container">
             <img src="@/assets/images/mail 2.png" alt="Email" class="email-icon" />
             <span class="email-text">C.Ma20@newcastle.ac.uk</span>
           </div>
           <div class="linkedin-container" @click="openLinkedIn('https://www.linkedin.com/in/marci-ma/')">
-            <span class="linkedin-text">Linkedin Profile</span>
+            <span class="linkedin-text">{{ $t('team.linkedinProfile') }}</span>
           </div>
         </div>
       </div>
@@ -41,14 +46,14 @@
       <!-- Jiacheng Cheng -->
       <div class="team-member">
         <div class="member-info">
-          <h3>Front-end Developer</h3>
+          <h3>{{ $t('team.frontendDeveloper') }}</h3>
           <h2>Jiacheng Cheng</h2>
           <div class="email-container">
             <img src="@/assets/images/mail 2.png" alt="Email" class="email-icon" />
             <span class="email-text">c0045893@newcastle.ac.uk</span>
           </div>
           <div class="linkedin-container" @click="openLinkedIn('https://www.linkedin.com/in/jiacheng-cheng-677417309/')">
-            <span class="linkedin-text">Linkedin Profile</span>
+            <span class="linkedin-text">{{ $t('team.linkedinProfile') }}</span>
           </div>
         </div>
       </div>
@@ -56,14 +61,14 @@
       <!-- Kevin Li -->
       <div class="team-member">
         <div class="member-info">
-          <h3>Back-end Developer</h3>
+          <h3>{{ $t('team.backendDeveloper') }}</h3>
           <h2>Kevin Li</h2>
           <div class="email-container">
             <img src="@/assets/images/mail 2.png" alt="Email" class="email-icon" />
             <span class="email-text">axiuluo40@gmail.com</span>
           </div>
           <div class="linkedin-container" @click="openLinkedIn('https://www.linkedin.com/in/kevin-li-8167381a6/')">
-            <span class="linkedin-text">Linkedin Profile</span>
+            <span class="linkedin-text">{{ $t('team.linkedinProfile') }}</span>
           </div>
         </div>
       </div>
@@ -72,8 +77,13 @@
 </template>
 
 <script>
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+
 export default {
   name: 'TeamPage',
+  components: {
+    LanguageSwitcher
+  },
   methods: {
     goToHomepage() {
       this.$router.push('/')
@@ -129,6 +139,14 @@ export default {
 
 .logo-refresh-button:hover .logo-image {
   transform: rotate(180deg);
+}
+
+/* Language Switcher */
+.language-switcher-container {
+  position: absolute;
+  top: 40px;
+  right: 15vw;
+  z-index: 100;
 }
 
 /* Meet our team text */
@@ -298,4 +316,4 @@ button:focus {
     font-size: 32px;
   }
 }
-</style> 
+</style>
