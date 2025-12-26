@@ -2,7 +2,7 @@
   <div class="story-page">
     <!-- Story Title Section -->
     <div class="storytittle">
-      <h1>{{ storyData.story?.title || 'Your Story' }}</h1>
+      <h1>{{ storyData.story?.title || $t('story.defaultTitle') }}</h1>
     </div>
     
     <div class="story-container">
@@ -13,14 +13,14 @@
           @mouseenter="showPrevious = true"
           @mouseleave="showPrevious = false"
         >
-          <span>Hover to see your previous selection:</span>
+          <span>{{ $t('story.hoverPrevious') }}</span>
           <img src="@/assets/images/hoverpalette.png" alt="Previous selection" class="previous-icon" />
           <div v-if="showPrevious" class="previous-popup">
-            <div class="previous-title">Your captured palette:</div>
+            <div class="previous-title">{{ $t('story.previousPalette') }}</div>
             <div class="previous-image-wrapper">
               <img :src="previousCapturedUrl" alt="captured palette" class="previous-image" />
             </div>
-            <div class="previous-emotion">Your selected emotion: <span class="emotion-highlight">{{ previousEmotion || '—' }}</span></div>
+            <div class="previous-emotion">{{ $t('story.previousEmotion') }} <span class="emotion-highlight">{{ previousEmotion || '—' }}</span></div>
           </div>
         </div>
       </div>
@@ -86,16 +86,16 @@
       <!-- Action Buttons -->
       <div class="action-buttons">
         <button @click="downloadStory" class="action-btn download-btn">
-          Download my story
+          {{ $t('story.downloadStory') }}
         </button>
         <button @click="regenerateStory" class="action-btn secondary-btn">
-          Re-generate story
+          {{ $t('story.regenerateStory') }}
         </button>
         <button @click="recapturepalette" class="action-btn secondary-btn">
-          Re-capture palette
+          {{ $t('story.recapturePalette') }}
         </button>
         <button @click="leaveFeedback" class="action-btn feedback-btn">
-          Leave us feedback!
+          {{ $t('story.leaveFeedback') }}
           <img src="@/assets/images/heart.png" alt="heart" class="feedback-heart-icon" />
         </button>
       </div>
@@ -118,7 +118,7 @@
                 target="_blank"
                 rel="noopener noreferrer"
                 class="check-source-link"
-              >See the original source</a>
+              >{{ $t('story.seeOriginalSource') }}</a>
             </div>
         </div>
       </div>

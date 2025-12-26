@@ -146,5 +146,16 @@
     "creatingStory": "Creating Your Story...",
     "loadingRecommendations": "Refreshing your recommendations...",
     "seeOriginalSource": "See the original source"
+  },
+  "story": {
+    "defaultTitle": "Your Story",
+    "hoverPrevious": "Hover to see your previous selection:",
+    "previousPalette": "Your captured palette:",
+    "previousEmotion": "Your selected emotion:",
+    "downloadStory": "Download my story",
+    "regenerateStory": "Re-generate story",
+    "recapturePalette": "Re-capture palette",
+    "leaveFeedback": "Leave us feedback!",
+    "seeOriginalSource": "See the original source"
   }
 }

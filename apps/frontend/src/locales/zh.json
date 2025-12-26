@@ -146,5 +146,16 @@
     "creatingStory": "正在创作您的故事...",
     "loadingRecommendations": "正在刷新您的推荐...",
     "seeOriginalSource": "查看原始来源"
+  },
+  "story": {
+    "defaultTitle": "您的故事",
+    "hoverPrevious": "悬停查看您之前的选择：",
+    "previousPalette": "您捕获的调色板：",
+    "previousEmotion": "您选择的情感：",
+    "downloadStory": "下载我的故事",
+    "regenerateStory": "重新生成故事",
+    "recapturePalette": "重新捕获调色板",
+    "leaveFeedback": "留下您的反馈！",
+    "seeOriginalSource": "查看原始来源"
   }
 }
