@@ -3,31 +3,31 @@
     <div class="gallery-container" v-if="allPaintings && allPaintings.length > 0">
       <!-- Step Progress Indicator -->
       <div class="progress-indicator">
-        <div class="progress-step completed">1. Emotion Selected</div>
-        <div :class="['progress-step', { completed: step2Complete }]">2. Choose 3 Paintings</div>
-        <div :class="['progress-step', { completed: step3Complete }]">3. Select Character</div>
-        <div :class="['progress-step', { completed: step4Complete }]">4. Create Story</div>
+        <div class="progress-step completed">{{ $t('gallery.step1') }}</div>
+        <div :class="['progress-step', { completed: ste2Complete }]">{{ $t('gallery.step2') }}</div>
+        <div :class="['progress-step', { completed: step3Complete }]">{{ $t('gallery.step3') }}</div>
+        <div :class="['progress-step', { completed: step4Complete }]">{{ $t('gallery.step4') }}</div>
       </div>
 
       <!-- Painting Gallery -->
       <div class="gallery-section">
-        <h3>Paintings for you</h3>
-        <p class="gallery-subtitle">See the 10 paintings recommended from your captured colours</p>
+        <h3>{{ $t('gallery.title') }}</h3>
+        <p class="gallery-subtitle">{{ $t('gallery.subtitle') }}</p>
         <div class="top-row-info">
-          <p class="sub-instruction">These paintings are sourced from the Google Arts & Culture.</p>
+          <p class="sub-instruction">{{ $t('gallery.sourceNote') }}</p>
           <div 
             class="previous-selection"
             @mouseenter="showPrevious = true"
             @mouseleave="showPrevious = false"
           >
-            <span>Hover to see your previous selection:</span>
+            <span>{{ $t('gallery.hoverPrevious') }}</span>
             <img src="@/assets/images/hoverpalette.png" alt="Previous selection" class="previous-icon" />
             <div v-if="showPrevious" class="previous-popup">
-              <div class="previous-title">Your captured palette:</div>
+              <div class="previous-title">{{ $t('gallery.previousPalette') }}</div>
               <div class="previous-image-wrapper">
                 <img :src="previousCapturedUrl" alt="captured palette" class="previous-image" />
               </div>
-              <div class="previous-emotion">Your selected emotion: <span class="emotion-highlight">{{ previousEmotion || '—' }}</span></div>
+              <div class="previous-emotion">{{ $t('gallery.previousEmotion') }} <span class="emotion-highlight">{{ previousEmotion || '—' }}</span></div>
             </div>
           </div>
         </div>
@@ -79,28 +79,28 @@
         
         <!-- Recapture Option -->
         <div class="gallery-recapture">
-          <span class="recapture-text-left">I don't like any of these paintings. I want to</span>
+          <span class="recapture-text-left">{{ $t('gallery.reloadPrefix') }}</span>
           <button 
             @click="reloadRecommendations" 
             class="recapture-btn"
             :disabled="remainingReloads <= 0"
           >
-            Reload
+            {{ $t('gallery.reloadButton') }}
             <span :class="['reload-counter', { zero: remainingReloads === 0 }]">{{ remainingReloads }}/3</span>
           </button>
-          <span class="recapture-text-right">recommendations.</span>
+          <span class="recapture-text-right">{{ $t('gallery.reloadSuffix') }}</span>
         </div>
       </div>
 
       <!-- Selected Paintings Drop Zone -->
       <div class="selection-area">
-        <h2>Your Selected Paintings</h2>
+        <h2>{{ $t('gallery.selectedPaintings') }}</h2>
         <p class="instruction">
-          <span class="step-label">Step 3:</span> <br/>
-          <span class="step-label-text">Which paintings spark your curiosity?</span> <br/>
-          <span class="step-label-text">Pick three to craft a unique story...</span>
+          <span class="step-label">{{ $t('gallery.step3Label') }}</span> <br/>
+          <span class="step-label-text">{{ $t('gallery.step3Text1') }}</span> <br/>
+          <span class="step-label-text">{{ $t('gallery.step3Text2') }}</span>
         </p>
-        <p class="sub-instruction">Drag and drop paintings into the boxes</p>
+        <p class="sub-instruction">{{ $t('gallery.dragInstruction') }}</p>
         
         <div class="drop-zones">
           <div 
@@ -127,12 +127,12 @@
       <!-- Character Selection -->
       <div v-if="step2Complete" class="selection-area">
         <p class="instruction">
-          <span class="step-label">Step 4:</span> <br/>
-          <span class="step-label-text">Which character resonates with you?</span> <br/>
-          <span class="step-label-text">Dive into their story...</span>
+          <span class="step-label">{{ $t('gallery.step4Label') }}</span> <br/>
+          <span class="step-label-text">{{ $t('gallery.step4Text1') }}</span> <br/>
+          <span class="step-label-text">{{ $t('gallery.step4Text2') }}</span>
         </p>
-        <p class="sub-instruction">Select the perspective that interests you the most</p>
-                 <p class="sub-instruction">Hover your <img src="@/assets/images/cursor.png" alt="cursor" class="cursor-icon" /> over the cards to see each story's style</p>
+        <p class="sub-instruction">{{ $t('gallery.selectPerspective') }}</p>
+                 <p class="sub-instruction">{{ $t('gallery.hoverCards') }}</p>
         
         <div class="character-cards" v-if="characters && characters.length > 0">
           <div 
@@ -154,12 +154,12 @@
       <!-- Name Input Modal -->
       <div v-if="showNameInput" class="name-modal-overlay" @click="closeNameInput">
         <div class="name-modal" @click.stop>
-          <h3>What shall we call your story's main character?</h3>
-          <h3>Pick a name (different from your username)</h3>
+          <h3>{{ $t('gallery.nameModalTitle') }}</h3>
+          <h3>{{ $t('gallery.nameModalSubtitle') }}</h3>
           <input 
             v-model="nickname" 
             type="text" 
-            placeholder="Enter a name..."
+            :placeholder="$t('gallery.nameInputPlaceholder')"
             class="name-input"
             maxlength="50"
             @keyup.enter="confirmName"
@@ -189,7 +189,7 @@
                 target="_blank"
                 rel="noopener noreferrer"
                 class="check-source-link"
-              >See the original source</a>
+              >{{ $t('gallery.seeOriginalSource') }}</a>
             </div>
           </div>
         </div>
@@ -202,7 +202,7 @@
           @click="generateStory"
           :disabled="!step4Complete || generatingStory"
         >
-          {{ generatingStory ? 'Creating Your Story...' : 'All done!' }}
+          {{ generatingStory ? $t('gallery.creatingStory') : $t('gallery.allDone') }}
         </button>
       </div>
     </div>
