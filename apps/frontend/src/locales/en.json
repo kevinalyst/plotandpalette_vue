@@ -1,0 +1,71 @@
+{
+  "home": {
+    "getInTouch": "Get in touch",
+    "people": "People",
+    "startJourney": "Start the journey!",
+    "loadingPalettes": "Hang tight! The palettes are coming..."
+  },
+  "contact": {
+    "title": "Send us a message",
+    "subtitle": "If you have any thoughts,<br/>we'd love to hear from you.",
+    "name": "Name",
+    "email": "Email",
+    "message": "Message",
+    "send": "Send"
+  },
+  "userInfo": {
+    "title": "Tell us about yourself",
+    "username": "Create a username:",
+    "usernamePlaceholder": "Type here...",
+    "usernameRule": "* Minimum 6 characters with both letters and numbers",
+    "ageRange": "Age Range:",
+    "gender": "Gender:",
+    "fieldOfStudy": "Field of Study/Profession:",
+    "frequency": "Art Engagement Frequency:",
+    "frequencySubtitle": "(in person or online)",
+    "submit": "Submit",
+    "noteTitle": "*Please note:",
+    "noteText1": "We will collect your <u>basic demographics</u> and <u>interaction logs</u>.",
+    "noteText2": "All data is anonymised, securely stored until 2029, and used solely for academic research (Newcastle University Ethics Approval No. 54009/2023). Participation is voluntary – you may withdraw at any time!"
+  },
+  "select": {
+    "selectOptions": "Select Options",
+    "age18to24": "18-24",
+    "age25to34": "25-34",
+    "age35to44": "35-44",
+    "age45to54": "45-54",
+    "age55plus": "55+",
+    "woman": "Woman",
+    "man": "Man",
+    "nonBinary": "Non-binary",
+    "preferNotToSay": "Prefer not to say",
+    "artsHumanities": "Arts & Humanities",
+    "designCreativeArts": "Design & Creative Arts",
+    "computerScience": "Computer Science",
+    "socialSciences": "Social Sciences",
+    "businessManagement": "Business & Management",
+    "naturalSciences": "Natural Sciences",
+    "healthcareMedicine": "Healthcare & Medicine",
+    "educationResearch": "Education & Research",
+    "engineering": "Engineering",
+    "publicServices": "Public Services",
+    "other": "Other",
+    "daily": "Daily or almost daily",
+    "weekly": "Weekly (1-3 times per week)",
+    "monthly": "Monthly (1-3 times per month)",
+    "fewTimesYear":"A few times a year (1-3 times per year)",
+    "rarely": "Rarely (less than once a year)",
+    "firstTime": "First time (never)"
+  },
+  "loading": {
+    "analyzing": "Analyzing your palette...",
+    "generating": "Generating...",
+    "processing": "Processing...",
+    "pleaseWait": "Please wait..."
+  },
+  "errors": {
+    "failed": "Failed to save user information. Please try again.",
+    "connectionFailed": "Backend connection failed. Check console for details.",
+    "tryAgain": "Please try again"
+  }
+}

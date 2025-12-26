@@ -4,11 +4,16 @@
       <img src="@/assets/images/logo.png" alt="Logo" class="logo-image" />
     </button>
 
+    <!-- Language Switcher -->
+    <div class="language-switcher-container">
+      <LanguageSwitcher />
+    </div>
+
     <div class="get-in-touch-container" @click="getInTouch" v-if="!disableGetInTouch">
-      <p>Get in touch</p>
+      <p>{{ $t('home.getInTouch') }}</p>
     </div>
     <div class="people-container" @click="goToTeamPage" v-if="!disablePeople">
-      <p>People</p>
+      <p>{{ $t('home.people') }}</p>
     </div>
     <div class = "text-container">
     </div>
@@ -16,7 +21,7 @@
       <img src="@/assets/images/colourbar.png" alt="Colour Bar" class="colourbar-image" />
     </div>
     <div class="homepage-controls">
-      <button class="start-button" @click="startJourney" v-if="!disableStartJourney">Start the journey!</button>
+      <button class="start-button" @click="startJourney" v-if="!disableStartJourney">{{ $t('home.startJourney') }}</button>
     </div>
     <div class="paintings-container">
       <img src="@/assets/images/paintings.png" alt="Paintings" class="paintings-image" />
@@ -26,9 +31,9 @@
     <div class="get-in-touch-form-container" v-if="isGetInTouch">
       <button class="get-in-touch-form-close" @click="closeForm">×</button>
       <div class="get-in-touch-form-container-left">
-        <p class="get-in-touch-form-container-left-title">Send us a message</p>
+        <p class="get-in-touch-form-container-left-title">{{ $t('contact.title') }}</p>
         <div class="get-in-touch-form-container-left-line"/>
-        <p class="get-in-touch-form-container-left-text">If you have any thoughts,<br/>we'd love to hear from you.</p>
+        <p class="get-in-touch-form-container-left-text" v-html="$t('contact.subtitle')"></p>
         <div class="get-in-touch-form-container-left-email">
           <span class="email-icon">✉</span>
           <a href = "mailto:C.Ma20@newcastle.ac.uk">C.Ma20@newcastle.ac.uk</a>
@@ -36,104 +41,104 @@
       </div>
       <div class="get-in-touch-form-container-right">
         <div class="get-in-touch-form-field">
-          <label>Name</label>
+          <label>{{ $t('contact.name') }}</label>
           <input type="text" class="get-in-touch-form-input" />
         </div>
         <div class="get-in-touch-form-field">
-          <label>Email</label>
+          <label>{{ $t('contact.email') }}</label>
           <input type="email" class="get-in-touch-form-input" />
         </div>
         <div class="get-in-touch-form-field">
-          <label>Message</label>
+          <label>{{ $t('contact.message') }}</label>
           <textarea class="get-in-touch-form-textarea"></textarea>
         </div>
-        <button class="get-in-touch-form-send-button">Send</button>
+        <button class="get-in-touch-form-send-button">{{ $t('contact.send') }}</button>
       </div>
     </div>
 
     <!-- User Information form -->
     <div class="user-information-form-container" v-if="isUserInformation">
       <button class="user-information-form-close" @click="closeForm">×</button>
-      <h2 class="user-information-form-title">Tell us about yourself</h2>
+      <h2 class="user-information-form-title">{{ $t('userInfo.title') }}</h2>
       
       <div class="username-field">
-        <label class="form-field-label">Create a username:</label>
+        <label class="form-field-label">{{ $t('userInfo.username') }}</label>
         <input 
           type="text" 
           class="username-input" 
           v-model="userInformation.username"
-          placeholder="Type here..."
+          :placeholder="$t('userInfo.usernamePlaceholder')"
           maxlength="50"
         />
-        <p class="username-rule">* Minimum 6 characters with both letters and numbers</p>
+        <p class="username-rule">{{ $t('userInfo.usernameRule') }}</p>
       </div>
       
       <div class="user-information-form-grid">
         <div class="form-field">
-          <label class="form-field-label">Age Range:</label>
+          <label class="form-field-label">{{ $t('userInfo.ageRange') }}</label>
           <select class="form-field-select" v-model="userInformation.age">
-            <option value="" disabled selected>Select Options</option>
-            <option value="18-24">18-24</option>
-            <option value="25-34">25-34</option>
-            <option value="35-44">35-44</option>
-            <option value="45-54">45-54</option>
-            <option value="55+">55+</option>
-            <option value="prefer-not-to-say">Prefer not to say</option>
+            <option value="" disabled selected>{{ $t('select.selectOptions') }}</option>
+            <option value="18-24">{{ $t('select.age18to24') }}</option>
+            <option value="25-34">{{ $t('select.age25to34') }}</option>
+            <option value="35-44">{{ $t('select.age35to44') }}</option>
+            <option value="45-54">{{ $t('select.age45to54') }}</option>
+            <option value="55+">{{ $t('select.age55plus') }}</option>
+            <option value="prefer-not-to-say">{{ $t('select.preferNotToSay') }}</option>
           </select>
         </div>
         
         <div class="form-field">
-          <label class="form-field-label">Gender:</label>
+          <label class="form-field-label">{{ $t('userInfo.gender') }}</label>
           <select class="form-field-select" v-model="userInformation.gender">
-            <option value="" disabled selected>Select Options</option>
-            <option value="woman">Woman</option>
-            <option value="man">Man</option>
-            <option value="non-binary">Non-binary</option>
-            <option value="prefer-not-to-say">Prefer not to say</option>
+            <option value="" disabled selected>{{ $t('select.selectOptions') }}</option>
+            <option value="woman">{{ $t('select.woman') }}</option>
+            <option value="man">{{ $t('select.man') }}</option>
+            <option value="non-binary">{{ $t('select.nonBinary') }}</option>
+            <option value="prefer-not-to-say">{{ $t('select.preferNotToSay') }}</option>
           </select>
         </div>
         
         <div class="form-field">
-          <label class="form-field-label">Field of Study/Profession:</label>
+          <label class="form-field-label">{{ $t('userInfo.fieldOfStudy') }}</label>
           <p class="form-field-label" style="visibility: hidden;">&nbsp;</p>
           <select class="form-field-select" v-model="userInformation.fieldOfStudy">
-            <option value="" disabled selected>Select Options</option>
-            <option value="arts-humanities">Arts & Humanities</option>
-            <option value="design-creative-arts">Design & Creative Arts</option>
-            <option value="computer-science">Computer Science</option>
-            <option value="social-sciences">Social Sciences</option>
-            <option value="business-management">Business & Management</option>
-            <option value="natural-sciences">Natural Sciences</option>
-            <option value="healthcare-medicine">Healthcare & Medicine</option>
-            <option value="education-research">Education & Research</option>
-            <option value="engineering">Engineering</option>
-            <option value="public-services">Public Services</option>
-            <option value="other">Other</option>
-            <option value="prefer-not-to-say">Prefer not to say</option>
+            <option value="" disabled selected>{{ $t('select.selectOptions') }}</option>
+            <option value="arts-humanities">{{ $t('select.artsHumanities') }}</option>
+            <option value="design-creative-arts">{{ $t('select.designCreativeArts') }}</option>
+            <option value="computer-science">{{ $t('select.computerScience') }}</option>
+            <option value="social-sciences">{{ $t('select.socialSciences') }}</option>
+            <option value="business-management">{{ $t('select.businessManagement') }}</option>
+            <option value="natural-sciences">{{ $t('select.naturalSciences') }}</option>
+            <option value="healthcare-medicine">{{ $t('select.healthcareMedicine') }}</option>
+            <option value="education-research">{{ $t('select.educationResearch') }}</option>
+            <option value="engineering">{{ $t('select.engineering') }}</option>
+            <option value="public-services">{{ $t('select.publicServices') }}</option>
+            <option value="other">{{ $t('select.other') }}</option>
+            <option value="prefer-not-to-say">{{ $t('select.preferNotToSay') }}</option>
           </select>
         </div>
         
         <div class="form-field">
-          <label class="form-field-label">Art Engagement Frequency:</label>
-            <p class="form-field-label">(in person or online)</p>
+          <label class="form-field-label">{{ $t('userInfo.frequency') }}</label>
+            <p class="form-field-label">{{ $t('userInfo.frequencySubtitle') }}</p>
           <select class="form-field-select" v-model="userInformation.frequency">
-            <option value="" disabled selected>Select Options</option>
-            <option value="daily">Daily or almost daily</option>
-            <option value="weekly">Weekly (1-3 times per week)</option>
-            <option value="monthly">Monthly (1-3 times per month)</option>
-            <option value="few-times-year">A few times a year (1-3 times per year)</option>
-            <option value="rarely">Rarely (less than once a year)</option>
-            <option value="first-time">First time (never)</option>
+            <option value="" disabled selected>{{ $t('select.selectOptions') }}</option>
+            <option value="daily">{{ $t('select.daily') }}</option>
+            <option value="weekly">{{ $t('select.weekly') }}</option>
+            <option value="monthly">{{ $t('select.monthly') }}</option>
+            <option value="few-times-year">{{ $t('select.fewTimesYear') }}</option>
+            <option value="rarely">{{ $t('select.rarely') }}</option>
+            <option value="first-time">{{ $t('select.firstTime') }}</option>
           </select>
         </div>
       </div>
       
-      <button class="user-information-form-submit" @click="submitUserInformation" :disabled="!isUserInformationComplete">Submit</button>
+      <button class="user-information-form-submit" @click="submitUserInformation" :disabled="!isUserInformationComplete">{{ $t('userInfo.submit') }}</button>
       
       <div class="user-information-form-note">
-        <p><em>*Please note:</em></p>
-        <p>We will collect your <u>basic demographics</u> and <u>interaction logs</u>.</p>
-        <p>All data is anonymised, securely stored until 2029, and used solely for academic research (Newcastle University Ethics Approval No. 54009/2023). Participation is voluntary – you may withdraw at any time!</p>
+        <p><em>{{ $t('userInfo.noteTitle') }}</em></p>
+        <p v-html="$t('userInfo.noteText1')"></p>
+        <p>{{ $t('userInfo.noteText2') }}</p>
       </div>
     </div>
     
@@ -141,7 +146,7 @@
     <LoadingSpinner
       :show="isGifPreloading"
       type="palette"
-      message="Hang tight! The palettes are coming..."
+      :message="$t('home.loadingPalettes')"
     />
 
 
@@ -163,11 +168,13 @@
 import ApiService from '@/services/api.js'
 import GifPreloader from '@/services/gifPreloader.js'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 
 export default {
   name: 'HomePage',
   components: {
-    LoadingSpinner
+    LoadingSpinner,
+    LanguageSwitcher
   },
   data() {
     return {
@@ -322,7 +329,7 @@ export default {
         
       } catch (error) {
         console.error('❌ Error storing username:', error)
-        alert('Failed to save user information. Please try again.')
+        alert(this.$t('errors.failed'))
       }
     },
     refreshPage() {
@@ -335,7 +342,7 @@ export default {
         console.log('✅ Backend connection successful!', response)
       } catch (error) {
         console.error('❌ Backend connection failed:', error)
-        alert('❌ Backend connection failed. Check console for details.')
+        alert(this.$t('errors.connectionFailed'))
       }
     },
     async preloadGifsAndNavigate() {
@@ -458,6 +465,13 @@ a{
 .logo-refresh-button:hover .logo-image {
   transform: rotate(180deg);  /* Rotate 90 degrees clockwise */
 }
+.language-switcher-container {
+  position: absolute;
+  top: 40px;
+  right: 26vw;
+  z-index: 100;
+}
+
 .get-in-touch-container {
   position: absolute;
   top: 40px;

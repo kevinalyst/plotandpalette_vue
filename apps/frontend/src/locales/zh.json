@@ -1,0 +1,71 @@
+{
+  "home": {
+    "getInTouch": "联系我们",
+    "people": "团队",
+    "startJourney": "开始旅程！",
+    "loadingPalettes": "稍等！调色板正在加载中..."
+  },
+  "contact": {
+    "title": "发送消息",
+    "subtitle": "如果您有任何想法，<br/>我们很乐意听取您的意见。",
+    "name": "姓名",
+    "email": "电子邮箱",
+    "message": "留言",
+    "send": "发送"
+  },
+  "userInfo": {
+    "title": "请告诉我们关于您的信息",
+    "username": "创建用户名：",
+    "usernamePlaceholder": "在此输入...",
+    "usernameRule": "* 至少6个字符，需包含字母和数字",
+    "ageRange": "年龄范围：",
+    "gender": "性别：",
+    "fieldOfStudy": "学习领域/职业：",
+    "frequency": "艺术参与频率：",
+    "frequencySubtitle": "（线上或线下）",
+    "submit": "提交",
+    "noteTitle": "*请注意：",
+    "noteText1": "我们将收集您的<u>基本人口统计信息</u>和<u>交互日志</u>。",
+    "noteText2": "所有数据均已匿名化，安全存储至2029年，仅用于学术研究（纽卡斯尔大学伦理批准编号：54009/2023）。参与是自愿的 - 您可以随时退出！"
+  },
+  "select": {
+    "selectOptions": "请选择",
+    "age18to24": "18-24岁",
+    "age25to34": "25-34岁",
+    "age35to44": "35-44岁",
+    "age45to54": "45-54岁",
+    "age55plus": "55岁以上",
+    "woman": "女性",
+    "man": "男性",
+    "nonBinary": "非二元性别",
+    "preferNotToSay": "不愿透露",
+    "artsHumanities": "艺术与人文",
+    "designCreativeArts": "设计与创意艺术",
+    "computerScience": "计算机科学",
+    "socialSciences": "社会科学",
+    "businessManagement": "商业与管理",
+    "naturalSciences": "自然科学",
+    "healthcareMedicine": "医疗与医学",
+    "educationResearch": "教育与研究",
+    "engineering": "工程",
+    "publicServices": "公共服务",
+    "other": "其他",
+    "daily": "每天或几乎每天",
+    "weekly": "每周（每周1-3次）",
+    "monthly": "每月（每月1-3次）",
+    "fewTimesYear": "每年几次（每年1-3次）",
+    "rarely": "很少（每年少于一次）",
+    "firstTime": "第一次（从未）"
+  },
+  "loading": {
+    "analyzing": "正在分析您的调色板...",
+    "generating": "正在生成...",
+    "processing": "正在处理...",
+    "pleaseWait": "请稍候..."
+  },
+  "errors": {
+    "failed": "保存用户信息失败。请重试。",
+    "connectionFailed": "后端连接失败。请查看控制台了解详情。",
+    "tryAgain": "请重试"
+  }
+}
