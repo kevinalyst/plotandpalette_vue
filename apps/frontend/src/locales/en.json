@@ -157,5 +157,24 @@
     "recapturePalette": "Re-capture palette",
     "leaveFeedback": "Leave us feedback!",
     "seeOriginalSource": "See the original source"
+  },
+  "colorPalette": {
+    "title": "Colours extracted from your palette",
+    "subtitle": "Based on your captured gradient",
+    "loadingAnalysis": "⏳ Loading your palette analysis...",
+    "loadingImage": "⏳ Loading captured image...",
+    "capturedPalette": "Your captured palette",
+    "colorsExtracted": "Colours extracted from your palette",
+    "noColorsData": "❌ No color data available",
+    "step2Label": "Step 2:",
+    "emotionQuestion": "Which emotion best describes your palette?",
+    "emotionInstruction": "Choose one to set your story's vibe...",
+    "intensitySuffix": "intensity",
+    "moreEmotions": "More Emotions",
+    "emotionExplanationTitle": "Where these emotions came from?",
+    "emotionExplanationText": "These predictions come from our emotion engine, a machine learning model trained on 4,779 real and synthetic paintings. The model analyzes your palette's colors and determines the intensity level (low, medium, or high) of each emotion present in your color selection.",
+    "recapture": "Re-capture",
+    "continue": "Continue",
+    "chooseEmotion": "Choose an emotion"
   }
 }

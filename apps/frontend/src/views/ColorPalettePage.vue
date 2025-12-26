@@ -1,21 +1,21 @@
 <template>
   <div class="color-palette-page">
     <div class="gallery-container">
-      <h1 class="gallery-title">Colours extracted from your palette</h1>
-      <p class="gallery-subtitle">Based on your captured gradient</p>
+      <h1 class="gallery-title">{{ $t('colorPalette.title') }}</h1>
+      <p class="gallery-subtitle">{{ $t('colorPalette.subtitle') }}</p>
       
       <!-- Show loading state initially -->
       <div v-if="loading" style="text-align: center; padding: 40px; color: white;">
-        <p>⏳ Loading your palette analysis...</p>
+        <p>{{ $t('colorPalette.loadingAnalysis') }}</p>
       </div>
       
       <!-- Palette Analysis Container -->
       <div class="palette-analysis-container">
         <!-- Captured Image Section -->
         <div class="captured-image-section">
-          <h3 class="captured-image-title">Your captured palette</h3>
+          <h3 class="captured-image-title">{{ $t('colorPalette.capturedPalette') }}</h3>
           <div v-if="!capturedImageUrl" class="no-colors-message">
-            <p>⏳ Loading captured image...</p>
+            <p>{{ $t('colorPalette.loadingImage') }}</p>
           </div>
           <img 
             v-else
@@ -32,7 +32,7 @@
         
         <!-- Raw Colors Section -->
         <div class="raw-colors-section">
-          <h3 class="raw-colors-title">Colours extracted from your palette</h3>
+          <h3 class="raw-colors-title">{{ $t('colorPalette.colorsExtracted') }}</h3>
           <div class="chart-container">
             <div v-if="rawColors && rawColors.length > 0" class="color-bar raw-color-bar">
               <div 
@@ -47,7 +47,7 @@
               ></div>
             </div>
             <div v-else class="no-colors-message">
-              <p>❌ No color data available</p>
+              <p>{{ $t('colorPalette.noColorsData') }}</p>
             </div>
           </div>
         </div>
@@ -59,9 +59,9 @@
       <!-- Emotion Selection Section -->
       <div v-if="emotionPrediction && showEmotionSelection" class="emotion-container">
         <div class="emotion-title-section">
-          <div class="emotion-step-title">Step 2:</div>
-          <div class="emotion-main-title">Which emotion best describes your palette?</div>
-          <div class="emotion-main-title">Choose one to set your story's vibe...</div>
+          <div class="emotion-step-title">{{ $t('colorPalette.step2Label') }}</div>
+          <div class="emotion-main-title">{{ $t('colorPalette.emotionQuestion') }}</div>
+          <div class="emotion-main-title">{{ $t('colorPalette.emotionInstruction') }}</div>
         </div>
         
         <div class="emotion-cards-container">
@@ -99,7 +99,7 @@
                 ★
               </span>
             </div>
-            <div class="emotion-card-intensity-label">{{ emotion.intensity }} intensity</div>
+            <div class="emotion-card-intensity-label">{{ emotion.intensity }} {{ $t('colorPalette.intensitySuffix') }}</div>
           </div>
         </div>
         
@@ -109,26 +109,26 @@
           :disabled="emotionResetCount >= 3"
           :class="{ 'disabled': emotionResetCount >= 3 }"
         >
-          <span>More Emotions</span>
+          <span>{{ $t('colorPalette.moreEmotions') }}</span>
           <span :class="['reload-counter', { zero: remainingReloads === 0 }]">{{ remainingReloads }}/3</span>
         </button>
         
         <!-- Emotion Explanation -->
         <div class="emotion-explanation">
-          <h4>Where these emotions came from?</h4>
-          <p>These predictions come from our emotion engine, a machine learning model trained on 4,779 real and synthetic paintings. The model analyzes your palette's colors and determines the intensity level (low, medium, or high) of each emotion present in your color selection.</p>
+          <h4>{{ $t('colorPalette.emotionExplanationTitle') }}</h4>
+          <p>{{ $t('colorPalette.emotionExplanationText') }}</p>
         </div>
       </div>
       
       <!-- Actions -->
       <div class="color-palette-controls">
-        <button class="btn-primary" @click="recapture">Re-capture</button>
+        <button class="btn-primary" @click="recapture">{{ $t('colorPalette.recapture') }}</button>
         <button 
           :class="['btn-secondary', { 'disabled': !selectedEmotion }]"
           :disabled="!selectedEmotion"
           @click="proceedToGallery"
         >
-          {{ selectedEmotion ? 'Continue' : 'Choose an emotion' }}
+          {{ selectedEmotion ? $t('colorPalette.continue') : $t('colorPalette.chooseEmotion') }}
         </button>
       </div>
     </div>

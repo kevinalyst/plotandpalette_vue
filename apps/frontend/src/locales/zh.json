@@ -157,5 +157,24 @@
     "recapturePalette": "重新捕获调色板",
     "leaveFeedback": "留下您的反馈！",
     "seeOriginalSource": "查看原始来源"
+  },
+  "colorPalette": {
+    "title": "从您的调色板中提取的颜色",
+    "subtitle": "基于您捕获的渐变",
+    "loadingAnalysis": "⏳ 正在加载您的调色板分析...",
+    "loadingImage": "⏳ 正在加载捕获的图像...",
+    "capturedPalette": "您捕获的调色板",
+    "colorsExtracted": "从您的调色板中提取的颜色",
+    "noColorsData": "❌ 没有颜色数据",
+    "step2Label": "第二步：",
+    "emotionQuestion": "哪种情感最能描述您的调色板？",
+    "emotionInstruction": "选择一个来设定您故事的氛围...",
+    "intensitySuffix": "强度",
+    "moreEmotions": "更多情感",
+    "emotionExplanationTitle": "这些情感从何而来？",
+    "emotionExplanationText": "这些预测来自我们的情感引擎，这是一个在4,779幅真实和合成画作上训练的机器学习模型。该模型分析您调色板的颜色，并确定您颜色选择中每种情感的强度水平（低、中或高）。",
+    "recapture": "重新捕获",
+    "continue": "继续",
+    "chooseEmotion": "选择一种情感"
   }
 }
