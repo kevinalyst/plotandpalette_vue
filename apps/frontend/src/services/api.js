@@ -104,6 +104,39 @@ class ApiService {
     return this.request('/selection-history')
   }
 
+  // Job endpoints
+  async createJob(data) {
+    return this.request('/jobs', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  }
+
+  async getJob(jobId) {
+    return this.request(`/jobs/${jobId}`)
+  }
+
+  async pollJob(jobId, maxAttempts = 60, interval = 1000) {
+    for (let i = 0; i < maxAttempts; i++) {
+      const response = await this.getJob(jobId)
+      
+      console.log(`🔄 Poll attempt ${i+1}/${maxAttempts}: Job ${jobId} status = ${response.data?.status}`)
+      
+      // Access status from response.data, not response directly
+      if (response.data && response.data.status === 'COMPLETED') {
+        console.log('✅ Job completed, returning result_data')
+        return response.data.result_data
+      } else if (response.data && response.data.status === 'FAILED') {
+        throw new Error(response.data.error_message || 'Job failed')
+      }
+      
+      // Wait before next poll
+      await new Promise(resolve => setTimeout(resolve, interval))
+    }
+    
+    throw new Error(`Job polling timeout after ${maxAttempts} attempts. Job ID: ${jobId}`)
+  }
+
   // Story endpoints
   async generateStory(data) {
     console.log('🔮 API Service - generateStory called with data:', data)

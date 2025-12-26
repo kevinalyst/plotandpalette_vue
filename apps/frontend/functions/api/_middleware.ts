@@ -53,7 +53,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   // Skip auth for health/status endpoints and internal callbacks
-  const publicPaths = ['/api/health', '/api/status', '/api/proxy', '/api/assets', '/api/internal'];
+  const publicPaths = ['/api/health', '/api/status', '/api/proxy', '/api/assets', '/api/uploads', '/api/internal'];
   const isPublic = publicPaths.some(path => url.pathname.startsWith(path));
 
   if (!isPublic) {

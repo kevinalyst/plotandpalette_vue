@@ -1,6 +1,7 @@
 /**
  * Screenshot Upload API
  * POST /api/uploads/screenshot - Upload screenshot to R2
+ * Note: GET requests are handled by /api/uploads/[[path]].ts
  */
 
 import type { Env } from '../../types/env';
