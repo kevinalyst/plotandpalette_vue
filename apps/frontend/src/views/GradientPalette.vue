@@ -75,6 +75,7 @@
 <script>
 import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import Modal from '@/components/Modal.vue'
 import ApiService from '@/services/api.js'
@@ -112,6 +113,7 @@ export default {
   },
   setup() {
     const router = useRouter()
+    const { t } = useI18n()
     
     // Reactive data
     const currentGifSrc = ref('')
@@ -121,7 +123,7 @@ export default {
     const isCapturing = ref(false)
     const showModal = ref(false)
     const showLoading = ref(false)
-    const loadingMessage = ref('Faster than Van Gogh\'s brush!')
+    const loadingMessage = ref(t('gradient.loadingMessage'))
     
     // Modal data
     const modalTitle = ref('')

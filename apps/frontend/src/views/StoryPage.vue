@@ -20,7 +20,7 @@
             <div class="previous-image-wrapper">
               <img :src="previousCapturedUrl" alt="captured palette" class="previous-image" />
             </div>
-            <div class="previous-emotion">{{ $t('story.previousEmotion') }} <span class="emotion-highlight">{{ previousEmotion || '—' }}</span></div>
+            <div class="previous-emotion">{{ $t('story.previousEmotion') }} <span class="emotion-highlight">{{ previousEmotion ? $t(`emotions.${previousEmotion}`) : '—' }}</span></div>
           </div>
         </div>
       </div>
@@ -130,6 +130,7 @@
 <script>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 export default {
   name: 'StoryPage',
@@ -139,6 +140,7 @@ export default {
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const { t } = useI18n()
     
     // Reactive data
     const loading = ref(false)
@@ -214,7 +216,7 @@ export default {
     const downloadStory = async () => {
       try {
         loading.value = true
-        loadingMessage.value = 'Preparing your story download...'
+        loadingMessage.value = t('loading.preparingDownload')
 
         // Import html2canvas dynamically
         const html2canvas = await import('html2canvas')

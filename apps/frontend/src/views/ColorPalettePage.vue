@@ -71,7 +71,7 @@
             :class="['emotion-card', { 'emotion-card-selected': selectedEmotion === emotion.name }]"
             @click="selectEmotion(emotion.name, emotion.intensity)"
           >
-            <div class="emotion-card-name">{{ emotion.name }}</div>
+            <div class="emotion-card-name">{{ $t(`emotions.${emotion.name}`) }}</div>
             <div class="emotion-card-image-container">
               <img 
                 v-if="getEmotionImageSrc(emotion.name)"
@@ -99,19 +99,11 @@
                 ★
               </span>
             </div>
-            <div class="emotion-card-intensity-label">{{ emotion.intensity }} {{ $t('colorPalette.intensitySuffix') }}</div>
+            <div class="emotion-card-intensity-label">{{ $t(`intensity.${emotion.intensity}`) }} {{ $t('colorPalette.intensitySuffix') }}</div>
           </div>
         </div>
         
-        <button 
-          class="more-feelings-btn"
-          @click="shuffleEmotions"
-          :disabled="emotionResetCount >= 3"
-          :class="{ 'disabled': emotionResetCount >= 3 }"
-        >
-          <span>{{ $t('colorPalette.moreEmotions') }}</span>
-          <span :class="['reload-counter', { zero: remainingReloads === 0 }]">{{ remainingReloads }}/3</span>
-        </button>
+        <!-- More feelings button removed - users now scroll through all emotions -->
         
         <!-- Emotion Explanation -->
         <div class="emotion-explanation">
@@ -140,6 +132,7 @@
 <script>
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ApiService from '@/services/api.js'
 
@@ -168,6 +161,7 @@ export default {
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const { t } = useI18n()
     
     // Reactive data
     const loading = ref(false)
@@ -239,7 +233,7 @@ export default {
           
           // Show loading state while fetching from API
           loading.value = true
-          loadingMessage.value = 'Loading your palette analysis...'
+          loadingMessage.value = t('loading.analyzingPaletteDetail')
           
           try {
             const response = await ApiService.getSessionPalette(sessionId)
@@ -348,8 +342,8 @@ export default {
           
           topEmotions.value = sortedEmotions
           
-          // Select initial 3 emotions from different categories
-          displayedEmotions.value = selectRandomEmotions(sortedEmotions)
+          // Display all 15 emotions (user will scroll through them)
+          displayedEmotions.value = sortedEmotions
           
           // Show emotion selection after a brief delay to show color analysis first
           setTimeout(() => {
@@ -382,7 +376,7 @@ export default {
       console.log('🚀 Proceeding to gallery with emotion:', selectedEmotion.value)
       
       loading.value = true
-      loadingMessage.value = 'Unlike Mondrian, we love curves...'
+      loadingMessage.value = t('loading.mondrianCurves')
       spinnerType.value = 'keyboard'
       
       try {
@@ -397,11 +391,11 @@ export default {
         console.log('✅ Emotion saved successfully')
         
         // Wait 1 second before polling for recommendations
-        loadingMessage.value = 'Curating your paintings...'
+        loadingMessage.value = t('loading.curatingPaintings')
         await new Promise(resolve => setTimeout(resolve, 1000))
         
         // Poll for painting recommendations (max 10 attempts, 1 second apart)
-        loadingMessage.value = 'Preparing your gallery...'
+        loadingMessage.value = t('loading.preparingGallery')
         let recommendations = null
         const maxAttempts = 10
         
@@ -1049,11 +1043,35 @@ export default {
 
 .emotion-cards-container {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 30px;
-  margin: 40px 0;
+  margin: 40px auto;
   flex-wrap: nowrap;
   align-items: stretch;
+  max-width: 960px; /* Exactly 3 cards: 3 × 300px + 2 × 30px gaps */
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding: 10px 0; /* Extra padding for scrollbar */
+}
+
+/* Custom scrollbar styling for emotion cards */
+.emotion-cards-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.emotion-cards-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.emotion-cards-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
+
+.emotion-cards-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .emotion-card {
@@ -1063,6 +1081,7 @@ export default {
   padding: 20px;
   width: 300px;
   height: 450px;
+  flex-shrink: 0; /* Prevent cards from shrinking */
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);

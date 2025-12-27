@@ -64,7 +64,16 @@
     "analyzing": "Analyzing your palette...",
     "generating": "Generating...",
     "processing": "Processing...",
-    "pleaseWait": "Please wait..."
+    "pleaseWait": "Please wait...",
+    "vanGoghBrush": "Faster than Van Gogh's brush!",
+    "analyzingPaletteDetail": "Loading your palette analysis...",
+    "mondrianCurves": "Unlike Mondrian, we love curves...",
+    "curatingPaintings": "Curating your paintings...",
+    "preparingGallery": "Preparing your gallery...",
+    "refreshingRecommendations": "Refreshing your recommendations...",
+    "dancersWarmingUp": "Matisse's dancers are warming up!",
+    "preparingDownload": "Preparing your story download...",
+    "defaultMessage": "Your palette is being analysed. Please hold on a moment..."
   },
   "errors": {
     "failed": "Failed to save user information. Please try again.",
@@ -190,5 +199,27 @@
     "loadingMessage": "Faster than Van Gogh's brush!",
     "uploadingPalette": "Uploading your palette screenshot...",
     "analyzingPalette": "Analyzing your color palette..."
+  },
+  "emotions": {
+    "happiness": "Happiness",
+    "love": "Love",
+    "optimism": "Optimism",
+    "trust": "Trust",
+    "anticipation": "Anticipation",
+    "surprise": "Surprise",
+    "fear": "Fear",
+    "sadness": "Sadness",
+    "anger": "Anger",
+    "disgust": "Disgust",
+    "gratitude": "Gratitude",
+    "humility": "Humility",
+    "arrogance": "Arrogance",
+    "pessimism": "Pessimism",
+    "disagreeableness": "Disagreeableness"
+  },
+  "intensity": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High"
   }
 }

@@ -64,7 +64,16 @@
     "analyzing": "色彩分析中...",
     "generating": "为你推荐画作中...",
     "processing": "故事生成中...",
-    "pleaseWait": "请稍候..."
+    "pleaseWait": "请稍候...",
+    "vanGoghBrush": "比梵高的画笔还快！",
+    "analyzingPaletteDetail": "正在加载你的调色板分析...",
+    "mondrianCurves": "与蒙德里安不同，我们热爱曲线...",
+    "curatingPaintings": "正在为你精选画作...",
+    "preparingGallery": "正在准备你的画廊...",
+    "refreshingRecommendations": "正在刷新你的推荐...",
+    "dancersWarmingUp": "马蒂斯的舞者们正在热身！",
+    "preparingDownload": "正在准备你的故事下载...",
+    "defaultMessage": "你的调色板正在分析中。请稍候..."
   },
   "errors": {
     "failed": "保存用户信息失败。请重试。",
@@ -189,5 +198,27 @@
     "loadingMessage": "比梵高的画笔还快！",
     "uploadingPalette": "正在上传你的色彩截图...",
     "analyzingPalette": "正在分析你的色彩..."
+  },
+  "emotions": {
+    "happiness": "快乐",
+    "love": "爱",
+    "optimism": "乐观",
+    "trust": "信任",
+    "anticipation": "期待",
+    "surprise": "惊喜",
+    "fear": "恐惧",
+    "sadness": "悲伤",
+    "anger": "愤怒",
+    "disgust": "厌恶",
+    "gratitude": "感激",
+    "humility": "谦逊",
+    "arrogance": "傲慢",
+    "pessimism": "悲观",
+    "disagreeableness": "不和"
+  },
+  "intensity": {
+    "low": "低",
+    "medium": "中",
+    "high": "高"
   }
 }

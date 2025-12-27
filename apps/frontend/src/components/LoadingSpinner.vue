@@ -4,11 +4,14 @@
     <div v-else-if="type === 'dance'" class="dance-animation"></div>
     <div v-else-if="type === 'palette'" class="palette-animation"></div>
     <div v-else class="magic-cube-animation"></div>
-    <p class="loading-analysis-text">{{ message }}</p>
+    <p class="loading-analysis-text">{{ displayMessage }}</p>
   </div>
 </template>
 
 <script>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 export default {
   name: 'LoadingSpinner',
   props: {
@@ -18,12 +21,24 @@ export default {
     },
     message: {
       type: String,
-      default: 'Your palette is being analysed. Please hold on a moment...'
+      default: ''
     },
     type: {
       type: String,
       default: 'magic-cube', // 'magic-cube', 'keyboard', 'dance', or 'palette'
       validator: (value) => ['magic-cube', 'keyboard', 'dance', 'palette'].includes(value)
+    }
+  },
+  setup(props) {
+    const { t } = useI18n()
+    
+    // Use provided message or fall back to translated default
+    const displayMessage = computed(() => {
+      return props.message || t('loading.defaultMessage')
+    })
+    
+    return {
+      displayMessage
     }
   }
 }
@@ -92,4 +107,4 @@ export default {
   margin: 0;
   padding: 0 20px;
 }
-</style> 
+</style>

@@ -27,7 +27,7 @@
               <div class="previous-image-wrapper">
                 <img :src="previousCapturedUrl" alt="captured palette" class="previous-image" />
               </div>
-              <div class="previous-emotion">{{ $t('gallery.previousEmotion') }} <span class="emotion-highlight">{{ previousEmotion || '—' }}</span></div>
+              <div class="previous-emotion">{{ $t('gallery.previousEmotion') }} <span class="emotion-highlight">{{ previousEmotion ? $t(`emotions.${previousEmotion}`) : '—' }}</span></div>
             </div>
           </div>
         </div>
@@ -214,6 +214,7 @@
 <script>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ApiService from '@/services/api.js'
 
@@ -225,6 +226,7 @@ export default {
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const { t } = useI18n()
     
     // Reactive data
     const loading = ref(false)
@@ -530,7 +532,7 @@ export default {
       if (remainingReloads.value <= 0) return
       try {
         loading.value = true
-        loadingMessage.value = 'Refreshing your recommendations...'
+        loadingMessage.value = t('loading.refreshingRecommendations')
         spinnerType.value = 'keyboard'
 
         // Re-run recommendations using the same raw color statistics
@@ -807,7 +809,7 @@ export default {
       
       generatingStory.value = true
       loading.value = true
-      loadingMessage.value = 'Matisse\'s dancers are warming up!'
+      loadingMessage.value = t('loading.dancersWarmingUp')
       spinnerType.value = 'dance'
       
       try {
