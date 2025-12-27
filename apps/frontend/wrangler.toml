@@ -18,7 +18,7 @@ bucket_name = "plotpalette-assets-prod"
 # Environment variables (including secrets for LOCAL DEV ONLY)
 [vars]
 ENVIRONMENT = "development"
-N8N_WEBHOOK_URL = "https://kevinalyst.app.n8n.cloud/webhook-test/97dac6bc-5ecc-42f2-89f8-d0c4e883c38d"
+N8N_WEBHOOK_URL = "https://kevinalyst.app.n8n.cloud/webhook/97dac6bc-5ecc-42f2-89f8-d0c4e883c38d"
 CORS_ORIGIN = "*"
 # LOCAL DEV SECRETS - DO NOT COMMIT TO PRODUCTION
 API_KEY = "2727ef63765ef750a57e643b7c6d3b7840c47139b568ded83bfa4af9170d8180"

@@ -457,7 +457,23 @@ export default {
           
           if (status === 'COMPLETED') {
             console.log('✅ Job completed successfully!')
+            console.log('📦 Full status response:', statusResponse)
+            console.log('📦 Status response data:', statusResponse.data)
+            
             const result = statusResponse.data.result_data
+            
+            // SAFETY CHECK: Ensure result_data exists before navigation
+            if (!result) {
+              console.error('❌ Job completed but result_data is missing!', {
+                statusResponse: statusResponse,
+                jobData: statusResponse.data,
+                hasResultData: 'result_data' in statusResponse.data,
+                resultDataValue: statusResponse.data.result_data
+              })
+              throw new Error('Job completed but result_data is missing from API response. Please check the backend logs.')
+            }
+            
+            console.log('✅ result_data found:', result)
             
             // Helper function for Unicode-safe base64 encoding
             const unicodeSafeBase64Encode = (str) => {

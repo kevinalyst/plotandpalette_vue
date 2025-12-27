@@ -1062,7 +1062,7 @@ export default {
   border-radius: 20px;
   padding: 20px;
   width: 300px;
-  height: 400px;
+  height: 450px;
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);

@@ -94,7 +94,7 @@
         <button @click="recapturepalette" class="action-btn secondary-btn">
           {{ $t('story.recapturePalette') }}
         </button>
-        <button @click="leaveFeedback" class="action-btn feedback-btn">
+        <button @click="leaveFeedback" class="action-btn feedback-btn" v-if="false">
           {{ $t('story.leaveFeedback') }}
           <img src="@/assets/images/heart.png" alt="heart" class="feedback-heart-icon" />
         </button>

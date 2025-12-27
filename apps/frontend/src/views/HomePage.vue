@@ -1,6 +1,6 @@
 <template>
   <div class="homepage">
-    <button class="logo-refresh-button" @click="refreshPage">
+    <button class="logo-refresh-button" @click="refreshPage" v-if="false">
       <img src="@/assets/images/logo.png" alt="Logo" class="logo-image" />
     </button>
 
@@ -9,13 +9,16 @@
       <LanguageSwitcher />
     </div>
 
-    <div class="get-in-touch-container" @click="getInTouch" v-if="!disableGetInTouch">
+    <div class="get-in-touch-container" @click="getInTouch" v-if="false">
       <p>{{ $t('home.getInTouch') }}</p>
     </div>
-    <div class="people-container" @click="goToTeamPage" v-if="!disablePeople">
+    <div class="people-container" @click="goToTeamPage" v-if="false">
       <p>{{ $t('home.people') }}</p>
     </div>
     <div class = "text-container">
+      <h1 class="hero-title" :class="{ 'hero-title-zh': $i18n.locale === 'zh' }">{{ $t('home.heroTitle') }}</h1>
+      <h2 class="hero-subtitle" :class="{ 'hero-subtitle-zh': $i18n.locale === 'zh' }">{{ $t('home.heroSubtitle') }}</h2>
+      <p class="hero-description" :class="{ 'hero-description-zh': $i18n.locale === 'zh' }">{{ $t('home.heroDescription') }}</p>
     </div>
     <div class="colourbar-container">
       <img src="@/assets/images/colourbar.png" alt="Colour Bar" class="colourbar-image" />
@@ -407,6 +410,13 @@ export default {
 
 <style scoped>
 
+@font-face {
+  font-family: 'Uegor Regular';
+  src: url('~@/assets/images/Uegor-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 p{
   /* font-size: 0.8vw; */
   /* font-weight: 600; */
@@ -677,17 +687,70 @@ a{
 
 
 .text-container {
-  background-image: url('@/assets/images/backgroundtext.png');
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-  width: 100%;
-  height: 100%;
-  transform: translate(-50%, -50%); 
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 40%;
+  left: 160px;
+  transform: translateY(-50%);
   z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+  width: auto;
+  max-width: 1100px;
+}
+
+.hero-title {
+  font-family: 'Uegor Regular', 'Georgia', 'Times New Roman', serif;
+  font-size: 120px;
+  font-weight: normal;
+  color: black;
+  margin: 0;
+  margin-bottom: 20px;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-align: left;
+}
+
+.hero-subtitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 26px;
+  font-weight: 500;
+  color: black;
+  margin: 0;
+  margin-bottom: 20px;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.hero-description {
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: black;
+  margin: 0;
+  line-height: 1.6;
+  max-width: 600px;
+  text-align: left;
+}
+
+/* Chinese-specific styling overrides */
+.hero-title-zh {
+  font-family: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', 'SimHei', sans-serif;
+  font-size: 80px;
+  letter-spacing: 0.05em;
+}
+
+.hero-subtitle-zh {
+  font-family: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  font-size: 26px;
+}
+
+.hero-description-zh {
+  font-family: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  font-size: 16px;
+  line-height: 1.8;
 }
 
 .colourbar-container {
@@ -723,7 +786,7 @@ a{
   margin-bottom: 30px;
   position: absolute;
   top: 50%;
-  right: 20%;
+  right: 15%;
   transform: translate(-50%, -50%);
   z-index: 10;
   transition: opacity 0.3s ease;
@@ -731,27 +794,6 @@ a{
 
 .paintings-container:hover {
   opacity: 0.9;
-}
-
-/* Hover effect to change paintings.png to paintingsguide.png */
-.paintings-container::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 30vw;
-  height: 100%;
-  background-image: url('@/assets/images/paintingsguide.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.paintings-container:hover::after {
-  opacity: 1;
 }
 
 .paintings-image {

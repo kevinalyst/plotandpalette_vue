@@ -135,32 +135,6 @@ body.allow-scroll {
     transition: opacity 0.3s ease;
 }
 
-/* Hover effect to change paintings.png to paintingsguide.png */
-.paintings-container::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url('~@/assets/images/paintingsguide.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-    z-index: 2;
-}
-
-.paintings-container:hover::after {
-    opacity: 1;
-}
-
-.paintings-container:hover .paintings-image {
-    opacity: 0;
-}
-
 .background-image-container {
     display: none; /* Hide the image container since we're using background-image */
 }
@@ -596,4 +570,4 @@ body.allow-scroll {
     height: 100%;
     object-fit: cover;
     z-index: -1;
-} 
+}
