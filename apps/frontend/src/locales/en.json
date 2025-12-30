@@ -23,9 +23,8 @@
     "usernameRule": "* Minimum 6 characters with both letters and numbers",
     "ageRange": "Age Range:",
     "gender": "Gender:",
-    "fieldOfStudy": "Field of Study/Profession:",
-    "frequency": "Art Engagement Frequency:",
-    "frequencySubtitle": "(in person or online)",
+    "schoolName": "School Name:",
+    "yearsTeaching": "Years of Teaching:",
     "submit": "Submit",
     "noteTitle": "*Please note:",
     "noteText1": "We will collect your <u>basic demographics</u> and <u>interaction logs</u>.",
@@ -40,8 +39,18 @@
     "age55plus": "55+",
     "woman": "Woman",
     "man": "Man",
-    "nonBinary": "Non-binary",
     "preferNotToSay": "Prefer not to say",
+    "years1to2": "1-2 years",
+    "years3to5": "3-5 years",
+    "years6to10": "6-10 years",
+    "years11to15": "11-15 years",
+    "years16plus": "16+ years",
+    "schoolA": "School A",
+    "schoolB": "School B",
+    "schoolC": "School C",
+    "schoolD": "School D",
+    "schoolE": "School E",
+    "schoolF": "School F",
     "artsHumanities": "Arts & Humanities",
     "designCreativeArts": "Design & Creative Arts",
     "computerScience": "Computer Science",
@@ -143,11 +152,14 @@
     "step3Text1": "Which paintings spark your curiosity?",
     "step3Text2": "Pick three to craft a unique story...",
     "dragInstruction": "Drag and drop paintings into the boxes",
+    "clickInstruction": "Click Select button to choose paintings",
+    "select": "Select",
+    "unselect": "Unselect",
     "step4Label": "Step 4:",
     "step4Text1": "Which character resonates with you?",
     "step4Text2": "Dive into their story...",
     "selectPerspective": "Select the perspective that interests you the most",
-    "hoverCards": "Hover your <img src=\"@/assets/images/cursor.png\" alt=\"cursor\" class=\"cursor-icon\" /> over the cards to see each story's style",
+    "hoverCards": "Hover over the cards to see each story's style",
     "reloadPrefix": "I don't like any of these paintings. I want to",
     "reloadButton": "Reload",
     "reloadSuffix": "recommendations.",
@@ -221,5 +233,27 @@
     "low": "Low",
     "medium": "Medium",
     "high": "High"
+  },
+  "characters": {
+    "historian": {
+      "title": "Historian's Chronicle",
+      "description": "A journey through time, uncovering the stories behind the art, the artist's life, and the world they lived in."
+    },
+    "poet": {
+      "title": "The Poet's Dream",
+      "description": "A lyrical and imaginative story that explores the beauty, emotion, and sensory details within each painting."
+    },
+    "detective": {
+      "title": "The Detective's Case",
+      "description": "A suspenseful investigation into the hidden symbols, secrets, and psychological mysteries lurking within the artworks."
+    },
+    "critic": {
+      "title": "The Critic's Analysis",
+      "description": "A sharp, insightful look at how the artist uses colour, light, and composition to tell a story and provoke a reaction."
+    },
+    "time_traveller": {
+      "title": "The Time Traveller's Report",
+      "description": "A playful and imaginative tale that connects the historical artworks to our modern world in surprising and humorous ways."
+    }
   }
 }

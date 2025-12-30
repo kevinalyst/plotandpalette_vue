@@ -47,14 +47,12 @@
               :key="painting.url || index"
               class="painting-item"
               :data-number="index + 1"
-              draggable="true"
-              @dragstart="handleDragStart($event, painting)"
-              @click="openPaintingModal(painting)"
             >
               <img 
                 :src="painting.url" 
                 :alt="painting.title"
                 @error="handleImageError($event, painting)"
+                @click="openPaintingModal(painting)"
                 loading="lazy"
               />
               <div class="painting-hover-info">
@@ -64,6 +62,12 @@
                   <p>{{ painting.year }}</p>
                 </div>
               </div>
+              <button 
+                :class="['painting-select-btn', { 'selected': isPaintingSelected(painting) }]"
+                @click.stop="togglePaintingSelection(painting)"
+              >
+                {{ isPaintingSelected(painting) ? $t('gallery.unselect') : $t('gallery.select') }}
+              </button>
             </div>
           </div>
           
@@ -100,16 +104,13 @@
           <span class="step-label-text">{{ $t('gallery.step3Text1') }}</span> <br/>
           <span class="step-label-text">{{ $t('gallery.step3Text2') }}</span>
         </p>
-        <p class="sub-instruction">{{ $t('gallery.dragInstruction') }}</p>
+        <p class="sub-instruction">{{ $t('gallery.clickInstruction') }}</p>
         
         <div class="drop-zones">
           <div 
             v-for="i in 3" 
             :key="i"
             :class="['drop-zone', { 'has-painting': selectedPaintings[i-1] }]"
-            @drop="handleDrop($event, i-1)"
-            @dragover.prevent
-            @dragenter.prevent
           >
             <div v-if="selectedPaintings[i-1]" class="selected-painting">
               <img :src="selectedPaintings[i-1].url" :alt="selectedPaintings[i-1].title" />
@@ -147,28 +148,16 @@
             <img :src="character.image_b" :alt="character.name" v-if="hoveredCharacter === character.id"/>
             <!-- <div class="exit-btn" v-if="selectedCharacter === character.id" @click="closeCharacter(character.id)">x</div> -->
             
+            <!-- Text overlay -->
+            <div class="character-card-text">
+              <div v-if="hoveredCharacter !== character.id" class="character-title">
+                {{ $t(`characters.${character.id}.title`) }}
+              </div>
+              <div v-else class="character-description">
+                {{ $t(`characters.${character.id}.description`) }}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Name Input Modal -->
-      <div v-if="showNameInput" class="name-modal-overlay" @click="closeNameInput">
-        <div class="name-modal" @click.stop>
-          <h3>{{ $t('gallery.nameModalTitle') }}</h3>
-          <h3>{{ $t('gallery.nameModalSubtitle') }}</h3>
-          <input 
-            v-model="nickname" 
-            type="text" 
-            :placeholder="$t('gallery.nameInputPlaceholder')"
-            class="name-input"
-            maxlength="50"
-            @keyup.enter="confirmName"
-            ref="nameInputField"
-          />
-          <!-- <div class="name-modal-buttons">
-            <button @click="closeNameInput" class="cancel-btn">Cancel</button>
-            <button @click="confirmName" class="confirm-btn" :disabled="!nickname.trim()">Confirm</button>
-          </div> -->
         </div>
       </div>
 
@@ -239,9 +228,7 @@ export default {
     const recommendations = ref([])
     const selectedPaintings = ref([])
     const selectedCharacter = ref('')
-    const nickname = ref('')
     const hoveredCharacter = ref('')
-    const showNameInput = ref(false)
     const showAllPaintings = ref(false)
     const emotionFromPalette = ref('')
     const rawColorsFromPalette = ref([])
@@ -261,7 +248,7 @@ export default {
       return step2Complete.value && selectedCharacter.value
     })
     const step4Complete = computed(() => {
-      return step3Complete.value && nickname.value && nickname.value.trim().length > 0
+      return step3Complete.value // Character selection is final step
     })
     
     // Character options
@@ -691,6 +678,36 @@ export default {
       selectedPaintingForModal.value = {}
     }
 
+    // Check if a painting is currently selected
+    const isPaintingSelected = (painting) => {
+      if (!painting || !selectedPaintings.value) return false
+      return selectedPaintings.value.some(p => p && p.url === painting.url)
+    }
+    
+    // Toggle painting selection (Select/Unselect)
+    const togglePaintingSelection = (painting) => {
+      if (!painting || !selectedPaintings.value) return
+      
+      // Check if already selected
+      const selectedIndex = selectedPaintings.value.findIndex(p => p && p.url === painting.url)
+      
+      if (selectedIndex !== -1) {
+        // Unselect: remove from array
+        selectedPaintings.value[selectedIndex] = null
+        console.log('🗑️ Unselected painting:', painting.title)
+      } else {
+        // Select: find first empty slot
+        const emptySlot = selectedPaintings.value.findIndex(slot => !slot)
+        
+        if (emptySlot !== -1) {
+          selectedPaintings.value[emptySlot] = painting
+          console.log('✅ Selected painting:', painting.title, 'in slot', emptySlot + 1)
+        } else {
+          console.warn('⚠️ Cannot select more than 3 paintings')
+        }
+      }
+    }
+
     const selectPainting = (painting) => {
       if (!selectedPaintings.value || !painting) return
       
@@ -717,14 +734,7 @@ export default {
     
     const selectCharacter = (characterId) => {
       selectedCharacter.value = characterId
-      // Show name input modal when character is selected
-      showNameInput.value = true
-      // Focus name input after modal is shown
-      setTimeout(() => {
-        if (document.querySelector('.name-input')) {
-          document.querySelector('.name-input').focus()
-        }
-      }, 100)
+      // No modal needed - character selection is final
     }
 
     const showCharacterDescription = (characterId) => {
@@ -733,20 +743,6 @@ export default {
 
     const hideCharacterDescription = () => {
       hoveredCharacter.value = ''
-    }
-
-    const closeNameInput = () => {
-      showNameInput.value = false
-      // Reset character selection if no name was entered
-      if (!nickname.value.trim()) {
-        selectedCharacter.value = ''
-      }
-    }
-
-    const confirmName = () => {
-      if (nickname.value.trim()) {
-        showNameInput.value = false
-      }
     }
     
     const handleImageError = (event, painting) => {
@@ -779,7 +775,6 @@ export default {
       console.log('🚀 Generating story with selections:')
       console.log('- Paintings:', selectedPaintings.value.filter(p => p))
       console.log('- Character:', selectedCharacter.value)
-      console.log('- Nickname:', nickname.value)
       console.log('- Page data:', pageData.value)
       
       // Validate required data before making API calls
@@ -802,11 +797,6 @@ export default {
         return
       }
       
-      if (!nickname.value || !nickname.value.trim()) {
-        alert('Error: Please enter a nickname for your story')
-        return
-      }
-      
       generatingStory.value = true
       loading.value = true
       loadingMessage.value = t('loading.dancersWarmingUp')
@@ -821,7 +811,6 @@ export default {
         const selectionData = {
           selectedPaintings: validPaintings,
           character: selectedCharacter.value,
-          nickname: nickname.value,
           emotion: pageData.value.selectedEmotion,
           probability: pageData.value.selectedProbability,
           sessionId: sessionId
@@ -850,16 +839,61 @@ export default {
         console.log('⏳ Polling for story generation completion...')
         const result = await ApiService.pollJob(jobId, 60, 2000)
         
-        console.log('✅ Story generation completed:', result)
+        console.log('✅ Story generation completed, result:', result)
+        console.log('📖 Result type:', typeof result)
+        console.log('📖 Result keys:', result ? Object.keys(result) : 'null')
+        
+        // Extract story with robust fallback handling
+        let storyData = null
+        
+        // Handle various possible formats
+        if (result && typeof result === 'object') {
+          if (result.story) {
+            // Format: { story: { title, paragraph_1, ... } }
+            storyData = result.story
+            console.log('✅ Extracted story from result.story')
+          } else if (result.title && result.paragraph_1) {
+            // Format: { title, paragraph_1, ... } (story object directly)
+            storyData = result
+            console.log('✅ Using result directly as story (has title and paragraphs)')
+          } else {
+            console.error('❌ Unexpected result format:', result)
+            throw new Error('Story data has unexpected format')
+          }
+        } else if (typeof result === 'string') {
+          // Handle case where result might be a JSON string
+          try {
+            const parsed = JSON.parse(result)
+            storyData = parsed.story || parsed
+            console.log('✅ Parsed story from string')
+          } catch (e) {
+            console.error('❌ Failed to parse result string:', e)
+            throw new Error('Failed to parse story data')
+          }
+        } else {
+          console.error('❌ Invalid result type:', typeof result, result)
+          throw new Error('Story generation returned invalid data')
+        }
+        
+        // Validate story has required fields
+        if (!storyData || !storyData.title || !storyData.paragraph_1) {
+          console.error('❌ Story missing required fields:', storyData)
+          throw new Error('Story data is incomplete (missing title or paragraphs)')
+        }
+        
+        console.log('✅ Story validated successfully:', {
+          title: storyData.title,
+          hasParagraph1: !!storyData.paragraph_1,
+          hasParagraph2: !!storyData.paragraph_2,
+          hasParagraph3: !!storyData.paragraph_3
+        })
         
         // Navigate to StoryPage with result
-        // result is { story: { title, paragraph_1, ... } }, so extract story
         const storyPageData = {
           ...pageData.value,
           selectedPaintings: validPaintings,
           selectedCharacter: selectedCharacter.value,
-          userName: nickname.value,
-          story: result.story || result, // Extract story from result_data
+          story: storyData,
           sessionId: sessionId
         }
         
@@ -904,9 +938,7 @@ export default {
       scrollThumbWidth,
       selectedPaintings,
       selectedCharacter,
-      nickname,
       hoveredCharacter,
-      showNameInput,
       characters,
       step2Complete,
       step3Complete,
@@ -921,8 +953,8 @@ export default {
       prevPaintings,
       initializeScrollHandler,
       updateScrollPosition,
-      handleDragStart,
-      handleDrop,
+      isPaintingSelected,
+      togglePaintingSelection,
       openPaintingModal,
       closePaintingModal,
       selectPainting,
@@ -930,8 +962,6 @@ export default {
       selectCharacter,
       showCharacterDescription,
       hideCharacterDescription,
-      closeNameInput,
-      confirmName,
       handleImageError,
       generateStory
     }
@@ -1382,6 +1412,44 @@ export default {
   transform: scale(1.05);
 }
 
+/* Select/Unselect button on painting cards */
+.painting-select-btn {
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(128, 128, 128, 0.8);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 3;
+  transition: all 0.3s ease;
+  opacity: 0;
+}
+
+.painting-item:hover .painting-select-btn {
+  opacity: 1;
+}
+
+.painting-select-btn:hover {
+  background: rgba(150, 150, 150, 0.9);
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.painting-select-btn.selected {
+  background: rgba(80, 80, 80, 0.9);
+  opacity: 1;
+}
+
+.painting-select-btn.selected:hover {
+  background: rgba(100, 100, 100, 0.95);
+}
+
 .painting-hover-info {
   position: absolute;
   bottom: 0;
@@ -1517,7 +1585,31 @@ export default {
   height: 100%;
   border-radius: 8px;
   object-fit: cover;
-  
+}
+
+/* Character card text overlay */
+.character-card-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.character-title,
+.character-description {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: white;
+  line-height: 1.4;
+  word-wrap: break-word;
 }
 
 .character-card h4 {
@@ -1547,130 +1639,6 @@ export default {
   line-height: 1.4;
   margin: 0;
   color: white;
-}
-
-/* Name Input Modal */
-.name-modal-overlay {
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(40, 40, 40, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  backdrop-filter: blur(5px);
-  line-height: 1.5;
-}
-
-.name-modal {
-  
-  padding: 40px;
-  
-  width: 100%;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  transform: scale(0.9);
-  animation: modalAppear 0.3s ease forwards;
-}
-
-@keyframes modalAppear {
-  to {
-    transform: scale(1);
-  }
-}
-
-.name-modal h3 {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 400;
-  color: white;
-  font-size: 18px;
-}
-
-.name-subtitle {
-  font-family: 'Poppins', sans-serif;
-  color: #ccc;
-  margin-bottom: 15px;
-  font-style: italic;
-  font-weight: 250;
-}
-
-.name-instruction {
-  font-family: 'Poppins', sans-serif;
-  color: #ccc;
-  margin-bottom: 30px;
-  font-size: 14px;
-}
-
-.name-input {
-  width: 100%;
-  padding: 15px 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 25px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 16px;
-  text-align: center;
-  margin-bottom: 30px;
-  transition: border-color 0.3s ease;
-  box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  margin-top: 20px;
-}
-
-.name-input:focus {
-  border-color: rgba(255, 255, 255, 0.6);
-  outline: none;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.name-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.name-modal-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-}
-
-.cancel-btn, .confirm-btn {
-  padding: 12px 25px;
-  border-radius: 25px;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
-}
-
-.cancel-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ccc;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-.confirm-btn {
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
-}
-
-.confirm-btn:hover:not(:disabled) {
-  background: white;
-  transform: translateY(-2px);
-}
-
-.confirm-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* Painting Preview Modal */
@@ -1766,35 +1734,6 @@ export default {
 .check-source-link:hover {
   color: #cfe7ff;
   text-decoration-thickness: 2px;
-}
-
-.name-section {
-  margin-bottom: 40px;
-  text-align: center;
-}
-
-.name-section h3 {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 10px;
-}
-
-.name-input {
-  padding: 15px 20px;
-  border: 2px solid #e9ecef;
-  border-radius: 25px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 16px;
-  text-align: center;
-  width: 300px;
-  max-width: 100%;
-  transition: border-color 0.3s ease;
-}
-
-.name-input:focus {
-  /* border-color: #4ecdc4; */
-  outline: none;
 }
 
 .story-section {

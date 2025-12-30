@@ -124,8 +124,31 @@ class ApiService {
       
       // Access status from response.data, not response directly
       if (response.data && response.data.status === 'COMPLETED') {
-        console.log('✅ Job completed, returning result_data')
-        return response.data.result_data
+        console.log('✅ Job completed, checking result_data...')
+        console.log('📦 Full response.data:', response.data)
+        
+        // Extract result_data with robust handling
+        let resultData = response.data.result_data
+        
+        // Handle case where result_data might be a JSON string
+        if (typeof resultData === 'string') {
+          try {
+            resultData = JSON.parse(resultData)
+            console.log('📝 Parsed result_data from string')
+          } catch (e) {
+            console.warn('⚠️ Failed to parse result_data as JSON:', e)
+          }
+        }
+        
+        // Validate result_data exists
+        if (!resultData || (typeof resultData === 'object' && Object.keys(resultData).length === 0)) {
+          console.error('❌ result_data is empty or undefined!')
+          console.error('   Full job data:', JSON.stringify(response.data, null, 2))
+          throw new Error('Job completed but result_data is empty')
+        }
+        
+        console.log('✅ Returning result_data:', resultData)
+        return resultData
       } else if (response.data && response.data.status === 'FAILED') {
         throw new Error(response.data.error_message || 'Job failed')
       }

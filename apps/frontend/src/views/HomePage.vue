@@ -96,53 +96,37 @@
             <option value="" disabled selected>{{ $t('select.selectOptions') }}</option>
             <option value="woman">{{ $t('select.woman') }}</option>
             <option value="man">{{ $t('select.man') }}</option>
-            <option value="non-binary">{{ $t('select.nonBinary') }}</option>
             <option value="prefer-not-to-say">{{ $t('select.preferNotToSay') }}</option>
           </select>
         </div>
         
         <div class="form-field">
-          <label class="form-field-label">{{ $t('userInfo.fieldOfStudy') }}</label>
-          <p class="form-field-label" style="visibility: hidden;">&nbsp;</p>
-          <select class="form-field-select" v-model="userInformation.fieldOfStudy">
+          <label class="form-field-label">{{ $t('userInfo.schoolName') }}</label>
+          <select class="form-field-select" v-model="userInformation.schoolName">
             <option value="" disabled selected>{{ $t('select.selectOptions') }}</option>
-            <option value="arts-humanities">{{ $t('select.artsHumanities') }}</option>
-            <option value="design-creative-arts">{{ $t('select.designCreativeArts') }}</option>
-            <option value="computer-science">{{ $t('select.computerScience') }}</option>
-            <option value="social-sciences">{{ $t('select.socialSciences') }}</option>
-            <option value="business-management">{{ $t('select.businessManagement') }}</option>
-            <option value="natural-sciences">{{ $t('select.naturalSciences') }}</option>
-            <option value="healthcare-medicine">{{ $t('select.healthcareMedicine') }}</option>
-            <option value="education-research">{{ $t('select.educationResearch') }}</option>
-            <option value="engineering">{{ $t('select.engineering') }}</option>
-            <option value="public-services">{{ $t('select.publicServices') }}</option>
-            <option value="other">{{ $t('select.other') }}</option>
-            <option value="prefer-not-to-say">{{ $t('select.preferNotToSay') }}</option>
+            <option value="A">{{ $t('select.schoolA') }}</option>
+            <option value="B">{{ $t('select.schoolB') }}</option>
+            <option value="C">{{ $t('select.schoolC') }}</option>
+            <option value="D">{{ $t('select.schoolD') }}</option>
+            <option value="E">{{ $t('select.schoolE') }}</option>
+            <option value="F">{{ $t('select.schoolF') }}</option>
           </select>
         </div>
         
         <div class="form-field">
-          <label class="form-field-label">{{ $t('userInfo.frequency') }}</label>
-            <p class="form-field-label">{{ $t('userInfo.frequencySubtitle') }}</p>
-          <select class="form-field-select" v-model="userInformation.frequency">
+          <label class="form-field-label">{{ $t('userInfo.yearsTeaching') }}</label>
+          <select class="form-field-select" v-model="userInformation.yearsTeaching">
             <option value="" disabled selected>{{ $t('select.selectOptions') }}</option>
-            <option value="daily">{{ $t('select.daily') }}</option>
-            <option value="weekly">{{ $t('select.weekly') }}</option>
-            <option value="monthly">{{ $t('select.monthly') }}</option>
-            <option value="few-times-year">{{ $t('select.fewTimesYear') }}</option>
-            <option value="rarely">{{ $t('select.rarely') }}</option>
-            <option value="first-time">{{ $t('select.firstTime') }}</option>
+            <option value="1-2">{{ $t('select.years1to2') }}</option>
+            <option value="3-5">{{ $t('select.years3to5') }}</option>
+            <option value="6-10">{{ $t('select.years6to10') }}</option>
+            <option value="11-15">{{ $t('select.years11to15') }}</option>
+            <option value="16+">{{ $t('select.years16plus') }}</option>
           </select>
         </div>
       </div>
       
       <button class="user-information-form-submit" @click="submitUserInformation" :disabled="!isUserInformationComplete">{{ $t('userInfo.submit') }}</button>
-      
-      <div class="user-information-form-note">
-        <p><em>{{ $t('userInfo.noteTitle') }}</em></p>
-        <p v-html="$t('userInfo.noteText1')"></p>
-        <p>{{ $t('userInfo.noteText2') }}</p>
-      </div>
     </div>
     
     <!-- GIF Preloading Spinner -->
@@ -194,8 +178,8 @@ export default {
         username: '',
         age: '',
         gender: '',
-        fieldOfStudy: '',
-        frequency: '',
+        schoolName: '',
+        yearsTeaching: '',
       },
     }
   },
@@ -215,8 +199,8 @@ export default {
              this.isUsernameValid &&
              this.userInformation.age && 
              this.userInformation.gender && 
-             this.userInformation.fieldOfStudy && 
-             this.userInformation.frequency
+             this.userInformation.schoolName && 
+             this.userInformation.yearsTeaching
     }
   },
   methods: {
@@ -311,8 +295,8 @@ export default {
             name: this.userInformation.username,
             age: this.userInformation.age,
             gender: this.userInformation.gender,
-            fieldOfStudy: this.userInformation.fieldOfStudy,
-            frequency: this.userInformation.frequency
+            schoolName: this.userInformation.schoolName,
+            yearsTeaching: this.userInformation.yearsTeaching
           })
         })
         
@@ -993,23 +977,6 @@ a{
 .user-information-form-submit:disabled:hover {
   background-color: #ccc;
   transform: none;
-}
-
-.user-information-form-note {
-  max-width: 600px;
-  text-align: left;
-  font-size: 14px;
-  color: black;
-  font-family: 'Poppins', sans-serif;
-  font-style: italic;
-  line-height: 1.4;
-}
-
-.user-information-form-note p {
-  margin: 5px 0;
-  font-size: 14px;
-  color: black;
-  text-shadow: none;
 }
 
 /* Global button focus disable */

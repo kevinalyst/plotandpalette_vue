@@ -64,13 +64,20 @@
           <div class="emotion-main-title">{{ $t('colorPalette.emotionInstruction') }}</div>
         </div>
         
-        <div class="emotion-cards-container">
-          <div 
-            v-for="emotion in displayedEmotions" 
-            :key="emotion.name"
-            :class="['emotion-card', { 'emotion-card-selected': selectedEmotion === emotion.name }]"
-            @click="selectEmotion(emotion.name, emotion.intensity)"
-          >
+        <div class="emotion-cards-wrapper">
+          <button 
+            @click="prevEmotions" 
+            class="grid-nav-btn grid-nav-left" 
+            aria-label="Previous"
+          >‹</button>
+          
+          <div class="emotion-cards-container" ref="emotionCardsContainer">
+            <div 
+              v-for="emotion in displayedEmotions" 
+              :key="emotion.name"
+              :class="['emotion-card', { 'emotion-card-selected': selectedEmotion === emotion.name }]"
+              @click="selectEmotion(emotion.name, emotion.intensity)"
+            >
             <div class="emotion-card-name">{{ $t(`emotions.${emotion.name}`) }}</div>
             <div class="emotion-card-image-container">
               <img 
@@ -101,6 +108,13 @@
             </div>
             <div class="emotion-card-intensity-label">{{ $t(`intensity.${emotion.intensity}`) }} {{ $t('colorPalette.intensitySuffix') }}</div>
           </div>
+        </div>
+        
+          <button 
+            @click="nextEmotions" 
+            class="grid-nav-btn grid-nav-right" 
+            aria-label="Next"
+          >›</button>
         </div>
         
         <!-- More feelings button removed - users now scroll through all emotions -->
@@ -196,6 +210,7 @@ export default {
     const displayedEmotions = ref([])
     const capturedImageUrl = ref('')
     const imageFallbackUrls = ref([])
+    const emotionCardsContainer = ref(null)
     
     // Methods
     const loadPageData = async () => {
@@ -763,6 +778,25 @@ export default {
       console.log('✅ Captured palette image loaded successfully:', capturedImageUrl.value)
     }
     
+    // Navigation methods for emotion cards
+    const prevEmotions = () => {
+      if (!emotionCardsContainer.value) return
+      const scrollAmount = 330 // card width (300px) + gap (30px)
+      emotionCardsContainer.value.scrollBy({
+        left: -scrollAmount,
+        behavior: 'smooth'
+      })
+    }
+    
+    const nextEmotions = () => {
+      if (!emotionCardsContainer.value) return
+      const scrollAmount = 330 // card width (300px) + gap (30px)
+      emotionCardsContainer.value.scrollBy({
+        left: scrollAmount,
+        behavior: 'smooth'
+      })
+    }
+    
     // Lifecycle
     onMounted(() => {
       console.log('🎬 ColorPalettePage mounted!')
@@ -789,10 +823,13 @@ export default {
       showEmotionSelection,
       emotionResetCount,
       remainingReloads,
+      emotionCardsContainer,
       selectEmotion,
       proceedToGallery,
       recapture,
       shuffleEmotions,
+      prevEmotions,
+      nextEmotions,
       getEmotionColor,
       getEmotionImageSrc,
       getColorFromRawColor,
@@ -1040,6 +1077,43 @@ export default {
   font-weight: 400;
   line-height: 1.5;
 }
+
+/* Emotion cards wrapper with navigation buttons */
+.emotion-cards-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  margin: 40px auto;
+}
+
+/* Navigation buttons for emotion cards */
+.grid-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(20,20,20,0.45);
+  color: #fff;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  z-index: 5;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.grid-nav-btn:hover {
+  background: rgba(255,255,255,0.25);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.grid-nav-left { left: -50px; }
+.grid-nav-right { right: -50px; }
 
 .emotion-cards-container {
   display: flex;

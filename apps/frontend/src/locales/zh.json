@@ -65,13 +65,13 @@
     "generating": "为你推荐画作中...",
     "processing": "故事生成中...",
     "pleaseWait": "请稍候...",
-    "vanGoghBrush": "比梵高的画笔还快！",
+    "vanGoghBrush": "正在分析你的色彩...",
     "analyzingPaletteDetail": "正在加载你的调色板分析...",
     "mondrianCurves": "与蒙德里安不同，我们热爱曲线...",
     "curatingPaintings": "正在为你精选画作...",
     "preparingGallery": "正在准备你的画廊...",
     "refreshingRecommendations": "正在刷新你的推荐...",
-    "dancersWarmingUp": "马蒂斯的舞者们正在热身！",
+    "dancersWarmingUp": "故事生成中...（这个过程大约需等待一分钟，请不要刷新或关闭页面）",
     "preparingDownload": "正在准备你的故事下载...",
     "defaultMessage": "你的调色板正在分析中。请稍候..."
   },
@@ -143,9 +143,13 @@
     "step3Text1": "哪些画作激发了你的兴趣和好奇？",
     "step3Text2": "选择三幅来创作一个故事...",
     "dragInstruction": "将画作拖到框中",
+    "clickInstruction": "点击选择按钮来挑选画作",
+    "select": "选择",
+    "unselect": "取消",
     "step4Label": "第四步：",
     "step4Text1": "以下是五个不同人物视角的故事风格",
     "step4Text2": "选择一个你想看的...",
+    "selectPerspective": "选择视角",
     "hoverCards": "鼠标悬停查看每个故事的风格简介",
     "reloadPrefix": "这些画作我都不喜欢。我想",
     "reloadButton": "重新加载",
@@ -220,5 +224,27 @@
     "low": "低",
     "medium": "中",
     "high": "高"
+  },
+  "characters": {
+    "historian": {
+      "title": "历史学家的编年史",
+      "description": "一场穿越时空的旅程，挖掘艺术背后的轶事、艺术家的生平以及他们所处的时代背景。"
+    },
+    "poet": {
+      "title": "诗人的梦想",
+      "description": "一段充满诗意与想象力的叙事，探索每一幅画作中蕴含的美感、情感以及细腻的感官体验。"
+    },
+    "detective": {
+      "title": "侦探的案件",
+      "description": "一场扣人心弦的探秘之旅，揭开潜藏在艺术品背后的隐秘符号、不为人知的秘密以及心理学谜题。"
+    },
+    "critic": {
+      "title": "评论家的分析",
+      "description": "以敏锐而深刻的视角，剖析艺术家如何运用色彩、光影和构图来构建叙事，并激发观者的情感共鸣。"
+    },
+    "time_traveller": {
+      "title": "时间旅行者的报告",
+      "description": "一个妙趣横生且充满奇思妙想的故事，以意想不到的幽默方式，将历史名作与我们的现代生活紧密联结。"
+    }
   }
 }

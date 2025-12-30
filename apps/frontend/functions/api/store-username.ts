@@ -31,8 +31,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         username: username,
         age: body.age,
         gender: body.gender,
-        field_of_study: body.fieldOfStudy || body.field_of_study,
-        frequency: body.frequency,
+        school_name: body.schoolName || body.school_name || body.fieldOfStudy || body.field_of_study,
+        years_teaching: body.yearsTeaching || body.years_teaching || body.frequency,
       });
     }
     
