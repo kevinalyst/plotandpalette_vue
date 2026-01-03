@@ -74,6 +74,10 @@ Thumbs.db
 uploads/**/*
 !uploads/.gitkeep
 
+# 📂 Archive & Documentation (local only)
+archive/
+memory/
+
 # 🖼️ Large static assets (kept out of portfolio repo)
 palette GIF/**
 image/**
