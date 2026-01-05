@@ -395,6 +395,28 @@ export default {
         const screenshot = await captureCurrentFrame()
         console.log('✅ Screenshot captured successfully')
         
+        // STEP 4.5: Validate screenshot is not empty/black (rural school network fix)
+        console.log('🔍 Validating screenshot size...')
+        const screenshotSize = screenshot.length
+        console.log('📊 Screenshot data size:', screenshotSize, 'characters')
+        
+        // A pure black 900x600 PNG is ~1-2KB (base64 ~1500-3000 chars)
+        // A typical palette screenshot should be 50KB+ (base64 ~70000+ chars)
+        if (screenshotSize < 50000) {
+          console.error('❌ Screenshot appears to be empty or mostly black')
+          console.error('   Size:', screenshotSize, 'chars (expected >50000)')
+          console.error('   This usually means the GIF failed to load before capture')
+          
+          // Restore UI
+          if (controlsElement) controlsElement.style.display = 'block'
+          if (capturePrompt) capturePrompt.style.display = 'block'
+          if (galleryElement) galleryElement.style.display = 'flex'
+          
+          throw new Error('Network error: Palette image failed to load completely. Please wait a moment for the palette to load, then try again.')
+        }
+        
+        console.log('✅ Screenshot validation passed (size OK)')
+        
         // STEP 5: Restore UI elements and show loading
         if (controlsElement) controlsElement.style.display = 'block'
         if (capturePrompt) capturePrompt.style.display = 'block'
@@ -514,7 +536,15 @@ export default {
         isCapturing.value = false
         showModal.value = true
         modalTitle.value = 'Capture Failed'
-        modalMessage.value = `Failed to capture palette: ${error.message}`
+        
+        // Friendly error message for network/loading issues
+        const errorMsg = error.message || 'Unknown error'
+        const isNetworkError = errorMsg.includes('Network error') || errorMsg.includes('failed to load')
+        
+        modalMessage.value = isNetworkError 
+          ? `⚠️ ${errorMsg}\n\n💡 Tip: Make sure you can see the colorful palette on screen before clicking capture.`
+          : `Failed to capture palette: ${errorMsg}`
+        
         modalButtons.value = [
           {
             text: 'Try Again',
