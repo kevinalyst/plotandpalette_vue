@@ -9,7 +9,7 @@ An interactive art-emotion-storytelling platform designed for high school teache
 This is a live classroom pilot from a Chinese high school, where an art teacher uses the AI-supported teaching toolkit I built to guide students through artwork interpretation and discussion.
 
 <a href="https://youtu.be/gcj9P27kBbI">
-  <img src="https://youtu.be/gcj9P27kBbI/maxresdefault.jpg"
+  <img src="https://i.ytimg.com/vi/gcj9P27kBbI/maxresdefault.jpg"
        alt="Watch the Video"
        width="50%">
 </a>
