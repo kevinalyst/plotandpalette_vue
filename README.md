@@ -2,8 +2,19 @@
 
 An interactive art-emotion-storytelling platform designed for high school teachers to explore the connection between colors, emotions, and artworks through AI-powered recommendations and narrative generation.
 
+
 **Live Demo:** https://plotandpalette.uk/
 
+**Watch the Real Classroom Pilot:**
+This is a live classroom pilot from a Chinese high school, where an art teacher uses the AI-supported teaching toolkit I built to guide students through artwork interpretation and discussion.
+
+<a href="https://youtu.be/gcj9P27kBbI">
+  <img src="https://youtu.be/gcj9P27kBbI/maxresdefault.jpg"
+       alt="Watch the Video"
+       width="50%">
+</a>
+
+*(Click the image above to watch the video)*
 ---
 
 ## 🏗️ Modern Architecture (Cloudflare Stack)
@@ -35,6 +46,8 @@ An interactive art-emotion-storytelling platform designed for high school teache
 │   - HMAC-verified callbacks                        │
 └─────────────────────────────────────────────────────┘
 ```
+**n8n Workflow:**
+<img width="1092" height="1192" alt="n8n work flow" src="https://github.com/user-attachments/assets/59849ed3-d662-4852-9a5a-5a5f5ad1c889" />
 
 **Data Storage:**
 - **Cloudflare D1** (SQLite) - User data, sessions, jobs, results
